@@ -83,7 +83,8 @@ def ellipse(mesh, center=(0, 0), ax_len=(5, 5), index=(0, 1), density=1, resolut
 
     Args:
         mesh(tomomak.main_structures.Mesh): mesh to work with.
-        center(tuple of int, optional): Center of the real_solution, given by tuples with 2 elements(x, y). default: (0, 0).
+        center(tuple of int, optional): Center of the real_solution, given by tuples with 2 elements(x, y).
+            Default: (0, 0).
         ax_len (tuple of int, optional): Half-width and Half-height of the real_solution,
             given by tuples with 2 elements (a, b). default: (5, 5).
         index(tuple of two ints, optional): axes to build object at. Default:  (0,1)
@@ -151,7 +152,8 @@ def cone(mesh, center=(3, 4), ax_len=(4, 3), index=(0, 1), height=1, cone_type='
 
     Args:
         mesh(tomomak.main_structures.Mesh): mesh to work with.
-        center(tuple of int, optional): Center of the real_solution, given by tuples with 2 elements(x, y). default: (0, 0).
+        center(tuple of int, optional): Center of the real_solution, given by tuples with 2 elements(x, y).
+            Default: (0, 0).
         ax_len (tuple of int, optional): Half-width and Half-height of the base real_solution,
             given by tuples with 2 elements (a, b). default: (5, 5).
         index(tuple of two ints, optional): axes to build object at. Default:  (0,1)

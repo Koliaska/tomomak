@@ -45,7 +45,6 @@ class ML(abstract_iterator.AbstractIterator):
         model.solution = model.solution * mult
 
 
-
 class MLFlatten(abstract_iterator.AbstractIterator):
     """ML analog, which flattens arrays during calculation. Experimental feature.
     """
@@ -88,4 +87,3 @@ class MLFlatten(abstract_iterator.AbstractIterator):
         mult = mult / self.wi
         # find delta
         model.solution = model.solution * mult
-

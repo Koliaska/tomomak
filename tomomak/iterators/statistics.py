@@ -10,7 +10,7 @@ class RMS(AbstractStatistics):
     Real solution should be defined in order to get RMS: to do this set real_solution member of solver object.
 
     """
-    def step(self, model, solution, real_solution, *args, **kwargs):
+    def step(self, solution, real_solution, *args, **kwargs):
         """Calculate a normalized root mean square error at current step
 
         Args:
@@ -27,7 +27,7 @@ class RMS(AbstractStatistics):
         res = np.sum(res)
         tmp = np.sum(np.square(solution))
         if tmp != 0:
-            res =  np.sqrt(res / tmp) * 100
+            res = np.sqrt(res / tmp) * 100
         else:
             res = float("inf")
         self.data.append(res)
@@ -49,7 +49,7 @@ class RN(AbstractStatistics):
     RN is between calculated and measured signal.
     """
 
-    def step(self, model, solution, real_solution, *args, **kwargs):
+    def step(self, model,  real_solution, *args, **kwargs):
         """Residual norm at current step.
 
         Args:
@@ -85,7 +85,7 @@ class ChiSq(AbstractStatistics):
 
     """
 
-    def step(self, model, solution, real_solution, *args, **kwargs):
+    def step(self, solution, real_solution, *args, **kwargs):
         """Chi^2 statistics.
 
         Note, that fo usage in feasibility method chi^2 should be divided by number of detectors.
@@ -135,7 +135,7 @@ class CorrCoef(AbstractStatistics):
         det_num2 = det_num**2
         f_s = np.sum(old_solution)
         f_new_s = np.sum(solution)
-        corr= det_num2 * np.sum(np.multiply(solution, old_solution))
+        corr = det_num2 * np.sum(np.multiply(solution, old_solution))
         corr = corr - f_s * f_new_s
         divider = det_num2 * np.sum(np.multiply(solution, solution))
         tmp = f_new_s**2

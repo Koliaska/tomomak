@@ -45,7 +45,7 @@ def line2d(mesh, p1, p2, width, divergence=0, index=(0, 1), response=1, radius_d
     return res
 
 
-def fan_detector(mesh, p1, p2, width,  number, index=(0, 1), angle=np.pi/2, *args, **kwargs):
+def fan_detector(mesh, p1, p2, width, number, index=(0, 1), angle=np.pi/2, *args, **kwargs):
     """ Creates one fan of detectors.
 
     Args:
@@ -113,7 +113,7 @@ def fan_detector_array(mesh, focus_point, radius, fan_num, line_num, width,
         r = (focus_point - p1) * 10
         p2 = p1 + r
         res = np.append(res, fan_detector(mesh, p1, p2, width, line_num,  *args, **kwargs), axis=0)
-        print('\r', end='' )
+        print('\r', end='')
         print("Generating array of fan detectors: ", str(i*100 // fan_num) + "% complete", end='')
         incline += d_incline
     print('\r \r ', end='')

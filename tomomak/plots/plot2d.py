@@ -71,8 +71,8 @@ def detector_colormesh2d(data, axis1, axis2, title='', fill_scheme='viridis',
         Objects need to exist in order to work.
          """
     class ColormeshSlice(interactive.DetectorPlotSlicer):
-        def __init__(self, data, axis, figure, color_bar, normalization):
-            super().__init__(data, axis)
+        def __init__(self, data_input, axis, figure, color_bar, normalization):
+            super().__init__(data_input, axis)
             self.fig = figure
             self.cb = color_bar
             self.norm = normalization

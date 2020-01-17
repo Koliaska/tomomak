@@ -2,6 +2,7 @@ import numpy as np
 from tomomak.mesh import mesh
 import copy
 
+
 class Rescale:
     """
     Rescales to the new shape. Keeps proportions for irregular grid. Doesn't smooth.
@@ -76,7 +77,7 @@ class NewMesh:
             if data_type == 'solution':
                 divider = new_mesh.axes[i].volumes
             elif data_type == 'detector_geometry':
-                divider = ax.volumes# np.ones(new_shape[i])
+                divider = ax.volumes  # np.ones(new_shape[i])
             else:
                 raise Exception("Wrong data type")
             for j in range(new_shape[i]):

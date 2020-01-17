@@ -100,7 +100,7 @@ class Solver:
             plt.xlabel('step')
             for ax in axes:
                 ax.label_outer()
-            #plt.tight_layout()
+            # plt.tight_layout()
         else:
             raise Exception("No statistics available.")
         plt.show()

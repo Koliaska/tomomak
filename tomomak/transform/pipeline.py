@@ -1,6 +1,5 @@
 """Module, defining transformation pipeline class and abstract transformer.
 """
-from abc import ABC, abstractmethod
 import warnings
 
 
@@ -25,11 +24,11 @@ class Pipeline:
         self._transformers = []
         self._names = []
         for i, t in enumerate(transformers):
-            self._len += 1
             if names is None:
-                self._transformers.append(t)
+                name = None
             else:
-                self._transformers.append(t, names[i])
+                name = names[i]
+            self.add_transform(t, name)
 
     @property
     def position(self):
@@ -42,6 +41,7 @@ class Pipeline:
     def add_transform(self, transformer, name=None):
         if name is None:
             name = 'Transformer ' + str(len(self._transformers))
+        self._names.append(name)
         self._transformers.append(transformer)
         self._len += 1
 
@@ -63,7 +63,7 @@ class Pipeline:
             raise Exception("Unable to {} since final index is out of range.".format(type_text))
 
     def forward(self, steps=1):
-        self._check_forward(steps,forward=True, type_text='perform transformation')
+        self._check_forward(steps, forward=True, type_text='perform transformation')
         for i in range(steps):
             self._transformers[self._position](self._model)
             self._position += 1
@@ -83,15 +83,13 @@ class Pipeline:
         self.backward(steps)
 
     def _skip_forward(self, steps=1):
-        self.__check_forward(steps, forward=True, type_text='skip')
-        self.position += steps
+        self._check_forward(steps, forward=True, type_text='skip')
+        self._position += steps
         warnings.warn("{} step(s) in the pipeline were skipped forward. "
                       "This may lead to unpredictable results.".format(steps))
 
     def _skip_backward(self, steps=1):
-        self.__check_forward(steps, forward=False, type_text='skip')
-        self.position -= steps
+        self._check_forward(steps, forward=False, type_text='skip')
+        self._position -= steps
         warnings.warn("{} step(s) in the pipeline were skipped backward."
                       " This may lead to unpredictable results.".format(steps))
-
-

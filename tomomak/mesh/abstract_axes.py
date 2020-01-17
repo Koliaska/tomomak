@@ -124,7 +124,8 @@ class Abstract1dAxis(AbstractAxis):
 
         Args:
             data(ndarray): data to plot.
-            axis2, axis3 (tomomak axis):  second and third 1D plot axes.
+            axis2 (tomomak axis): second 1D plot axes.
+            axis3 (tomomak axis): third 1D plot axes.
             data_type(str): type of plotted data: ''detectors' or 'solution'.
             *args, **kwargs: additional parameters. Depends on specific implementation.
 

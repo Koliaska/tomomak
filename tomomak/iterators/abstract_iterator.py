@@ -57,7 +57,7 @@ class AbstractIterator(AbstractSolverClass):
         self._alpha = None
 
     @abstractmethod
-    def init(self, model, steps, *args, **kwargs): ###NEED test for this
+    def init(self, model, steps, *args, **kwargs):
         """Use this (super().init(model, steps, *args, **kwargs)) to enable adding list of alphas.
         """
         if self.alpha_calc is not None:
@@ -96,20 +96,17 @@ class AbstractStatistics(AbstractSolverClass):
     """
 
     @abstractmethod
-    def step(self, model, solution, real_solution, *args, **kwargs):
+    def step(self, *args, **kwargs):
         """Step function.
 
         Calculated value should be appended to self.data as well as returned.
 
         Args:
-            model:
-            step_num
 
         Returns:
             number: statistics calculation result at current step. Needed in order to use as early stopping criteria.
 
         """
-
 
     def __init__(self):
         self.data = []
@@ -118,5 +115,3 @@ class AbstractStatistics(AbstractSolverClass):
         plt.plot(self.data)
         plt.yscale('log')
         plt.ylabel(str(self))
-
-

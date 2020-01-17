@@ -2,6 +2,7 @@ import numpy as np
 from tomomak.util import array_routines
 import itertools
 
+
 class Mesh:
     """Mesh, containing all coordinate axes.
 

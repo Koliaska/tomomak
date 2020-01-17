@@ -136,7 +136,7 @@ class Model:
                 check_shapes(val, name)
             if self.solution is not None:
                 val = self.solution
-                name =  "solution"
+                name = "solution"
                 check_shapes(val, name)
 
     def plot1d(self, index=0, data_type="solution", **kwargs):
@@ -181,7 +181,6 @@ class Model:
         plot = self._mesh.plot3d(data, index, data_type,  **kwargs)
         return plot
 
-
     def save(self, fn):
         with open(fn, 'wb') as f:
             pickle.dump(self, f)
@@ -194,5 +193,3 @@ class Model:
 def load_model(fn):
     with open(fn, 'rb') as f:
         return pickle.load(f)
-
-

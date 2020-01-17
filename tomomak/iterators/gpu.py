@@ -41,7 +41,6 @@ class MLCuda(abstract_iterator.AbstractIterator):
         self.y_len = self.y_expected.shape[0]
         self.mult = cp.array(self.w_det)
 
-
     def finalize(self, model):
         model.detector_geometry = cp.asnumpy(model.detector_geometry)
         model.solution = cp.asnumpy(model.solution)
@@ -50,7 +49,7 @@ class MLCuda(abstract_iterator.AbstractIterator):
         return 'Maximum Likelihood method (GPU version)'
 
     def step(self, model, step_num):
-        #expected signal
+        # expected signal
         for i in range(self.y_len):
             tmp = cp.multiply(model.solution, model.detector_geometry[i])
             self.y_expected[i] = cp.sum(tmp)
