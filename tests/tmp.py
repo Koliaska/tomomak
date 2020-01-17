@@ -27,6 +27,7 @@ from tomomak.iterators import statistics
 import tomomak.constraints.basic
 
 
+
 # This is an example of a basic framework functionality.
 # You will learn how to use framework, steps you need to follow in order to get the solution.
 # More advanced features are described in advanced examples.

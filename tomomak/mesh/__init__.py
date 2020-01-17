@@ -1,4 +1,2 @@
-from tomomak.mesh.cartesian import Axis1d
-
-
-__all__ = ['abstract_axes', 'mesh', 'cartesian']
+from .mesh import Mesh
+from . import cartesian
