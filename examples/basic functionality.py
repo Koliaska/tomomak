@@ -120,6 +120,9 @@ solver.solve(mod, steps=steps)
 mod.plot2d()
 solver.plot_statistics()
 
+# Finally we can save our model for later usage. I
+mod.save("basic_func_model.tmm")
+
 # And that's it. You get solution, which is, of course, not perfect,
 # but world is not easy when you work with the limited data.
 # There are number of ways to improve your solution, which will be described in other examples.
