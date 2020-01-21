@@ -1,4 +1,4 @@
-"""Generators for basic detectors arrays in 2D geometry
+"""Generators for basic detectors and detector arrays in 2D geometry
 """
 import shapely.geometry
 import shapely.affinity
@@ -14,18 +14,18 @@ def line2d(mesh, p1, p2, width, divergence=0, index=(0, 1), response=1, radius_d
     Line length should be long enough to lay outside of mesh.
 
     Args:
-        mesh(tomomak.main_structures.Mesh): mesh to work with.
-        p1(tuple of 2 floats): Detector origin (x, y).
-        p2(tuple of 2 floats): Second point, characterizing central axis of detector line.
-        width: width of line.
-        divergence: line of sight divergence. 0 means line is collimated. Default: 0.
-        index(tuple of two ints, optional): axes to build object at. Default: (0,1).
-        response(float): Detector response = amplification * detector area.
-            E.g. detector signal at 1m from source, emitting 4*pi particles at given time interval.
-        radius_dependence: if True, signal is divided by 4 *pi *r^2
-        broadcast(bool, optional) If true, resulted array is broadcasted to fit Mesh shape.
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        p1 (tuple of 2 floats): Detector origin (x, y).
+        p2 (tuple of 2 floats): Second point, characterizing central axis of detector line.
+        width (float): width of line.
+        divergence (float, optional): line of sight divergence. 0 means line is collimated. Default: 0.
+        index (tuple of two ints, optional): axes to build object at. Default: (0,1).
+        response (float, optional): Detector response = amplification * detector area.
+            E.g. detector signal at 1m from source, emitting 4*pi particles at given time interval. Default: 1.
+        radius_dependence (bool, optional): if True, signal is divided by 4 *pi *r^2
+        broadcast (bool, optional): If true, resulted array is broadcasted to fit Mesh shape.
             If False, 2d array is returned, even if Mesh is not 2D. Default: True.
-        calc_area(bool): If True, area of intersection with each cell is calculated, if False,
+        calc_area (bool, optional): If True, area of intersection with each cell is calculated, if False,
             only fact of intersecting with mesh cell is taken into account. Default: True.
 
     Returns:
@@ -49,14 +49,15 @@ def fan_detector(mesh, p1, p2, width, number, index=(0, 1), angle=np.pi/2, *args
     """ Creates one fan of detectors.
 
     Args:
-        mesh(tomomak.main_structures.Mesh): mesh to work with.
-        p1(tuple of 2 floats): Detector origin (x, y).
-        p2(tuple of 2 floats): Second point, characterizing central axis of detector fan.
-        width: width of each line.
-        index(tuple of two ints, optional): axes to build object at. Default: (0,1).
-        number(integer): number of detector lines in the fan.
-        angle(float): total angle of fan in Rad. Default: pi/2.
-        *args, **kwarg - line2d arguments.
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        p1 (tuple of 2 floats): Detector origin (x, y).
+        p2 (tuple of 2 floats): Second point, characterizing central axis of detector fan.
+        width (folat): width of each line.
+        index (tuple of two ints, optional): axes to build object at. Default: (0,1).
+        number (integer): number of detector lines in the fan.
+        angle (float): total angle of fan in Rad. Default: pi/2.
+        *args: line2d arguments.
+        **kwargs: line2d keyword arguments.
 
     Returns:
         ndarray: numpy array, representing fan of detectors on a given mesh.
@@ -91,14 +92,15 @@ def fan_detector_array(mesh, focus_point, radius, fan_num, line_num, width,
     """ Creates array of fan detectors around focus points.
 
       Args:
-          mesh(tomomak.main_structures.Mesh): mesh to work with.
-          focus_point(tuple of 2 floats): Focus point (x, y).
-          radius(float): radius of the circle around focus_point, where detectors are located.
-          fan_num(integer): number of fans.
-          line_num(integer): number of lines.
-          width: width of each line.
-          incline(float): incline of first detector fan in Rad from the (1, 0) direction. Default: 0.
-          *args, **kwarg - fan_detector arguments.
+          mesh (tomomak.main_structures.Mesh): mesh to work with.
+          focus_point (tuple of 2 floats): Focus point (x, y).
+          radius (float): radius of the circle around focus_point, where detectors are located.
+          fan_num (integer): number of fans.
+          line_num (integer): number of lines.
+          width (float): width of each line.
+          incline (float): incline of first detector fan in Rad from the (1, 0) direction. Default: 0.
+          *args: fan_detector arguments.
+          **kwargs: fan_detector keyword arguments.
 
       Returns:
           ndarray: numpy array, representing fan of detectors on a given mesh.
@@ -125,14 +127,15 @@ def parallel_detector(mesh, p1, p2, width, number, shift, index=(0, 1), *args, *
     """ Creates array of parallel detectors.
 
        Args:
-           mesh(tomomak.main_structures.Mesh): mesh to work with.
-           p1(tuple of 2 floats): Detector origin (x, y).
-           p2(tuple of 2 floats): Second point, characterizing central axis of detectors.
-           width(float): width of each line.
-           number(int): number of detectors.
-           shift(float): shift of each line as compared to previous.
-           index(tuple of two ints, optional): axes to build object at. Default: (0,1).
-           *args, **kwarg - additional line2d arguments.
+           mesh (tomomak.main_structures.Mesh): mesh to work with.
+           p1 (tuple of 2 floats): Detector origin (x, y).
+           p2 (tuple of 2 floats): Second point, characterizing central axis of detectors.
+           width (float): width of each line.
+           number (int): number of detectors.
+           shift (float): shift of each line as compared to previous.
+           index (tuple of two ints, optional): axes to build object at. Default: (0,1).
+           *args: line2d arguments.
+           **kwargs: line2d keyword arguments.
 
        Returns:
            ndarray: numpy array, representing detectors on a given mesh.
@@ -164,9 +167,10 @@ def _line_to_polygon(p1, p2, width, divergence=0):
     line of sight can be collimated or diverging (cone-like).
 
     Args:
-        p1, p2(tuple of 2 points):
-        width(float): line width.
-        divergence(float, optional): Angle between two LOS borders in Rad [0, pi). 0 means that line is collimated.
+        p1 (tuple of floats): first line point (x,y).
+        p2 (tuple of 2 points): second line point (x,y).
+        width (float): line width.
+        divergence (float, optional): Angle between two LOS borders in Rad [0, pi). 0 means that line is collimated.
             default: 0.
 
     Returns:
