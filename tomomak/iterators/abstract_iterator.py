@@ -6,14 +6,28 @@ import matplotlib.pyplot as plt
 
 
 class AbstractSolverClass(ABC):
+    """Abstract class for Solvers and constraints.
+
+    Every solver or constraint should implement these four methods to work correctly.
+    However, often only step() and __str__() methods are required. So init() and finalize() methods may just pass.
     """
-        """
 
     @abstractmethod
     def init(self, model, steps, *args, **kwargs):
-        """
+        """Initialize method called by solver.
 
-        :return:
+        This method is called by solver before the calculation start.
+        May be used to prepare some data used in step() method.
+        Args:
+            model (tomomak Model): Model to work with.
+            steps (int): Number of steps. May be used to check,
+                if you have enough data to iterate over this amount of steps, see AbstractIterator for example.
+            *args: Additional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            None
+
         """
 
     @abstractmethod

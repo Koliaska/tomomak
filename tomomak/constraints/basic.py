@@ -2,22 +2,32 @@ from ..iterators import abstract_iterator
 import numpy as np
 
 
-class Positive(abstract_iterator.AbstractSolverClass):
+class Positive(abstract_iterator.AbstractIterator):
     """Makes all negative values equal to 0.
     """
     def __init__(self):
         pass
 
     def init(self, model, steps, *args, **kwargs):
+        """Initialize method called by solver.
+
+        For this class: pass.
+        """
         pass
 
     def finalize(self, model):
+        """Finalize method called by solver.
+
+        For this class: pass.
+        """
         pass
 
     def __str__(self):
         return "Remove negative values"
 
     def step(self, model, step_num):
+        """Step function, called by solver.
+        """
         model.solution = model.solution.clip(min=0)
 
 
@@ -27,6 +37,15 @@ class ApplyAlongAxis(abstract_iterator.AbstractIterator):
     Uses numpy.apply_along_axis
     """
     def __init__(self,  func, axis=0, alpha=0.1, alpha_calc=None, **kwargs):
+        """
+
+        Args:
+            func:
+            axis:
+            alpha:
+            alpha_calc:
+            **kwargs:
+        """
         super().__init__(alpha, alpha_calc)
         self.func = func
         self.axis = axis
