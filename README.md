@@ -48,11 +48,7 @@ As soon as you are done switch to the other examples and documentation.
 
 
 ## Documentation
-To generate API-doumentation in your terminal or Anaconda Prompt, go to doc folder:
-```
-cd doc
-```
-Use pdoc:
+To generate API-doumentation in your terminal or Anaconda Prompt, go to doc folder in the downloaded tomomak archive and use pdoc:
 ```
 pdoc --html --force ../tomomak
 ```

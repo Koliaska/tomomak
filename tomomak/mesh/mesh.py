@@ -145,13 +145,13 @@ class Mesh:
                 new_data = self._prepare_data(data, index[0], data_type)
                 plot = self._axes[index[0]].plot2d(new_data, *args, **kwargs)
                 return plot
-            except (AttributeError, NotImplementedError, TypeError):
+            except (NotImplementedError, TypeError):
                 index.append(index[0] + 1)
         # try to draw using 2 axes
         new_data = self._prepare_data(data, index, data_type)
         try:
             plot = self._axes[index[0]].plot2d(new_data, self._axes[index[1]], data_type, *args, **kwargs)
-        except (AttributeError, NotImplementedError, TypeError):
+        except (NotImplementedError, TypeError):
             new_data = new_data.transpose()
             plot = self._axes[index[1]].plot2d(new_data, self._axes[index[0]], data_type, *args, **kwargs)
         return plot
@@ -165,19 +165,19 @@ class Mesh:
                 new_data = self._prepare_data(data, index[0], data_type)
                 plot = self._axes[index[0]].plot3d(new_data, *args, **kwargs)
                 return plot
-            except (AttributeError, NotImplementedError, TypeError):
+            except (NotImplementedError, TypeError):
                 index.append(index[0] + 1)
         # try to draw using 2 axes
         new_data = self._prepare_data(data, index, data_type)
         try:
             plot = self._axes[index[0]].plot3d(new_data, self._axes[index[1]], data_type, *args, **kwargs)
             return plot
-        except (AttributeError, NotImplementedError,  TypeError):
+        except (NotImplementedError,  TypeError):
             try:
                 new_data = new_data.transpose()
                 plot = self._axes[index[1]].plot3d(new_data, self._axes[index[0]], data_type, *args, **kwargs)
                 return plot
-            except (AttributeError, NotImplementedError, TypeError):
+            except (NotImplementedError, TypeError):
                 index.append(index[1] + 1)
         # try to draw using 3 axes
         new_data = self._prepare_data(data, index, data_type)
@@ -190,7 +190,7 @@ class Mesh:
                     np.moveaxis(dat, p[i], i)
                 plot = new_ax[index[0]].plot3d(dat, new_ax[index[1]], new_ax[index[2]], data_type, *args, **kwargs)
                 return plot
-            except(AttributeError, NotImplementedError, TypeError):
+            except(NotImplementedError, TypeError):
                 pass
         raise TypeError("plot3d is not implemented for such axes combination")
 

@@ -1,7 +1,7 @@
 from . import abstract_axes
 import numpy as np
 import matplotlib.pyplot as plt
-from tomomak.plots import plot1d, plot2d
+from tomomak.plots import plot1d, plot2d, plot3d
 import warnings
 import tomomak.util.text
 
@@ -155,9 +155,9 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             for j, col in enumerate(row):
                 for k, _ in enumerate(col):
                     res[i][j][k] = [(edge1[i], edge2[j], edge3[k]), (edge1[i + 1], edge2[j], edge3[k]),
-                                     (edge1[i + 1], edge2[j + 1], edge3[k]), (edge1[i + 1], edge2[j], edge3[k + 1]),
-                                     (edge1[i + 1], edge2[j + 1], edge3[k + 1]), (edge1[i], edge2[j + 1], edge3[k]),
-                                     (edge1[i], edge2[j + 1], edge3[k + 1]), (edge1[i], edge2[j], edge3[k + 1])]
+                                    (edge1[i + 1], edge2[j + 1], edge3[k]), (edge1[i + 1], edge2[j], edge3[k + 1]),
+                                    (edge1[i + 1], edge2[j + 1], edge3[k + 1]), (edge1[i], edge2[j + 1], edge3[k]),
+                                    (edge1[i], edge2[j + 1], edge3[k + 1]), (edge1[i], edge2[j], edge3[k + 1])]
         return res
 
     def intersection(self, axis2):
@@ -185,7 +185,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         return intersection
 
     def plot1d(self, data, data_type='solution', filled=True,
-               fill_scheme='viridis', edge_color='black', grid=False, equal_norm=False, *args, **kwargs):
+               fill_scheme='viridis', edge_color='black', grid=False, equal_norm=False, y_label=None, *args, **kwargs):
         """Create 1D plot of the solution or detector geometry.
 
         matplotlib bar plot is used. Detector data is plotted on the interactive graph.
@@ -200,13 +200,15 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             grid(bool, optional): If true, grid is displayed. Default:False.
             equal_norm(bool, optional): If true, all detectors will have same norm.
                 Valid only if data_type = detector_geometry. Default: False.
+            y_label (str, optional): y_label caption. Default: automatic.
             *args,**kwargs: additional arguments to pass to matplotlib bar plot.
 
         Returns:
             matplotlib plot, matplotlib axis
         """
         if data_type == 'solution':
-            y_label = r"Density, {}{}".format(self.units, '$^{-1}$')
+            if y_label is None:
+                y_label = r"Density, {}{}".format(self.units, '$^{-1}$')
             plot, ax = plot1d.bar1d(data, self, 'Density', y_label, filled, fill_scheme,
                                     edge_color, grid, *args, **kwargs)
         elif data_type == 'detector_geometry':
@@ -220,7 +222,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         return plot, ax
 
     def plot2d(self, data, axis2, data_type='solution',
-               fill_scheme='viridis', grid=False, equal_norm=False, *args, **kwargs):
+               fill_scheme='viridis', grid=False, equal_norm=False, title=None, *args, **kwargs):
         """Create 2D plot of the solution or detector geometry.
 
         matplotlib pcolormesh is used. Detector data is plotted on the interactive graph.
@@ -233,6 +235,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             grid(bool, optional): If true, grid is displayed. Default:False.
             equal_norm(bool, optional): If true, all detectors will have same norm.
                 Valid only if data_type = detector_geometry. Default: False.
+            title (str, optional): solution figure caption. Default: automatic.
             *args,**kwargs: additional arguments to pass to matplotlib pcolormesh.
 
         Returns:
@@ -240,9 +243,11 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         """
         if type(axis2) is not Axis1d:
             raise NotImplementedError("2D plots with such combination of axes are not supported.")
+
         if data_type == 'solution':
-            units = tomomak.util.text.density_units([self.units, axis2.units])
-            title = r"Density, {}".format(units)
+            if title is None:
+                units = tomomak.util.text.density_units([self.units, axis2.units])
+                title = r"Density, {}".format(units)
             plot, ax, fig, cb = plot2d.colormesh2d(data, self, axis2, title, fill_scheme, grid, *args, **kwargs)
         elif data_type == 'detector_geometry':
             title = 'Detector 1/{}'.format(data.shape[0])
@@ -253,9 +258,24 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         plt.show()
         return plot, ax
 
-    def plot3d(self, data, axis2, axis3, data_type='solution', *args, **kwargs):
+    def plot3d(self, data, axis2, axis3, data_type='solution', colormap = 'blue-red', axes=False, *args, **kwargs):
         if type(axis2) is not Axis1d or type(axis3) is not Axis1d:
             raise NotImplementedError("3D plots with such combination of axes are not supported.")
+        x1 = self.coordinates
+        y1 = axis2.coordinates
+        z1 = axis3.coordinates
+        x, y, z = np.meshgrid(x1, y1, z1, indexing='ij')
+        if axes:
+            axes = ('{}, {}'.format(self.name, self.units),
+                    '{}, {}'.format(axis2.name, axis2.units),
+                    '{}, {}'.format(axis3.name, axis3.units))
+        title = 'Density'
+        if data_type == 'solution':
+            plot3d.contour3d(data, x, y, z, title=title, colormap=colormap, axes=axes, *args, **kwargs)
+        elif data_type == 'detector_geometry':
+            plot3d.detector_contour3d(data, x, y, z, title=title, colormap=colormap, axes=axes, *args, **kwargs)
 
-        raise NotImplementedError("Not implemented")
-        return 0
+        else:
+            raise AttributeError('data type {} is unknown'.format(data_type))
+
+        return 0, 0
