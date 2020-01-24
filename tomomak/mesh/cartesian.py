@@ -191,14 +191,14 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         matplotlib bar plot is used. Detector data is plotted on the interactive graph.
 
         Args:
-            data(1D ndarray): data to plot.
-            data_type(str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
-            filled(bool_optional, optional): if true, bars are filled. Color depends on the bar height. Default: True.
-            fill_scheme(str, optional): matplotlib fill scheme. Valid only if filled is True. Default: 'viridis'.
-            edge_color(str, optional): color of the bar edges. See matplotlib colors for the avaiable options.
+            data (1D ndarray): data to plot.
+            data_type (str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
+            filled (bool_optional, optional): if true, bars are filled. Color depends on the bar height. Default: True.
+            fill_scheme (str, optional): matplotlib fill scheme. Valid only if filled is True. Default: 'viridis'.
+            edge_color (str, optional): color of the bar edges. See matplotlib colors for the avaiable options.
                 Default: 'black'.
-            grid(bool, optional): If true, grid is displayed. Default:False.
-            equal_norm(bool, optional): If true, all detectors will have same norm.
+            grid (bool, optional): If true, grid is displayed. Default:False.
+            equal_norm (bool, optional): If true, all detectors will have same norm.
                 Valid only if data_type = detector_geometry. Default: False.
             y_label (str, optional): y_label caption. Default: automatic.
             *args,**kwargs: additional arguments to pass to matplotlib bar plot.
@@ -228,12 +228,12 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         matplotlib pcolormesh is used. Detector data is plotted on the interactive graph.
 
         Args:
-            data(2D ndarray): data to plot.
-            axis2(tomomak axis): second axis. Only cartesian.Axis1d is supported.
-            data_type(str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
-            fill_scheme(str, optional): matplotlib fill scheme. Default: 'viridis'.
-            grid(bool, optional): If true, grid is displayed. Default:False.
-            equal_norm(bool, optional): If true, all detectors will have same norm.
+            data (2D ndarray): data to plot.
+            axis2 (tomomak axis): second axis. Only cartesian.Axis1d is supported.
+            data_type (str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
+            fill_scheme (str, optional): matplotlib fill scheme. Default: 'viridis'.
+            grid (bool, optional): If true, grid is displayed. Default:False.
+            equal_norm (bool, optional): If true, all detectors will have same norm.
                 Valid only if data_type = detector_geometry. Default: False.
             title (str, optional): solution figure caption. Default: automatic.
             *args,**kwargs: additional arguments to pass to matplotlib pcolormesh.

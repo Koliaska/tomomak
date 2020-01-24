@@ -5,9 +5,9 @@ def multiply_along_axis(a, b, axis):
     """ Multiply numpy array by 1-D numpy array along given axis.
 
     Args:
-        a(ndarray): Array to multiply.
-        b(ndarray): 1D  array to multiply by.
-        axis(int): Axis along which multiplication is performed.
+        a (ndarray): Array to multiply.
+        b (ndarray): 1D  array to multiply by.
+        axis (int): Axis along which multiplication is performed.
 
     Returns:
         ndarray: Multiplied array
@@ -22,9 +22,9 @@ def broadcast_object(ar, index, shape):
     """Broadcast array to a new shape, using given indexes.
 
     Args:
-        ar(ndarray): numpy array to broadcast.
-        index(int or tuple of ints):  In the new array input array will be represented using this index or indexes.
-        shape(tuple of ints): new  shape.
+        ar (ndarray): numpy array to broadcast.
+        index (int or tuple of ints):  In the new array input array will be represented using this index or indexes.
+        shape (tuple of ints): new  shape.
 
     Returns:
         ndarray: broadkasted array

@@ -5,7 +5,7 @@ def density_units(units):
     """Combine axes units  to get density units.
 
     Args:
-        units(iterable of str): list of each axis units.
+        units (iterable of str): list of each axis units.
 
     Returns:
         str: density units

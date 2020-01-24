@@ -9,18 +9,18 @@ class DetectorPlotSlicer:
         See examples. e.g. in plot1d.detector_bar1d.
 
         Attributes:
-            ind(int): Index of currently viewed detector.
-            data(ndarray): Plotted data.
+            ind (int): Index of currently viewed detector.
+            data (ndarray): Plotted data.
                 In base class only shape of data is used.
-            ax(matplotlib.axes.Axes): Plot axis.
+            ax (matplotlib.axes.Axes): Plot axis.
 
         """
     def __init__(self, data, ax):
         """Class constructor, which requires only data and plot axes.
 
         Args:
-            data(ndarray): Plotted data.
-            ax(matplotlib.axes.Axes): Plot axes.
+            data (ndarray): Plotted data.
+            ax (matplotlib.axes.Axes): Plot axes.
         """
         self.ind = 0
         self.data = data
@@ -61,8 +61,8 @@ def crete_prev_next_buttons(callback_next, callback_prev):
     Buttons are created using matplotlib.widgets.Button.
 
     Args:
-        callback_next(func): Callback for the Next button.
-        callback_prev(func): Callback for the Prev button.
+        callback_next (func): Callback for the Next button.
+        callback_prev (func): Callback for the Prev button.
 
     Returns:
         b_next: button Next

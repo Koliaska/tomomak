@@ -10,22 +10,22 @@ def colormesh2d(data, axis1, axis2, title='', fill_scheme='viridis', grid=False,
      matplotlib.pyplot.pcolormesh  is used.
 
      Args:
-        data(ndarray): 2D array of data.
-        axis1(axis): corresponding tomomak axis № 1.
-        axis2(axis): corresponding tomomak axis № 2.
-        title(str, optional): Plot title. default: ''.
-        fill_scheme(pyplot colormap, optional): pyplot colormap to be used in the plot. default: 'viridis'.
-        grid(bool, optional): if True, grid is shown. default: False.
-        norm(None/[Number, Number], optional): If not None, all detectors will have same z axis
+        data (ndarray): 2D array of data.
+        axis1 (axis): corresponding tomomak axis № 1.
+        axis2 (axis): corresponding tomomak axis № 2.
+        title (str, optional): Plot title. default: ''.
+        fill_scheme (pyplot colormap, optional): pyplot colormap to be used in the plot. default: 'viridis'.
+        grid (bool, optional): if True, grid is shown. default: False.
+        norm (None/[Number, Number], optional): If not None, all detectors will have same z axis
             with [ymin, ymax] = norm. default: None.
         *args, **kwargs: arguments will be passed to matplotlib.pyplot.pcolormesh
 
      Returns:
          plot: matplotlib pcolormesh .
-         ax(axes.Axes ): axes.Axes object or array of Axes objects.
+         ax (axes.Axes ): axes.Axes object or array of Axes objects.
              See matplotlib Axes class
-         fig(matplotlib.figure): The figure module.
-         cb(matplotlib.pyplot.colorbar): colorbar on the right of the axis.
+         fig (matplotlib.figure): The figure module.
+         cb (matplotlib.pyplot.colorbar): colorbar on the right of the axis.
      """
     x = axis1.cell_edges1d
     y = axis2.cell_edges1d
@@ -53,19 +53,19 @@ def detector_colormesh2d(data, axis1, axis2, title='', fill_scheme='viridis',
     matplotlib.pyplot.pcolormesh  is used. Interactive elements are Next and Prev buttons to change detectors.
 
      Args:
-        data(ndarray): 2D array of data.
-        axis1(axis): corresponding tomomak axis № 1.
-        axis2(axis): corresponding tomomak axis № 2.
-        title(str, optional): Plot title. default: ''.
-        fill_scheme(pyplot colormap, optional): pyplot colormap to be used in the plot. default: 'viridis'.
-        grid(bool, optional): if True, grid is shown. default: False.
-        equal_norm(bool, optional): If True,  all detectors will have same z axis.
+        data (ndarray): 2D array of data.
+        axis1 (axis): corresponding tomomak axis № 1.
+        axis2 (axis): corresponding tomomak axis № 2.
+        title (str, optional): Plot title. default: ''.
+        fill_scheme (pyplot colormap, optional): pyplot colormap to be used in the plot. default: 'viridis'.
+        grid (bool, optional): if True, grid is shown. default: False.
+        equal_norm (bool, optional): If True,  all detectors will have same z axis.
             If False, each detector has individual z axis. default:False
         *args, **kwargs: arguments will be passed to matplotlib.pyplot.pcolormesh
 
     Returns:
     plot: matplotlib bar plot.
-    ax(matplotlib.axes.Axes): axes.Axes object or array of Axes objects.
+    ax (matplotlib.axes.Axes): axes.Axes object or array of Axes objects.
         See matplotlib Axes class
     (b_next, b_prev) tuple(matplotlib.widgets.Button): Tuple, containing Next and Prev buttons.
         Objects need to exist in order to work.

@@ -8,8 +8,8 @@ def get_signal(solution, detector_geometry):
     To find out about solution and detector_geometry see tomomak.model description.
 
     Args:
-        solution(ndarray): known solution.
-        detector_geometry(ndarray): known detector geometry.
+        solution (ndarray): known solution.
+        detector_geometry (ndarray): known detector geometry.
 
     Returns:
         ndarray: calculated signals.
@@ -27,8 +27,8 @@ def get_signal_one_det(solution, one_detector_geometry):
     To find out about solution and detector_geometry see tomomak.model description.
 
     Args:
-        solution(ndarray): known solution.
-        one_detector_geometry(ndarray): known detector geometry.
+        solution (ndarray): known solution.
+        one_detector_geometry (ndarray): known detector geometry.
 
     Returns:
         float: calculated signal
@@ -40,8 +40,8 @@ def add_noise(signal, st_div):
     """Add gaussian noise to signal.
 
     Args:
-        signal(float): original signal.
-        st_div(float): Standard deviation in percent.
+        signal (float): original signal.
+        st_div (float): Standard deviation in percent.
 
     Returns:
         ndarray: numpy array of signal with noise.
@@ -56,9 +56,9 @@ def resample(signal, rate, n_slices=1):
     """Resample signal adding (rate-1) additional points between each point.
 
     Args:
-        signal(ndarray):
-        rate(integer): Resample rate.
-        n_slices(integer): number of slices, which should be interpolated  independently, in y
+        signal (ndarray):
+        rate (integer): Resample rate.
+        n_slices (integer): number of slices, which should be interpolated  independently, in y
             (e.g. one fan of detectors  = one slice). Slices should have equal number of elements. Default: 1.
 
     Returns:

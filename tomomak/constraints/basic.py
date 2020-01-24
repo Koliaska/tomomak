@@ -3,7 +3,8 @@ import numpy as np
 
 
 class Positive(abstract_iterator.AbstractSolverClass):
-
+    """Makes all negative values equal to 0.
+    """
     def __init__(self):
         pass
 
@@ -22,6 +23,7 @@ class Positive(abstract_iterator.AbstractSolverClass):
 
 class ApplyAlongAxis(abstract_iterator.AbstractIterator):
     """Applies 1D function over given dimension.
+
     Uses numpy.apply_along_axis
     """
     def __init__(self,  func, axis=0, alpha=0.1, alpha_calc=None, **kwargs):

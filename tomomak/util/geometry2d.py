@@ -127,9 +127,9 @@ def cell_distances(mesh, index, p):
     """Get distance to each cell on 2D mesh.
 
     Args:
-        mesh(tomomak.main_structures.Mesh): mesh to work with.
-        index(tuple of two ints, optional): axes to calculate distance at. Default:  (0,1)
-        p(list of two floats): list representing point in 2D coordinates.
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        index (tuple of two ints, optional): axes to calculate distance at. Default:  (0,1)
+        p (list of two floats): list representing point in 2D coordinates.
 
     Returns:
         ndarray: 2D or 1D ndarray with distances.

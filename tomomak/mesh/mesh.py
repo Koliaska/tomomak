@@ -19,7 +19,7 @@ class Mesh:
         """Constructor requires only list of coordinate axes. Later axes may be added or removed.
 
         Args:
-            axes(tuple of tomomak axes, optional): Tuple of 1D, 2D or 3D axes.
+            axes (tuple of tomomak axes, optional): Tuple of 1D, 2D or 3D axes.
                 The order of the axes will be preserved. default: ().
         """
         self._axes = []

@@ -14,9 +14,10 @@ class RMS(AbstractStatistics):
         """Calculate a normalized root mean square error at current step
 
         Args:
-            solution(ndarray): supposed solution.
-            real_solution(ndarray): known solution.
-            *args, **kwargs: not used, but needed to be here in order to work with Solver properly.
+            solution (ndarray): supposed solution.
+            real_solution (ndarray): known solution.
+            *args: not used, but needed to be here in order to work with Solver properly.
+             **kwargs: not used, but needed to be here in order to work with Solver properly.
 
         Returns:
             float: normalized RMS.
@@ -53,9 +54,10 @@ class RN(AbstractStatistics):
         """Residual norm at current step.
 
         Args:
-            model(tomomak.Model): used model.
-            real_solution(ndarray): known solution.
-            *args, **kwargs: not used, but needed to be here in order to work with Solver properly.
+            model (tomomak.Model): used model.
+            real_solution (ndarray): known solution.
+             *args: not used, but needed to be here in order to work with Solver properly.
+             **kwargs: not used, but needed to be here in order to work with Solver properly.
 
         Returns:
             float: residual norm
@@ -90,9 +92,10 @@ class ChiSq(AbstractStatistics):
 
         Note, that fo usage in feasibility method chi^2 should be divided by number of detectors.
         Args:
-            solution(ndarray): supposed solution.
-            real_solution(ndarray): known solution.
-            *args, **kwargs: not used, but needed to be here in order to work with Solver properly.
+            solution (ndarray): supposed solution.
+            real_solution (ndarray): known solution.
+             *args: not used, but needed to be here in order to work with Solver properly.
+             **kwargs: not used, but needed to be here in order to work with Solver properly.
 
         Returns:
             float: chi^2.
@@ -124,9 +127,11 @@ class CorrCoef(AbstractStatistics):
         See Craciunescu et al., Nucl. Instr. and Meth. in Phys. Res. A595 2008 623-630.
 
         Args:
-            model(tomomak.Model): used model.
-            solution(ndarray): supposed solution.
-            old_solution(ndarray): supposed_solution at a previous iteration.
+            model (tomomak.Model): used model.
+            solution (ndarray): supposed solution.
+            old_solution (ndarray): supposed_solution at a previous iteration.
+             *args: not used, but needed to be here in order to work with Solver properly.
+             **kwargs: not used, but needed to be here in order to work with Solver properly.
 
         Returns:
             float: correlation coefficient.
@@ -166,8 +171,10 @@ class Convergence(AbstractStatistics):
         """calculate d(solution) / solution * 100%.
 
         Args:
-            solution(ndarray): supposed solution.
-            old_solution(ndarray): solution at previous step
+            solution (ndarray): supposed solution.
+            old_solution (ndarray): solution at previous step
+             *args: not used, but needed to be here in order to work with Solver properly.
+             **kwargs: not used, but needed to be here in order to work with Solver properly.
 
         Returns:
             float: ds/s, %

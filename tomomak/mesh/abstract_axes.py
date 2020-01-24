@@ -73,7 +73,7 @@ class AbstractAxis(ABC):
         """Intersection length/area/volume of each cell with each cell of another axis of a same type as 2D array.
 
         Args:
-            axis2(tomomak axis): another axis of a same type.
+            axis2 (tomomak axis): another axis of a same type.
 
         Returns:
             2D ndarray: intersection length/area/volume of element i with element j.
@@ -96,8 +96,8 @@ class Abstract1dAxis(AbstractAxis):
         """Create 1D plot.
 
         Args:
-            data(ndarray): data to plot.
-            data_type(str): type of plotted data: ''detectors' or 'solution'.
+            data (ndarray): data to plot.
+            data_type (str): type of plotted data: ''detectors' or 'solution'.
             *args, **kwargs: additional parameters. Depends on specific implementation.
 
         Returns:
@@ -109,9 +109,9 @@ class Abstract1dAxis(AbstractAxis):
         """Create 2D plot.
 
         Args:
-            data(ndarray): data to plot.
-            axis2(tomomak axis): second 1D plot axis.
-            data_type(str): type of plotted data: ''detectors' or 'solution'.
+            data (ndarray): data to plot.
+            axis2 (tomomak axis): second 1D plot axis.
+            data_type (str): type of plotted data: ''detectors' or 'solution'.
             *args, **kwargs: additional parameters. Depends on specific implementation.
 
         Returns:
@@ -123,10 +123,10 @@ class Abstract1dAxis(AbstractAxis):
         """Create 3D plot.
 
         Args:
-            data(ndarray): data to plot.
+            data (ndarray): data to plot.
             axis2 (tomomak axis): second 1D plot axes.
             axis3 (tomomak axis): third 1D plot axes.
-            data_type(str): type of plotted data: ''detectors' or 'solution'.
+            data_type (str): type of plotted data: ''detectors' or 'solution'.
             *args, **kwargs: additional parameters. Depends on specific implementation.
 
         Returns:
@@ -148,7 +148,7 @@ class Abstract1dAxis(AbstractAxis):
         """Get edges of a cell on a mesh consisting of this and another 1D axis in cartesian coordinates.
 
         Args:
-            axis2: another 1D axis of the same or other type.
+            axis2 (tomomak axis): another 1D axis of the same or other type.
 
         Returns:
             2D list of lists of points (x, y) in cartesian coordinates: points of the polygon, representing the cell.
@@ -160,7 +160,8 @@ class Abstract1dAxis(AbstractAxis):
         """Get edges of a cell on a mesh consisting of this and two other 1D axis in cartesian coordinates.
 
         Args:
-            axis2, axis3: another 1D axes of the same or other type.
+            axis2 (tomomak axis): another 1D axes of the same or other type.
+            axis3 (tomomak axis): another 1D axes of the same or other type.
 
         Returns:
             3D list of lists of points (x, y) in cartesian coordinates: points of the polygon, representing the cell.

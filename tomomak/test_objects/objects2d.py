@@ -23,12 +23,12 @@ def polygon(mesh, points=((0, 0), (5, 5), (10, 0)), index=(0, 1), density=1, bro
     Shapely module is used for the calculation.
 
     Args:
-        mesh(tomomak.main_structures.Mesh): mesh to work with.
-        points(An ordered sequence of point tuples, optional): Polygon points (x, y).
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        points (An ordered sequence of point tuples, optional): Polygon points (x, y).
             default: ((0 ,0), (5, 5), (10, 0))
-        index(tuple of two ints, optional): axes to build object at. Default: (0,1).
-        density(float, optional): Object density. E.g. number of emitted particles per second in 4*pi. Default: 1.
-        broadcast(bool, optional) If true, resulted array is broadcasted to fit Mesh shape.
+        index (tuple of two ints, optional): axes to build object at. Default: (0,1).
+        density (float, optional): Object density. E.g. number of emitted particles per second in 4*pi. Default: 1.
+        broadcast (bool, optional) If true, resulted array is broadcasted to fit Mesh shape.
             If False, 2d array is returned, even if Mesh is not 2D. Default: True.
 
     Returns:
@@ -55,13 +55,13 @@ def rectangle(mesh, center=(0, 0), size=(10, 10), index=(0, 1), density=1, broad
     Shapely module is used for calculation.
 
     Args:
-        mesh(tomomak.main_structures.Mesh): mesh to work with.
-        center(tuple of int, optional): Center of the rectangle, given by tuples with 2 elements(x, y). default: (0, 0).
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        center (tuple of int, optional): Center of the rectangle, given by tuples with 2 elements(x, y). default: (0, 0).
         size (tuple of int, optional): Length and height of the rectangle,
             given by tuples with 2 elements(length, height). default: (10, 10).
-        index(tuple of two ints, optional): axes to build object at. Default:  (0,1)
-        density(float, optional): Object density. default: 1.
-        broadcast(bool, optional) If true, resulted array is broadcasted to fit Mesh shape.
+        index (tuple of two ints, optional): axes to build object at. Default:  (0,1)
+        density (float, optional): Object density. default: 1.
+        broadcast (bool, optional) If true, resulted array is broadcasted to fit Mesh shape.
             If False, 2d array is returned, even if Mesh is not 2D. Default: True.
 
     Returns:
@@ -82,15 +82,15 @@ def ellipse(mesh, center=(0, 0), ax_len=(5, 5), index=(0, 1), density=1, resolut
     Shapely module is used for calculation.
 
     Args:
-        mesh(tomomak.main_structures.Mesh): mesh to work with.
-        center(tuple of int, optional): Center of the real_solution, given by tuples with 2 elements(x, y).
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        center (tuple of int, optional): Center of the real_solution, given by tuples with 2 elements(x, y).
             Default: (0, 0).
         ax_len (tuple of int, optional): Half-width and Half-height of the real_solution,
             given by tuples with 2 elements (a, b). default: (5, 5).
-        index(tuple of two ints, optional): axes to build object at. Default:  (0,1)
-        density(float, optional): Object density. default: 1.
-        resolution(integer, optional): Relative number of points, approximating real_solution. default: 32.
-        broadcast(bool, optional) If true, resulted array is broadcasted to fit Mesh shape.
+        index (tuple of two ints, optional): axes to build object at. Default:  (0,1)
+        density (float, optional): Object density. default: 1.
+        resolution (integer, optional): Relative number of points, approximating real_solution. default: 32.
+        broadcast (bool, optional) If true, resulted array is broadcasted to fit Mesh shape.
             If False, 2d array is returned, even if Mesh is not 2D. Default: True.
 
     Returns:
@@ -114,12 +114,12 @@ def pyramid(mesh, center=(0, 0), size=(10, 10), index=(0, 1), height=1, broadcas
 
     Args:
         mesh(tomomak.main_structures.Mesh): mesh to work with.
-        center(tuple of int): Center of the pyramid, given by tuples with 2 elements(x, y). default: (0, 0).
+        center (tuple of int): Center of the pyramid, given by tuples with 2 elements(x, y). default: (0, 0).
         size (tuple of int): Length and height of the pyramid, given by tuples with 2 elements(length, height).
             default: (10, 10).
-        index(tuple of two ints, optional): axes to build object at. Default:  (0,1)
-        height(float, optional): Pyramid max height. Minimum height is 0. default: 1.
-        broadcast(bool, optional) If true, resulted array is broadcasted to fit Mesh shape.
+        index (tuple of two ints, optional): axes to build object at. Default:  (0,1)
+        height (float, optional): Pyramid max height. Minimum height is 0. default: 1.
+        broadcast (bool, optional) If true, resulted array is broadcasted to fit Mesh shape.
             If False, 2d array is returned, even if Mesh is not 2D. Default: True.
 
     Returns:
@@ -151,16 +151,16 @@ def cone(mesh, center=(3, 4), ax_len=(4, 3), index=(0, 1), height=1, cone_type='
     Shapely module is used for calculation.
 
     Args:
-        mesh(tomomak.main_structures.Mesh): mesh to work with.
-        center(tuple of int, optional): Center of the real_solution, given by tuples with 2 elements(x, y).
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        center (tuple of int, optional): Center of the real_solution, given by tuples with 2 elements(x, y).
             Default: (0, 0).
         ax_len (tuple of int, optional): Half-width and Half-height of the base real_solution,
             given by tuples with 2 elements (a, b). default: (5, 5).
-        index(tuple of two ints, optional): axes to build object at. Default:  (0,1)
-        height(float, optional): Cone max height. Minimum height is 0. default: 1
-        cone_type(str, {'cone', 'paraboloid', 'paraboloid_h'}, optional): Shape of cone.
-        resolution(integer, optional): Relative number of points, approximating base real_solution. default: 32.
-        broadcast(bool, optional) If true, resulted array is broadcasted to fit Mesh shape.
+        index (tuple of two ints, optional): axes to build object at. Default:  (0,1)
+        height (float, optional): Cone max height. Minimum height is 0. default: 1
+        cone_type (str, {'cone', 'paraboloid', 'paraboloid_h'}, optional): Shape of cone.
+        resolution (integer, optional): Relative number of points, approximating base real_solution. default: 32.
+        broadcast (bool, optional) If true, resulted array is broadcasted to fit Mesh shape.
              If False, 2d array is returned, even if Mesh is not 2D. Default: True.
 
     Returns:
