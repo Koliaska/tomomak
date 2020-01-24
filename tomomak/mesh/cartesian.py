@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tomomak.plots import plot1d, plot2d, plot3d
 import warnings
-import tomomak.util.text
+from tomomak import util
 
 
 class Axis1d(abstract_axes.Abstract1dAxis):
@@ -228,10 +228,10 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         matplotlib pcolormesh is used. Detector data is plotted on the interactive graph.
 
         Args:
-            data(1D ndarray): data to plot.
+            data(2D ndarray): data to plot.
             axis2(tomomak axis): second axis. Only cartesian.Axis1d is supported.
             data_type(str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
-            fill_scheme(str, optional): matplotlib fill scheme. Valid only if filled is True. Default: 'viridis'.
+            fill_scheme(str, optional): matplotlib fill scheme. Default: 'viridis'.
             grid(bool, optional): If true, grid is displayed. Default:False.
             equal_norm(bool, optional): If true, all detectors will have same norm.
                 Valid only if data_type = detector_geometry. Default: False.
@@ -246,7 +246,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
 
         if data_type == 'solution':
             if title is None:
-                units = tomomak.util.text.density_units([self.units, axis2.units])
+                units = util.text.density_units([self.units, axis2.units])
                 title = r"Density, {}".format(units)
             plot, ax, fig, cb = plot2d.colormesh2d(data, self, axis2, title, fill_scheme, grid, *args, **kwargs)
         elif data_type == 'detector_geometry':
@@ -258,23 +258,68 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         plt.show()
         return plot, ax
 
-    def plot3d(self, data, axis2, axis3, data_type='solution', colormap = 'blue-red', axes=False, *args, **kwargs):
+    def plot3d(self, data, axis2, axis3, data_type='solution', colormap='blue-red', axes=False,
+               interp_size=50, *args, **kwargs):
+        """Create 2D plot of the solution or detector geometry.
+
+        Args:
+            data (3D ndarray): data to plot.
+            axis2 (tomomak axis): second axis. Only cartesian.Axis1d is supported.
+            axis3 (tomomak axis): third axis. Only cartesian.Axis1d is supported.
+            data_type (str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
+            colormap (str, optional): Colormap. Default: 'viridis'.
+            axes (bool, optional): If true, axes are shown. Default: False.
+            interp_size (int, optional): If at least one of the axes is irregular,
+                the new grid wil have  interp_size * interp_size * interp_size dimensions.
+            *args: arguments to pass to plot3d.contour3d, detector_contour3d.
+            **kwargs: keyword arguments to pass to plot3d.contour3d, detector_contour3d.
+
+        Returns:
+            0, 0: placeholder
+        """
         if type(axis2) is not Axis1d or type(axis3) is not Axis1d:
             raise NotImplementedError("3D plots with such combination of axes are not supported.")
-        x1 = self.coordinates
-        y1 = axis2.coordinates
-        z1 = axis3.coordinates
-        x, y, z = np.meshgrid(x1, y1, z1, indexing='ij')
+        x = self.coordinates
+        y = axis2.coordinates
+        z = axis3.coordinates
+        x_grid, y_grid, z_grid = np.meshgrid(x, y, z, indexing='ij')
         if axes:
             axes = ('{}, {}'.format(self.name, self.units),
                     '{}, {}'.format(axis2.name, axis2.units),
                     '{}, {}'.format(axis3.name, axis3.units))
         title = 'Density'
-        if data_type == 'solution':
-            plot3d.contour3d(data, x, y, z, title=title, colormap=colormap, axes=axes, *args, **kwargs)
-        elif data_type == 'detector_geometry':
-            plot3d.detector_contour3d(data, x, y, z, title=title, colormap=colormap, axes=axes, *args, **kwargs)
 
+        if data_type == 'solution':
+            # irregular axes
+            if not all((self.regular, axis2.regular, axis3.regular)):
+                warnings.warn("Since axes are not regular, linear interpolation with {} points used. "
+                              "You can change interpolation size with interp_size attribute.".format(interp_size**3))
+                x_grid, y_grid, z_grid, new_data = \
+                    util.geometry3d.make_regular(data, x_grid, y_grid, z_grid, interp_size)
+            else:
+                new_data = data
+            # plot
+            plot3d.contour3d(new_data, x_grid, y_grid, z_grid,
+                             title=title, colormap=colormap, axes=axes, *args, **kwargs)
+
+        elif data_type == 'detector_geometry':
+            if not all((self.regular, axis2.regular, axis3.regular)):
+                warnings.warn("Since axes are not regular, linear interpolation with {} points used."
+                              "You can change interpolation size with interp_size attribute.".format(interp_size ** 3))
+                x_grid_n, y_grid_n, z_grid_n = x_grid, y_grid, z_grid
+                new_data = np.zeros((data.shape[0], interp_size,  interp_size,  interp_size))
+                # interpolate data for each detector
+                print("Start interpolation.")
+                for i, d in enumerate(data):
+                    x_grid, y_grid, z_grid, new_data[i] \
+                        = util.geometry3d.make_regular(d, x_grid_n, y_grid_n, z_grid_n, interp_size)
+                    print('\r', end='')
+                    print("...", str((i+1) * 100 // data.shape[0]) + "% complete", end='')
+                print('\r \r', end='')
+            else:
+                new_data = data
+            plot3d.detector_contour3d(new_data, x_grid, y_grid, z_grid,
+                                      title=title, colormap=colormap, axes=axes, *args, **kwargs)
         else:
             raise AttributeError('data type {} is unknown'.format(data_type))
 

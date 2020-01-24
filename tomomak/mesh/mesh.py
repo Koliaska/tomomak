@@ -151,7 +151,7 @@ class Mesh:
         new_data = self._prepare_data(data, index, data_type)
         try:
             plot = self._axes[index[0]].plot2d(new_data, self._axes[index[1]], data_type, *args, **kwargs)
-        except (NotImplementedError, TypeError):
+        except NotImplementedError:
             new_data = new_data.transpose()
             plot = self._axes[index[1]].plot2d(new_data, self._axes[index[0]], data_type, *args, **kwargs)
         return plot
@@ -190,9 +190,9 @@ class Mesh:
                     np.moveaxis(dat, p[i], i)
                 plot = new_ax[index[0]].plot3d(dat, new_ax[index[1]], new_ax[index[2]], data_type, *args, **kwargs)
                 return plot
-            except(NotImplementedError, TypeError):
+            except NotImplementedError:
                 pass
-        raise TypeError("plot3d is not implemented for such axes combination")
+        raise TypeError("plot3d is not implemented for such axes combination or other problem occurred.")
 
     def draw_mesh(self):
         pass

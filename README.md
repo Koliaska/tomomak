@@ -1,6 +1,6 @@
 # TOMOMAK
 
-TOMOMAK is an easy-to-use cross-platform framework for multidimensional limited data tomography. 
+TOMOMAK is an easy-to-use cross-platform framework for the multidimensional limited data tomography. 
 The main features of the TOMOMAK framework are:
 * Arbitrary number of dimensions.
 * Support of different coordinate systems.
