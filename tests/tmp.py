@@ -61,7 +61,7 @@ real_solution = objects2d.ellipse(mesh, (5,5),(3,3))
 noise = np.random.normal(0, 0.05, real_solution.shape)
 mod.solution = real_solution + noise
 mod.detector_geometry = np.array([mod.solution, mod.solution + noise, mod.solution + noise * 2])
-# mod.plot2d(data_type = 'detector_geometry')
+mod.plot2d(data_type = 'detector_geometry')
 obj, cb = mod.plot3d(data_type = 'detector_geometry', equal_norm=True, axes=True, style=1)
 mod.plot2d()
 

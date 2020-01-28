@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import colors
+from matplotlib.widgets import Button, Slider
 from . import interactive
 
 
@@ -71,15 +72,17 @@ def detector_colormesh2d(data, axis1, axis2, title='', cb_title='', fill_scheme=
     (b_next, b_prev) tuple(matplotlib.widgets.Button): Tuple, containing Next and Prev buttons.
         Objects need to exist in order to work.
          """
-    class ColormeshSlice(interactive.DetectorPlotSlicer):
-        def __init__(self, data_input, axis, figure, color_bar, normalization):
+
+    class ColormeshSlider(interactive.DetectorPlotSlider):
+        def __init__(self, data_input, axis, figure, color_bar, normalization, slider):
             super().__init__(data_input, axis)
             self.fig = figure
             self.cb = color_bar
             self.norm = normalization
+            self.slider = slider
 
         def redraw(self):
-            y_data = np.transpose(self.data[self.ind])
+            y_data = np.transpose(self.data[self.ind-1])
             plot.set_array(y_data.flatten())
             if self.norm is None:
                 normalization = colors.Normalize(np.min(y_data), np.max(y_data))
@@ -87,11 +90,26 @@ def detector_colormesh2d(data, axis1, axis2, title='', cb_title='', fill_scheme=
                 self.cb.draw_all()
             super().redraw()
 
+
     norm = None
     if equal_norm:
         norm = [min(np.min(data), 0), np.max(data)]
     plot, ax, fig, cb = colormesh2d(data[0], axis1, axis2, title,  fill_scheme, grid, norm, *args, **kwargs)
     cb.set_label(cb_title)
-    callback = ColormeshSlice(data, ax, fig, cb, norm)
-    b_next, b_prev = interactive.crete_prev_next_buttons(callback.next, callback.prev)
-    return plot, ax, (b_next, b_prev)
+
+    # slider
+    axcolor = 'lightgoldenrodyellow'
+    plt.subplots_adjust(bottom=0.2)
+    ax_slider = plt.axes([0.12, 0.05, 0.62, 0.03], facecolor=axcolor)
+    slider = Slider(ax_slider, '', 1, data.shape[0], valinit=1, valstep=1)
+    slider.valtext.set_visible(False)
+    callback = ColormeshSlider(data, ax, fig, cb, norm, slider)
+    slider.on_changed(callback.update)
+    # buttons
+    ax_prev = plt.axes([0.07, 0.028, 0.02, 0.075])
+    ax_next = plt.axes([0.78, 0.028, 0.02, 0.075])
+    b_next = Button(ax_next, '>')
+    b_prev = Button(ax_prev, '<')
+    b_next.on_clicked(callback.next)
+    b_prev.on_clicked(callback.prev)
+    return plot, ax, (slider, b_next, b_prev)
