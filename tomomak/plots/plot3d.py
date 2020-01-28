@@ -2,6 +2,7 @@ from mayavi import mlab
 import matplotlib.colors
 import matplotlib.pyplot as plt
 import numpy as np
+import warnings
 from traits.api import HasTraits, Range, Instance, on_trait_change
 from traitsui.api import View, Item, HGroup
 from tvtk.pyface.scene_editor import SceneEditor
@@ -38,30 +39,45 @@ def _build_contour3d(data, x, y, z, scene, title='', colormap='blue-red', limits
 
     # graph
     scene.background = (1, 1, 1)
-    obj = scene.mlab.contour3d(x, y, z, data, colormap=colormap,  opacity=0.05)
     min_ax_size = np.min(x.shape)
-    if style == 1:
-        obj.actor.property.line_width = 200/min_ax_size
-        obj.actor.property.representation = 'wireframe'
-        obj.actor.property.lighting = False
-        obj.contour.number_of_contours = 20
-    elif style == 2:
-        obj.actor.property.representation = 'points'
-        obj.actor.property.lighting = False
-        obj.actor.property.point_size = 200/min_ax_size
+    if style == 1 or style == 2:
+        obj = scene.mlab.contour3d(x, y, z, data, colormap=colormap, opacity=0.05)
+        if style == 1:
+            obj.actor.property.line_width = 200/min_ax_size
+            obj.actor.property.representation = 'wireframe'
+            obj.actor.property.lighting = False
+            obj.contour.number_of_contours = 20
+        elif style == 2:
+            obj.actor.property.representation = 'points'
+            obj.actor.property.lighting = False
+            obj.actor.property.point_size = 200/min_ax_size
+        if limits is None:
+            obj.contour.minimum_contour = np.amax(data) * 0.2
+            obj.contour.auto_update_range = False
+        else:
+            obj.contour.minimum_contour = limits[0]
+            obj.contour.maximum_contour = limits[1]
+    elif style == 3 or style == 33:
+        if limits is None:
+            max_val = np.amax(data)
+            min_val = max_val * 0.2
+        else:
+            min_val = limits[0]
+            max_val = limits[1]
+        if style == 33:  # special case to deal with Mayavi bug
+            obj = scene.mlab.pipeline.volume(mlab.pipeline.scalar_field(x, y, z, data))
+        else:
+            obj = scene.mlab.pipeline.volume(mlab.pipeline.scalar_field(x, y, z, data), vmin=min_val, vmax=max_val)
     else:
         raise AttributeError("Style {} is not supported".format(style))
-    if limits is None:
-        obj.contour.minimum_contour = np.amax(data) * 0.2
-        obj.contour.auto_update_range = False
-    else:
-        obj.contour.minimum_contour = limits[0]
-        obj.contour.maximum_contour = limits[1]
+
     # colorbar
     cb = scene.mlab.colorbar(title=title, orientation='vertical')
     cb.title_text_property.color = (0, 0, 0)
-    cb.label_text_property.line_offset = 2
+    cb.label_text_property.line_offset = 5
     cb.label_text_property.color = (0, 0, 0)
+    cb.scalar_bar.unconstrained_font_size = True
+    cb.title_text_property.font_size = 12
     # axes
     if axes:
         ax = scene.mlab.axes(xlabel=axes[0], ylabel=axes[1], zlabel=axes[2], nb_labels=5, color=(0, 0, 0))
@@ -106,7 +122,7 @@ def contour3d(data, x, y, z,  title='', colormap='blue-red', limits=None, style=
 
         # the layout of the dialog created
         view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene),
-                         height=400, width=500, show_label=False), resizable=True, title="Detectors")
+                         height=700, width=800, show_label=False), resizable=True, title="Detectors")
 
     visualization = Visualization()
     visualization.configure_traits()
@@ -137,6 +153,10 @@ def detector_contour3d(data, x, y, z,  title='', colormap='blue-red', limits=Non
           equal_norm(bool, optional): If True,  all detectors will have same z axis.
             If False, each detector has individual z axis. default:False
       """
+    # Currently there is a bug with Mayavi vmin and vmax limits in interactive volume render.
+    # So special rendering case is introduced.
+    if style == 3:
+        style = 33
     class Visualization(HasTraits):
         Detector = Range(1, data.shape[0], 1)
         scene = Instance(MlabSceneModel, ())
@@ -148,14 +168,18 @@ def detector_contour3d(data, x, y, z,  title='', colormap='blue-red', limits=Non
 
         @on_trait_change('scene.activated')
         def setup(self):
+
             self.plot = _build_contour3d(data[self.index], x, y, z,
                                          self.scene, title, colormap, limits, style, axes)
             if equal_norm:
-                max_d = np.max(data)
-                min_d = np.min(data)
-                self.plot.contour.minimum_contour = np.amax(data) * 0.2
-                self.plot.module_manager.scalar_lut_manager.use_default_range = False
-                self.plot.module_manager.scalar_lut_manager.data_range = [min_d, max_d]
+                if style != 33:
+                    max_d = np.max(data)
+                    min_d = np.min(data)
+                    self.plot.contour.minimum_contour = np.amax(data) * 0.2
+                    self.plot.module_manager.scalar_lut_manager.use_default_range = False
+                    self.plot.module_manager.scalar_lut_manager.data_range = [min_d, max_d]
+                else:
+                    warnings.warn("Equal norm is not supported for this style due to Mayavi bugs.")
 
         @on_trait_change('Detector')
         def update_plot(self):
@@ -164,7 +188,7 @@ def detector_contour3d(data, x, y, z,  title='', colormap='blue-red', limits=Non
 
         # the layout of the dialog created
         view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene),
-                         height=400, width=500, show_label=False),
+                         height=700, width=800, show_label=False),
                     HGroup('_', 'Detector'),
                     resizable=True, title="Detectors")
 

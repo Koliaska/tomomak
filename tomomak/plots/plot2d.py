@@ -46,7 +46,7 @@ def colormesh2d(data, axis1, axis2, title='', fill_scheme='viridis', grid=False,
     return plot, ax, fig, cb
 
 
-def detector_colormesh2d(data, axis1, axis2, title='', fill_scheme='viridis',
+def detector_colormesh2d(data, axis1, axis2, title='', cb_title='', fill_scheme='viridis',
                          grid=False, equal_norm=False, *args, **kwargs):
     """Prepare bar plot for 2D detector data visualization with interactive elements.
 
@@ -56,11 +56,12 @@ def detector_colormesh2d(data, axis1, axis2, title='', fill_scheme='viridis',
         data (ndarray): 2D array of data.
         axis1 (axis): corresponding tomomak axis № 1.
         axis2 (axis): corresponding tomomak axis № 2.
-        title (str, optional): Plot title. default: ''.
-        fill_scheme (pyplot colormap, optional): pyplot colormap to be used in the plot. default: 'viridis'.
-        grid (bool, optional): if True, grid is shown. default: False.
+        title (str, optional): Plot title. Default: ''.
+        cb_title (str, optional) Colorbar title. Default: ''.
+        fill_scheme (pyplot colormap, optional): pyplot colormap to be used in the plot. Default: 'viridis'.
+        grid (bool, optional): if True, grid is shown. Default: False.
         equal_norm (bool, optional): If True,  all detectors will have same z axis.
-            If False, each detector has individual z axis. default:False
+            If False, each detector has individual z axis. Default:False
         *args, **kwargs: arguments will be passed to matplotlib.pyplot.pcolormesh
 
     Returns:
@@ -90,6 +91,7 @@ def detector_colormesh2d(data, axis1, axis2, title='', fill_scheme='viridis',
     if equal_norm:
         norm = [min(np.min(data), 0), np.max(data)]
     plot, ax, fig, cb = colormesh2d(data[0], axis1, axis2, title,  fill_scheme, grid, norm, *args, **kwargs)
+    cb.set_label(cb_title)
     callback = ColormeshSlice(data, ax, fig, cb, norm)
     b_next, b_prev = interactive.crete_prev_next_buttons(callback.next, callback.prev)
     return plot, ax, (b_next, b_prev)

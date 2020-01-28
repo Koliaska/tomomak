@@ -1,5 +1,6 @@
 from . import abstract_axes
 import numpy as np
+import re
 import matplotlib.pyplot as plt
 from tomomak.plots import plot1d, plot2d, plot3d
 import warnings
@@ -184,7 +185,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 intersection[i, j] = dist
         return intersection
 
-    def plot1d(self, data, data_type='solution', filled=True,
+    def plot1d(self, data, mesh, data_type='solution', filled=True,
                fill_scheme='viridis', edge_color='black', grid=False, equal_norm=False, y_label=None, *args, **kwargs):
         """Create 1D plot of the solution or detector geometry.
 
@@ -192,6 +193,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
 
         Args:
             data (1D ndarray): data to plot.
+            mesh (tomomak mesh): mesh for units extraction.
             data_type (str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
             filled (bool_optional, optional): if true, bars are filled. Color depends on the bar height. Default: True.
             fill_scheme (str, optional): matplotlib fill scheme. Valid only if filled is True. Default: 'viridis'.
@@ -213,7 +215,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                                     edge_color, grid, *args, **kwargs)
         elif data_type == 'detector_geometry':
             title = "Detector 1/{}".format(data.shape[0])
-            y_label = "Intersection length, {}".format(self.units)
+            y_label = util.text.detector_caption(mesh)
             plot, ax, _ = plot1d.detector_bar1d(data, self, title, y_label, filled,
                                                 fill_scheme, edge_color, grid, equal_norm, *args, **kwargs)
         else:
@@ -221,7 +223,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         plt.show()
         return plot, ax
 
-    def plot2d(self, data, axis2, data_type='solution',
+    def plot2d(self, data, axis2, mesh, data_type='solution',
                fill_scheme='viridis', grid=False, equal_norm=False, title=None, *args, **kwargs):
         """Create 2D plot of the solution or detector geometry.
 
@@ -230,6 +232,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         Args:
             data (2D ndarray): data to plot.
             axis2 (tomomak axis): second axis. Only cartesian.Axis1d is supported.
+            mesh (tomomak mesh): mesh to extract additional info.
             data_type (str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
             fill_scheme (str, optional): matplotlib fill scheme. Default: 'viridis'.
             grid (bool, optional): If true, grid is displayed. Default:False.
@@ -251,14 +254,15 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             plot, ax, fig, cb = plot2d.colormesh2d(data, self, axis2, title, fill_scheme, grid, *args, **kwargs)
         elif data_type == 'detector_geometry':
             title = 'Detector 1/{}'.format(data.shape[0])
-            plot, ax, _ = plot2d.detector_colormesh2d(data, self, axis2, title, fill_scheme, grid,
+            cb_title = util.text.detector_caption(mesh)
+            plot, ax, _ = plot2d.detector_colormesh2d(data, self, axis2, title, cb_title, fill_scheme, grid,
                                                       equal_norm, *args, **kwargs)
         else:
             raise AttributeError('data type {} is unknown'.format(data_type))
         plt.show()
         return plot, ax
 
-    def plot3d(self, data, axis2, axis3, data_type='solution', colormap='blue-red', axes=False,
+    def plot3d(self, data, axis2, axis3, mesh, data_type='solution', colormap='blue-red', axes=False,
                interp_size=50, *args, **kwargs):
         """Create 2D plot of the solution or detector geometry.
 
@@ -266,6 +270,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             data (3D ndarray): data to plot.
             axis2 (tomomak axis): second axis. Only cartesian.Axis1d is supported.
             axis3 (tomomak axis): third axis. Only cartesian.Axis1d is supported.
+            mesh (tomomak mesh): mesh to extract additional info.
             data_type (str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
             colormap (str, optional): Colormap. Default: 'viridis'.
             axes (bool, optional): If true, axes are shown. Default: False.
@@ -287,9 +292,11 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             axes = ('{}, {}'.format(self.name, self.units),
                     '{}, {}'.format(axis2.name, axis2.units),
                     '{}, {}'.format(axis3.name, axis3.units))
-        title = 'Density'
 
         if data_type == 'solution':
+            # title
+            units = util.text.density_units([self.units, axis2.units, axis3.units])
+            title = re.sub('[${}]', '', r"   Density, {}".format(units))
             # irregular axes
             if not all((self.regular, axis2.regular, axis3.regular)):
                 warnings.warn("Since axes are not regular, linear interpolation with {} points used. "
@@ -303,6 +310,9 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                              title=title, colormap=colormap, axes=axes, *args, **kwargs)
 
         elif data_type == 'detector_geometry':
+            # title
+            title = '   ' + re.sub('[${}]', '', util.text.detector_caption(mesh))
+            # irregular ax4s
             if not all((self.regular, axis2.regular, axis3.regular)):
                 warnings.warn("Since axes are not regular, linear interpolation with {} points used."
                               "You can change interpolation size with interp_size attribute.".format(interp_size ** 3))

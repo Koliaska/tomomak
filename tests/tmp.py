@@ -52,7 +52,7 @@ import tomomak.constraints.basic
 # The first step is to create coordinate system. We will consider 2D cartesian coordinates.
 # Let's create coordinate mesh. First axis will consist of 20 segments. Second - of 30 segments.
 # This means that solution will be described by the 20x30 array.
-axes = [cartesian.Axis1d(name="X", units="cm",  coordinates=(0.1, 0.3, 0.5, 0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1, 2.5, 3,3.5, 4,4.5, 5, 7, 9,12)),
+axes = [cartesian.Axis1d(name="X", units="cm",  size=20, upper_limit=10),
         cartesian.Axis1d(name="Y", units="cm", size=20, upper_limit=10),
         cartesian.Axis1d(name="Z", units="cm", size=20, upper_limit=10)]
 mesh = mesh.Mesh(axes)
@@ -60,16 +60,9 @@ mod = model.Model(mesh=mesh)
 real_solution = objects2d.ellipse(mesh, (5,5),(3,3))
 noise = np.random.normal(0, 0.05, real_solution.shape)
 mod.solution = real_solution + noise
-
-from mayavi import mlab
-x, y, z = np.mgrid[-10:10:20j, -10:10:20j, -10:10:20j]
-s = np.sin(x*y*z)/(x*y*z)
-
-# mlab.pipeline.volume(mlab.pipeline.scalar_field(x,y,z,s), vmin=0, vmax=0.8)
-#
-# mlab.show()
 mod.detector_geometry = np.array([mod.solution, mod.solution + noise, mod.solution + noise * 2])
-obj, cb = mod.plot3d(data_type = 'detector_geometry', equal_norm=True, axes=True)
+# mod.plot2d(data_type = 'detector_geometry')
+obj, cb = mod.plot3d(data_type = 'detector_geometry', equal_norm=True, axes=True, style=1)
 mod.plot2d()
 
 

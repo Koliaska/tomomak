@@ -133,7 +133,7 @@ class Mesh:
         if isinstance(index, int):
             index = [index]
         new_data = self._prepare_data(data, index, data_type)
-        plot = self._axes[index[0]].plot1d(new_data, data_type, *args, **kwargs)
+        plot = self._axes[index[0]].plot1d(new_data, self, data_type, *args, **kwargs)
         return plot
 
     def plot2d(self, data, index=0, data_type='solution', *args, **kwargs):
@@ -143,17 +143,17 @@ class Mesh:
         if len(index) == 1:
             try:
                 new_data = self._prepare_data(data, index[0], data_type)
-                plot = self._axes[index[0]].plot2d(new_data, *args, **kwargs)
+                plot = self._axes[index[0]].plot2d(new_data, self, data_type,  *args, **kwargs)
                 return plot
             except (NotImplementedError, TypeError):
                 index.append(index[0] + 1)
         # try to draw using 2 axes
         new_data = self._prepare_data(data, index, data_type)
         try:
-            plot = self._axes[index[0]].plot2d(new_data, self._axes[index[1]], data_type, *args, **kwargs)
+            plot = self._axes[index[0]].plot2d(new_data, self._axes[index[1]], self, data_type, *args, **kwargs)
         except NotImplementedError:
             new_data = new_data.transpose()
-            plot = self._axes[index[1]].plot2d(new_data, self._axes[index[0]], data_type, *args, **kwargs)
+            plot = self._axes[index[1]].plot2d(new_data, self._axes[index[0]], self, data_type, *args, **kwargs)
         return plot
 
     def plot3d(self, data, index=0, data_type='solution', *args, **kwargs):
@@ -163,19 +163,19 @@ class Mesh:
         if len(index) == 1:
             try:
                 new_data = self._prepare_data(data, index[0], data_type)
-                plot = self._axes[index[0]].plot3d(new_data, *args, **kwargs)
+                plot = self._axes[index[0]].plot3d(new_data, self, *args, **kwargs)
                 return plot
             except (NotImplementedError, TypeError):
                 index.append(index[0] + 1)
         # try to draw using 2 axes
         new_data = self._prepare_data(data, index, data_type)
         try:
-            plot = self._axes[index[0]].plot3d(new_data, self._axes[index[1]], data_type, *args, **kwargs)
+            plot = self._axes[index[0]].plot3d(new_data, self._axes[index[1]], self, data_type, *args, **kwargs)
             return plot
         except (NotImplementedError,  TypeError):
             try:
                 new_data = new_data.transpose()
-                plot = self._axes[index[1]].plot3d(new_data, self._axes[index[0]], data_type, *args, **kwargs)
+                plot = self._axes[index[1]].plot3d(new_data, self._axes[index[0]], self, data_type, *args, **kwargs)
                 return plot
             except (NotImplementedError, TypeError):
                 index.append(index[1] + 1)
@@ -188,7 +188,8 @@ class Mesh:
                 dat = np.array(new_data)
                 for i in range(3):
                     np.moveaxis(dat, p[i], i)
-                plot = new_ax[index[0]].plot3d(dat, new_ax[index[1]], new_ax[index[2]], data_type, *args, **kwargs)
+                plot = new_ax[index[0]].plot3d(dat, new_ax[index[1]], new_ax[index[2]],
+                                               self, data_type, *args, **kwargs)
                 return plot
             except NotImplementedError:
                 pass
