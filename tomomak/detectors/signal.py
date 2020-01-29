@@ -1,4 +1,5 @@
 import numpy as np
+import cupy as cp
 from scipy import interpolate
 
 
@@ -20,6 +21,25 @@ def get_signal(solution, detector_geometry):
         signal[i] = get_signal_one_det(solution, ar)
     return signal
 
+
+def get_signal_gpu(solution, detector_geometry):
+    """Get detector signals from known object and geometry. GPU version.
+
+    To find out about solution and detector_geometry see tomomak.model description.
+
+    Args:
+        solution (cupy array): known solution.
+        detector_geometry (cupy array): known detector geometry.
+
+    Returns:
+        ndarray: calculated signals.
+
+    """
+    signal = cp.zeros(detector_geometry.shape[0])
+    for i, ar in enumerate(detector_geometry):
+        tmp = cp.multiply(solution, detector_geometry[i])
+        signal[i] = cp.sum(tmp)
+    return signal
 
 def get_signal_one_det(solution, one_detector_geometry):
     """Get detector signals from known object and geometry for one detector.

@@ -3,6 +3,7 @@ import numbers
 import warnings
 import copy
 import matplotlib.pyplot as plt
+import os
 
 
 class Solver:
@@ -30,6 +31,19 @@ class Solver:
                 raise ValueError("stop_values should be defined since stop_conditions is defined.")
             if len(self.stop_values) != len(self.stop_conditions):
                 raise ValueError("stop_conditions and stop_values have different length.")
+        # Check that if GPU-acceleration is enabled, all iterators are capable of GPU-calculation
+        if os.getenv('TM_GPU'):
+            if self.iterator is not None:
+                if type(self.iterator).__name__[-3:] != 'GPU':
+                    raise RuntimeError("Iterator doesn't support GPU acceleration")
+            if self.constraints is not None:
+                for r in self.constraints:
+                    if type(r).__name__[-3:] != 'GPU':
+                        raise RuntimeError("{} constraint doesn't support GPU acceleration".format(r))
+            if self.statistics is not None:
+                for ind, s in enumerate(self.statistics):
+                    if type(s).__name__[-3:] != 'GPU':
+                        raise RuntimeError("{} statistics calculation doesn't support GPU acceleration".format(s))
         # Init iterator and constraints.
         print("Start calculation with {} iterations using {}.".format(steps, self.iterator))
         if self.iterator is not None:

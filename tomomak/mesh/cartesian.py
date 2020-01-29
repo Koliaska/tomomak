@@ -223,7 +223,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         plt.show()
         return plot, ax
 
-    def plot2d(self, data, axis2, mesh, data_type='solution',
+    def plot2d(self, data, axis2, mesh, data_type='solution', style='colormesh',
                fill_scheme='viridis', grid=False, equal_norm=False, title=None, *args, **kwargs):
         """Create 2D plot of the solution or detector geometry.
 
@@ -234,6 +234,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             axis2 (tomomak axis): second axis. Only cartesian.Axis1d is supported.
             mesh (tomomak mesh): mesh to extract additional info.
             data_type (str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
+            style (str, optional): Plot style. Available options: 'colormesh', 'contour'. Default: 'colormesh'.
             fill_scheme (str, optional): matplotlib fill scheme. Default: 'viridis'.
             grid (bool, optional): If true, grid is displayed. Default:False.
             equal_norm (bool, optional): If true, all detectors will have same norm.
@@ -251,11 +252,11 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             if title is None:
                 units = util.text.density_units([self.units, axis2.units])
                 title = r"Density, {}".format(units)
-            plot, ax, fig, cb = plot2d.colormesh2d(data, self, axis2, title, fill_scheme, grid, *args, **kwargs)
+            plot, ax, fig, cb = plot2d.colormesh2d(data, self, axis2, title, style, fill_scheme, grid, *args, **kwargs)
         elif data_type == 'detector_geometry':
             title = 'Detector 1/{}'.format(data.shape[0])
             cb_title = util.text.detector_caption(mesh)
-            plot, ax, _ = plot2d.detector_colormesh2d(data, self, axis2, title, cb_title, fill_scheme, grid,
+            plot, ax, _ = plot2d.detector_colormesh2d(data, self, axis2, title, cb_title, style, fill_scheme, grid,
                                                       equal_norm, *args, **kwargs)
         else:
             raise AttributeError('data type {} is unknown'.format(data_type))

@@ -10,6 +10,12 @@ class AbstractSolverClass(ABC):
 
     Every solver or constraint should implement these four methods to work correctly.
     However, often only step() and __str__() methods are required. So init() and finalize() methods may just pass.
+
+    If your iterator has GPU and CPU versions, than your should be a factory, returning needed instance.
+    To do so use util.engine.IteratorFactory as superclass for your class. Don't add any functionality - just pass.
+    Let's assume your iterator has name *iterator_name*.
+    Make CPU and GPU versions of the iterator with names _*iterator_name*CPU and _*iterator_name*GPU respectively.
+    See iterators.ml for example.
     """
 
     @abstractmethod

@@ -5,7 +5,7 @@ from matplotlib.widgets import Button, Slider
 from . import interactive
 
 
-def colormesh2d(data, axis1, axis2, title='', fill_scheme='viridis', grid=False, norm=None, *args,  **kwargs):
+def colormesh2d(data, axis1, axis2, title='', style='colormesh', fill_scheme='viridis', grid=False, norm=None, *args,  **kwargs):
     """Prepare bar plot for 2D data visualization.
 
      matplotlib.pyplot.pcolormesh  is used.
@@ -15,6 +15,7 @@ def colormesh2d(data, axis1, axis2, title='', fill_scheme='viridis', grid=False,
         axis1 (axis): corresponding tomomak axis № 1.
         axis2 (axis): corresponding tomomak axis № 2.
         title (str, optional): Plot title. default: ''.
+        style (str, optional): Plot style. Available options: 'colormesh', 'contour'. Default: 'colormesh'.
         fill_scheme (pyplot colormap, optional): pyplot colormap to be used in the plot. default: 'viridis'.
         grid (bool, optional): if True, grid is shown. default: False.
         norm (None/[Number, Number], optional): If not None, all detectors will have same z axis
@@ -28,15 +29,21 @@ def colormesh2d(data, axis1, axis2, title='', fill_scheme='viridis', grid=False,
          fig (matplotlib.figure): The figure module.
          cb (matplotlib.pyplot.colorbar): colorbar on the right of the axis.
      """
-    x = axis1.cell_edges1d
-    y = axis2.cell_edges1d
-    z = data.transpose()
     cmap = plt.get_cmap(fill_scheme)
     fig, ax = plt.subplots()
+    if style == 'colormesh':
+        x = axis1.cell_edges1d
+        y = axis2.cell_edges1d
+        func = ax.pcolormesh
+    elif style == 'contour':
+        x = axis1.coordinates
+        y = axis2.coordinates
+        func = ax.contourf
+    z = data.transpose()
     if norm is not None:
-        plot = ax.pcolormesh(x, y, z, cmap=cmap, vmin=norm[0], vmax=norm[1], *args,  **kwargs)
+        plot = func(x, y, z, cmap=cmap, vmin=norm[0], vmax=norm[1], *args,  **kwargs)
     else:
-        plot = ax.pcolormesh(x, y, z, cmap=cmap, *args, **kwargs)
+        plot = func(x, y, z, cmap=cmap, *args, **kwargs)
     cb = fig.colorbar(plot, ax=ax)
     ax.set_title(title)
     xlabel = "{}, {}".format(axis1.name, axis1.units)
@@ -46,8 +53,7 @@ def colormesh2d(data, axis1, axis2, title='', fill_scheme='viridis', grid=False,
         ax.grid()
     return plot, ax, fig, cb
 
-
-def detector_colormesh2d(data, axis1, axis2, title='', cb_title='', fill_scheme='viridis',
+def detector_colormesh2d(data, axis1, axis2, title='', cb_title='',  style='colormesh',  fill_scheme='viridis',
                          grid=False, equal_norm=False, *args, **kwargs):
     """Prepare bar plot for 2D detector data visualization with interactive elements.
 
@@ -58,6 +64,7 @@ def detector_colormesh2d(data, axis1, axis2, title='', cb_title='', fill_scheme=
         axis1 (axis): corresponding tomomak axis № 1.
         axis2 (axis): corresponding tomomak axis № 2.
         title (str, optional): Plot title. Default: ''.
+        style (str, optional): Plot style. Available options: 'colormesh', 'contour'. Default: 'colormesh'.
         cb_title (str, optional) Colorbar title. Default: ''.
         fill_scheme (pyplot colormap, optional): pyplot colormap to be used in the plot. Default: 'viridis'.
         grid (bool, optional): if True, grid is shown. Default: False.
@@ -94,13 +101,13 @@ def detector_colormesh2d(data, axis1, axis2, title='', cb_title='', fill_scheme=
     norm = None
     if equal_norm:
         norm = [min(np.min(data), 0), np.max(data)]
-    plot, ax, fig, cb = colormesh2d(data[0], axis1, axis2, title,  fill_scheme, grid, norm, *args, **kwargs)
+    plot, ax, fig, cb = colormesh2d(data[0], axis1, axis2, title, style,  fill_scheme, grid, norm, *args, **kwargs)
     cb.set_label(cb_title)
 
     # slider
-    axcolor = 'lightgoldenrodyellow'
+    slider_color = 'lightgoldenrodyellow'
     plt.subplots_adjust(bottom=0.2)
-    ax_slider = plt.axes([0.12, 0.05, 0.62, 0.03], facecolor=axcolor)
+    ax_slider = plt.axes([0.12, 0.05, 0.62, 0.03], facecolor=slider_color)
     slider = Slider(ax_slider, '', 1, data.shape[0], valinit=1, valstep=1)
     slider.valtext.set_visible(False)
     callback = ColormeshSlider(data, ax, fig, cb, norm, slider)
@@ -113,3 +120,4 @@ def detector_colormesh2d(data, axis1, axis2, title='', cb_title='', fill_scheme=
     b_next.on_clicked(callback.next)
     b_prev.on_clicked(callback.prev)
     return plot, ax, (slider, b_next, b_prev)
+
