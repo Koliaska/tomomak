@@ -7,7 +7,7 @@ class IteratorFactory:
     """
     def __new__(cls, *args, **kwargs):
         gpu_enable = os.getenv('TM_GPU')
-        if gpu_enable != 0 and gpu_enable != '0' and gpu_enable.lower != 'false':
+        if gpu_enable is not None and gpu_enable != 0 and gpu_enable != '0' and gpu_enable.lower != 'false':
             module = importlib.import_module(cls.__module__)
             class_name = '_' + cls.__name__ + 'GPU'
             cls = getattr(module, class_name)

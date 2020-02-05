@@ -58,7 +58,7 @@ class _ARTCPU(abstract_iterator.AbstractIterator):
                 ai = 0
             if self.iter_type == 1:  # MART
                 if model.detector_signal[i] != 0:
-                    ai = ai / np.abs(model.detector_signal.y[i])
+                    ai = ai / np.abs(model.detector_signal[i])
             model.solution = model.solution + ai * model.detector_geometry[i] * alpha
 
 
@@ -78,7 +78,7 @@ class _ARTGPU(abstract_iterator.AbstractIterator):
         super().init(model, steps, *args, **kwargs)
         if model.solution is None:
             shape = model.mesh.shape
-            model.solution = cp.ones(shape)
+            model.solution = cp.zeros(shape)
         self.shape = model.solution.shape
         model.detector_geometry = cp.array(model.detector_geometry)
         model.solution = cp.array(model.solution)
@@ -106,7 +106,8 @@ class _ARTGPU(abstract_iterator.AbstractIterator):
             if self.iter_type == 1:  # MART
                 if model.detector_signal[i] != 0:
                     ai = ai / cp.abs(model.detector_signal[i])
-            model.solution = model.solution + ai * model.detector_geometry[i] * alpha
+            model._solution = model.solution + ai * model.detector_geometry[i] * alpha
+
 
 
 class SIRT(IteratorFactory):

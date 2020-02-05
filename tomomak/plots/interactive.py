@@ -22,7 +22,7 @@ class DetectorPlotSlider:
             data (ndarray): Plotted data.
             ax (matplotlib.axes.Axes): Plot axes.
         """
-        self.ind = 1
+        self.ind = 0
         self.data = data
         self.ax = ax
 
@@ -31,7 +31,7 @@ class DetectorPlotSlider:
 
         Changes detector index in plot title and rescales axes.
         """
-        new_title = 'Detector {}/{}'.format(self.ind , self.data.shape[0])
+        new_title = 'Detector {}/{}'.format(self.ind+1 , self.data.shape[0])
         self.ax.set_title(new_title)
         self.ax.relim()
 
@@ -49,7 +49,7 @@ class DetectorPlotSlider:
 
         Changes self.ind and initiate redraw.
         """
-        self.ind = (self.ind) % self.data.shape[0] + 1
+        self.ind = (self.ind + 1) % self.data.shape[0]
         self.slider.set_val(self.ind)
 
     def prev(self, _):
@@ -57,6 +57,6 @@ class DetectorPlotSlider:
 
         Changes self.ind and initiate redraw.
         """
-        self.ind = (self.ind) % self.data.shape[0] + 1
+        self.ind = (self.ind - 1) % self.data.shape[0]
         self.slider.set_val(self.ind)
 

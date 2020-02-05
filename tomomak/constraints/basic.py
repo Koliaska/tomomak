@@ -1,11 +1,19 @@
 from ..iterators import abstract_iterator
 import numpy as np
+import cupy as cp
+from tomomak.util.engine import IteratorFactory
 
 
-class Positive(abstract_iterator.AbstractIterator):
+class Positive(IteratorFactory):
     """Makes all negative values equal to 0.
     """
+    pass
+
+
+class _PositiveCPU(abstract_iterator.AbstractIterator):
+
     def __init__(self):
+        super().__init__()
         pass
 
     def init(self, model, steps, *args, **kwargs):
@@ -31,10 +39,19 @@ class Positive(abstract_iterator.AbstractIterator):
         model.solution = model.solution.clip(min=0)
 
 
+class _PositiveGPU(_PositiveCPU):
+
+    def step(self, model, step_num):
+        """Step function, called by solver.
+        """
+        model._solution = cp.clip(model.solution, a_min=0)
+
+
 class ApplyAlongAxis(abstract_iterator.AbstractIterator):
     """Applies 1D function over given dimension.
 
     Uses numpy.apply_along_axis
+    Doesn't support GPU acceleration.
     """
     def __init__(self,  func, axis=0, alpha=0.1, alpha_calc=None, **kwargs):
         """
@@ -67,12 +84,15 @@ class ApplyAlongAxis(abstract_iterator.AbstractIterator):
         model.solution = model.solution + alpha * (new_solution - model.solution)
 
 
-class ApplyFunction(abstract_iterator.AbstractIterator):
+class ApplyFunction(IteratorFactory):
     """Applies multidimensional function over solution.
 
     Note, that function should be able to work with array of the solution dimension.
     """
+    pass
 
+
+class _ApplyFunctionCPU(abstract_iterator.AbstractIterator):
     def __init__(self,  func, alpha=0.1, alpha_calc=None, **kwargs):
         super().__init__(alpha, alpha_calc)
         self.func = func
@@ -92,3 +112,7 @@ class ApplyFunction(abstract_iterator.AbstractIterator):
         alpha = self.get_alpha(model, step_num)
         new_solution = self.func(model.solution, **self.arg_dict)
         model.solution = model.solution + alpha * (new_solution - model.solution)
+
+
+class _ApplyFunctionGPU(_ApplyFunctionCPU):
+    pass

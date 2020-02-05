@@ -89,7 +89,7 @@ def detector_colormesh2d(data, axis1, axis2, title='', cb_title='',  style='colo
             self.slider = slider
 
         def redraw(self):
-            y_data = np.transpose(self.data[self.ind-1])
+            y_data = np.transpose(self.data[self.ind])
             plot.set_array(y_data.flatten())
             if self.norm is None:
                 normalization = colors.Normalize(np.min(y_data), np.max(y_data))
@@ -108,7 +108,7 @@ def detector_colormesh2d(data, axis1, axis2, title='', cb_title='',  style='colo
     slider_color = 'lightgoldenrodyellow'
     plt.subplots_adjust(bottom=0.2)
     ax_slider = plt.axes([0.12, 0.05, 0.62, 0.03], facecolor=slider_color)
-    slider = Slider(ax_slider, '', 1, data.shape[0], valinit=1, valstep=1)
+    slider = Slider(ax_slider, '', 0, data.shape[0] - 1, valinit=0, valstep=1)
     slider.valtext.set_visible(False)
     callback = ColormeshSlider(data, ax, fig, cb, norm, slider)
     slider.on_changed(callback.update)

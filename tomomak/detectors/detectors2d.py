@@ -6,9 +6,72 @@ import tomomak.util.geometry2d
 import numpy as np
 
 
+def two_pi_det(mesh, position, index=(0, 1), response=1, radius_dependence=True, broadcast=True):
+    """Generate intersection of one 2pi detector (e.g. hermetic detector)  with mesh cells.
+
+    Args:
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        position (tuple of 2 floats): Detector origin (x, y).
+        index (tuple of two ints, optional): axes to build object at. Default: (0,1).
+        response (float, optional): Detector response = amplification * detector area.
+            E.g. detector signal at 1m from source, emitting 4*pi particles at given time interval. Default: 1.
+        radius_dependence (bool, optional): if True, signal is divided by 4 *pi *r^2
+        broadcast (bool, optional): If true, resulted array is broadcasted to fit Mesh shape.
+            If False, 2d array is returned, even if Mesh is not 2D. Default: True.
+
+    Returns:
+         ndarray: numpy array, representing one detector on a given mesh.
+    """
+    if isinstance(index, int):
+        index = [index]
+    areas = tomomak.util.geometry2d.cell_areas(mesh, index)
+    intersection_geometry = areas * response
+    if radius_dependence:
+        r = tomomak.util.geometry2d.cell_distances(mesh, index, position)
+        r = 4 * np.pi * np.square(r)
+        intersection_geometry /= r
+    if broadcast:
+        intersection_geometry = tomomak.util.array_routines.broadcast_object(intersection_geometry, index, mesh.shape)
+    return intersection_geometry
+
+def two_pi_detector_array(mesh, focus_point, radius, det_num,  *args, **kwargs):
+    """ Creates array of fan detectors around focus points.
+
+          Args:
+              mesh (tomomak.main_structures.Mesh): mesh to work with.
+              focus_point (tuple of 2 floats): Focus point (x, y).
+              radius (float): radius of the circle around focus_point, where detectors are located.
+              fan_num (integer): number of fans.
+              line_num (integer): number of lines.
+              width (float): width of each line.
+              incline (float): incline of first detector fan in Rad from the (1, 0) direction. Default: 0.
+              *args: fan_detector arguments.
+              **kwargs: fan_detector keyword arguments.
+
+          Returns:
+              ndarray: numpy array, representing fan of detectors on a given mesh.
+          """
+    shape = [0]
+    shape.extend(mesh.shape)
+    res = np.zeros(shape)
+    incline = 0
+    d_incline = np.pi * 2 / det_num
+    focus_point = np.array(focus_point)
+    for i in range(det_num):
+        p = np.array([focus_point[0] + radius * np.cos(incline), focus_point[1] + radius * np.sin(incline)])
+        addition = np.array([two_pi_det(mesh, p,  *args, **kwargs),])
+        res = np.append(res, addition, axis=0)
+        print('\r', end='')
+        print("Generating array of 2pi detectors: ", str(i * 100 // det_num) + "% complete", end='')
+        incline += d_incline
+    print('\r \r ', end='')
+    print('\r \r ', end='')
+    return res
+
+
 def line2d(mesh, p1, p2, width, divergence=0, index=(0, 1), response=1, radius_dependence=True,
            broadcast=True, calc_area=True):
-    """Generate intersection with one detector line with given parameters.
+    """Generate intersection of one detector line with mesh cells.
 
     Source is isotropic.
     Line length should be long enough to lay outside of mesh.

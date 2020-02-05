@@ -41,8 +41,8 @@ from tomomak.transform import pipeline
 from tomomak.detectors import detectors2d, signal
 from tomomak.iterators import ml, algebraic
 from tomomak.iterators import statistics
+import os
 import tomomak.constraints.basic
-
 
 
 
@@ -57,7 +57,6 @@ import tomomak.constraints.basic
 # Let's create coordinate mesh. First axis will consist of 20 segments. Second - of 30 segments.
 # This means that solution will be described by the 20x30 array.
 axes = [cartesian.Axis1d(name="X", units="cm", size=10, upper_limit=10),
-        cartesian.Axis1d(name="Y", units="cm", size=10, upper_limit=10),
         cartesian.Axis1d(name="Y", units="cm", size=10, upper_limit=10)]
 mesh = mesh.Mesh(axes)
 mod = model.Model(mesh=mesh)
@@ -72,18 +71,7 @@ mod = model.Model(mesh=mesh)
 # Now let's create synthetic 2D object to study.
 # We will consider triangle.
 real_solution = objects2d.ellipse(mesh, (5,5),(3,3))
-# Model.solution is the solution we are looking for.
-# It will be obtained at the end of this example.
-# However, if you already know supposed solution (for example you get it with simulation),
-# you can use it as first approximation by setting Model.solution = *supposed solution*.
-# Recently we've generated test object, which is, of course, real solution.
-# A trick to visualize this object is to temporarily use it as model solution.
-mod.solution = real_solution
 
-# You can also make 1D plot. In this case data will be integrated over 2nd axis.
-
-# After we've visualized our test object, it's time to set model solution to None and try to find this solution fairly.
-mod.solution = None
 
 # Next step is to provide information about the detectors.
 # Let's create 15 fans with 22 detectors around the investigated object.
@@ -92,29 +80,42 @@ mod.solution = None
 det = detectors2d.fan_detector_array(mesh=mesh,
                                      focus_point=(5, 5),
                                      radius=11,
-                                     fan_num=2,
-                                     line_num=10,
+                                     fan_num=1,
+                                     line_num=6,
                                      width=1,
                                      divergence=0.2)
+det = detectors2d.two_pi_detector_array(mesh, (5,5), 10, 40)
+print(det)
 # Now we can calculate signal of each detector.
 # Of course in the real experiment you measure detector signals so you don't need this function.
 det_signal = signal.get_signal(real_solution, det)
 mod.detector_signal = det_signal
 mod.detector_geometry = det
-
+mod.plot2d(data_type='detector_geometry', equal_norm=True)
 solver = Solver()
-import os
+
 os.environ["TM_GPU"] = "1"
-# solver.statistics = [statistics.RN(), statistics.RMS()]
+solver.statistics = [statistics.RMS()]
+solver.constraints = [tomomak.constraints.basic.Positive()]
 
 solver.real_solution = real_solution
 
-solver.iterator = algebraic.SIRT(iter_type='SMART')
-solver.iterator.alpha = np.full(100, 0.2)
-
-steps = 50
+solver.iterator = algebraic.SIRT()
+solver.iterator.alpha = np.full(100000, 0.1)
+steps = 1
 solver.solve(mod, steps=steps)
-# mod.plot2d()
+solver.plot_statistics()
+
+os.environ["TM_GPU"] = "0"
+mod.solution = None
+solver.iterator = algebraic.SIRT()
+solver.constraints = [tomomak.constraints.basic.Positive()]
+solver.statistics = [statistics.RMS()]
+solver.iterator.alpha = np.full(100, 0.1)
+solver.solve(mod, steps=steps)
+solver.plot_statistics()
+
+mod.plot2d(data_type='detector_geometry')
 # solver.plot_statistics()
 #
 # # Now let's change to  algebraic reconstruction technique.

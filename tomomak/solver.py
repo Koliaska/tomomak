@@ -1,9 +1,7 @@
-import numpy as np
-import numbers
-import warnings
 import copy
 import matplotlib.pyplot as plt
 import os
+import time
 
 
 class Solver:
@@ -32,7 +30,8 @@ class Solver:
             if len(self.stop_values) != len(self.stop_conditions):
                 raise ValueError("stop_conditions and stop_values have different length.")
         # Check that if GPU-acceleration is enabled, all iterators are capable of GPU-calculation
-        if os.getenv('TM_GPU'):
+        gpu_enable = os.getenv('TM_GPU')
+        if gpu_enable is not None and gpu_enable != 0 and gpu_enable != '0' and gpu_enable.lower != 'false':
             if self.iterator is not None:
                 if type(self.iterator).__name__[-3:] != 'GPU':
                     raise RuntimeError("Iterator doesn't support GPU acceleration")
@@ -44,8 +43,14 @@ class Solver:
                 for ind, s in enumerate(self.statistics):
                     if type(s).__name__[-3:] != 'GPU':
                         raise RuntimeError("{} statistics calculation doesn't support GPU acceleration".format(s))
+            if self.stop_conditions is not None:
+                print("Stop conditions:")
+                for ind, s in enumerate(self.stop_conditions):
+                    if type(s).__name__[-3:] != 'GPU':
+                        raise RuntimeError("{} stop condition calculation doesn't support GPU acceleration".format(s))
         # Init iterator and constraints.
-        print("Start calculation with {} iterations using {}.".format(steps, self.iterator))
+        print("Started calculation with {} iterations using {}.".format(steps, self.iterator))
+        start_time = time.time()
         if self.iterator is not None:
             self.iterator.init(model, steps, *args, **kwargs)
         if self.constraints is not None:
@@ -54,10 +59,14 @@ class Solver:
                 r.init(model, steps, *args, **kwargs)
                 print("  " + str(r))
         if self.statistics is not None:
-            # print("Calculated statistics:")
             for ind, s in enumerate(self.statistics):
-                s.init(model, steps, *args, **kwargs)
+                s.init(model, steps, real_solution=self.real_solution, *args, **kwargs)
                 # print(" " + str(s))
+        if self.stop_conditions is not None:
+            print("Stop conditions:")
+            for ind, s in enumerate(self.stop_conditions):
+                s.init(model, steps, real_solution=self.real_solution, *args, **kwargs)
+                print("{} < {}".format(s, self.stop_values[ind]))
 
         # Start iteration
         for i in range(steps):
@@ -90,6 +99,8 @@ class Solver:
                 print("...", str(i * 100 // steps) + "% complete", end='')
 
         print('\r \r', end='')
+        end_time = time.time()
+        print(f"Finished in {end_time - start_time} s.")
         if self.iterator is not None:
             self.iterator.finalize(model)
         if self.constraints is not None:

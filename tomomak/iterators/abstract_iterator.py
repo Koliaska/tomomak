@@ -130,6 +130,10 @@ class AbstractStatistics(AbstractSolverClass):
 
     def __init__(self):
         self.data = []
+        self.real_solution = None
+
+    def init(self, model, steps, real_solution, *args, **kwargs):
+        self.real_solution = real_solution
 
     def plot(self):
         plt.plot(self.data)
