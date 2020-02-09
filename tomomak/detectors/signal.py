@@ -1,6 +1,9 @@
 import numpy as np
-import cupy as cp
 from scipy import interpolate
+try:
+    import cupy as cp
+except ImportError:
+    cp = None
 
 
 def get_signal(solution, detector_geometry):

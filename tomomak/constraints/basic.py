@@ -1,6 +1,10 @@
 from ..iterators import abstract_iterator
 import numpy as np
-import cupy as cp
+try:
+    import cupy as cp
+except ImportError:
+    cp = None
+
 from tomomak.util.engine import IteratorFactory
 
 

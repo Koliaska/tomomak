@@ -62,12 +62,12 @@ mesh = mesh.Mesh(axes)
 mod = model.Model(mesh=mesh)
 real_solution = objects2d.ellipse(mesh, (5,5),(3,3))
 mod.solution = real_solution
-
 # Now we can create Model.
 
 # Model is one of the basic tomomak structures which stores information about geometry, solution and detectors.
 # At present we only have information about the geometry.
 mod = model.Model(mesh=mesh)
+
 # Now let's create synthetic 2D object to study.
 # We will consider triangle.
 real_solution = objects2d.ellipse(mesh, (5,5),(3,3))
@@ -80,8 +80,8 @@ real_solution = objects2d.ellipse(mesh, (5,5),(3,3))
 det = detectors2d.fan_detector_array(mesh=mesh,
                                      focus_point=(5, 5),
                                      radius=11,
-                                     fan_num=1,
-                                     line_num=6,
+                                     fan_num=40,
+                                     line_num=10,
                                      width=1,
                                      divergence=0.2)
 det = detectors2d.two_pi_detector_array(mesh, (5,5), 10, 40)

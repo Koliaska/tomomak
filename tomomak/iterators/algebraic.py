@@ -2,7 +2,11 @@ from . import abstract_iterator
 import numpy as np
 from tomomak.detectors import signal
 from tomomak.util.engine import IteratorFactory
-import cupy as cp
+try:
+    import cupy as cp
+except ImportError:
+    pass
+
 
 
 class ART(IteratorFactory):

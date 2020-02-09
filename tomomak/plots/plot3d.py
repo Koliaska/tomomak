@@ -1,13 +1,18 @@
-from mayavi import mlab
+
+
 import matplotlib.colors
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
-from traits.api import HasTraits, Range, Instance, on_trait_change
-from traitsui.api import View, Item, HGroup
-from tvtk.pyface.scene_editor import SceneEditor
-from mayavi.tools.mlab_scene_model import MlabSceneModel
-from mayavi.core.ui.mayavi_scene import MayaviScene
+try:
+    from mayavi import mlab
+    from traits.api import HasTraits, Range, Instance, on_trait_change
+    from traitsui.api import View, Item, HGroup
+    from tvtk.pyface.scene_editor import SceneEditor
+    from mayavi.tools.mlab_scene_model import MlabSceneModel
+    from mayavi.core.ui.mayavi_scene import MayaviScene
+except ImportError:
+    mlab = None
 
 
 def _build_contour3d(data, x, y, z, scene, title='', colormap='blue-red', limits=None, style=1, axes=False):
@@ -108,6 +113,8 @@ def contour3d(data, x, y, z,  title='', colormap='blue-red', limits=None, style=
         axes (False or tuple of 3 str): If not False, axes are shown. Axes names are represented by tuple values.
             Default: False.
     """
+    if mlab is None:
+        raise ImportError("Unable to import Mayavi for 3D visualization.")
 
     class Visualization(HasTraits):
         scene = Instance(MlabSceneModel, ())
@@ -153,6 +160,8 @@ def detector_contour3d(data, x, y, z,  title='', colormap='blue-red', limits=Non
           equal_norm(bool, optional): If True,  all detectors will have same z axis.
             If False, each detector has individual z axis. default:False
       """
+    if mlab is None:
+        raise ImportError("Unable to import Mayavi for 3D visualization.")
     # Currently there is a bug with Mayavi vmin and vmax limits in interactive volume render.
     # So special rendering case is introduced.
     if style == 3:

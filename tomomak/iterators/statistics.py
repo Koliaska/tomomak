@@ -1,5 +1,9 @@
 import numpy as np
-import cupy as cp
+try:
+    import cupy as cp
+except ImportError:
+    cp = None
+
 from tomomak.detectors import signal
 from tomomak.iterators.abstract_iterator import AbstractStatistics
 from tomomak.util.engine import IteratorFactory

@@ -3,7 +3,10 @@ import numpy as np
 import warnings
 from tomomak.detectors import signal
 from tomomak.util.engine import IteratorFactory
-import cupy as cp
+try:
+    import cupy as cp
+except ImportError:
+    cp = None
 
 
 class ML(IteratorFactory):

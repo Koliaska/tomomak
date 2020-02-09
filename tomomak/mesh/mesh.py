@@ -180,19 +180,20 @@ class Mesh:
             except (NotImplementedError, TypeError):
                 index.append(index[1] + 1)
         # try to draw using 3 axes
-        new_data = self._prepare_data(data, index, data_type)
-        ind_lst = list(itertools.permutations((0, 1, 2), 3))
-        for p in ind_lst:
-            try:
-                new_ax = [self._axes[i] for i in p]
-                dat = np.array(new_data)
-                for i in range(3):
-                    np.moveaxis(dat, p[i], i)
-                plot = new_ax[index[0]].plot3d(dat, new_ax[index[1]], new_ax[index[2]],
-                                               self, data_type, *args, **kwargs)
-                return plot
-            except NotImplementedError:
-                pass
+        if len(self.axes) > 2:
+            new_data = self._prepare_data(data, index, data_type)
+            ind_lst = list(itertools.permutations((0, 1, 2), 3))
+            for p in ind_lst:
+                try:
+                    new_ax = [self._axes[i] for i in p]
+                    dat = np.array(new_data)
+                    for i in range(3):
+                        np.moveaxis(dat, p[i], i)
+                    plot = new_ax[index[0]].plot3d(dat, new_ax[index[1]], new_ax[index[2]],
+                                                   self, data_type, *args, **kwargs)
+                    return plot
+                except NotImplementedError:
+                    pass
         raise TypeError("plot3d is not implemented for such axes combination or other problem occurred.")
 
     def draw_mesh(self):
