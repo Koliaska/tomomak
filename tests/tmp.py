@@ -45,78 +45,77 @@ import os
 import tomomak.constraints.basic
 
 
+if __name__ == "__main__":
+
+    axes = [cartesian.Axis1d(name="X", units="cm", size=50, upper_limit=10),
+            cartesian.Axis1d(name="Y", units="cm", size=50, upper_limit=10)]
+    mesh = mesh.Mesh(axes)
+    mod = model.Model(mesh=mesh)
+    mod = model.Model(mesh=mesh)
 
 
+    #real_solution = objects2d.ellipse(mesh, (5,5),(3,3))
+    import time
 
+    start = time.time()
 
-# This is an example of a basic framework functionality.
-# You will learn how to use framework, steps you need to follow in order to get the solution.
-# More advanced features are described in advanced examples.
-
-# The first step is to create coordinate system. We will consider 2D cartesian coordinates.
-# Let's create coordinate mesh. First axis will consist of 20 segments. Second - of 30 segments.
-# This means that solution will be described by the 20x30 array.
-axes = [cartesian.Axis1d(name="X", units="cm", size=10, upper_limit=10),
-        cartesian.Axis1d(name="Y", units="cm", size=10, upper_limit=10)]
-mesh = mesh.Mesh(axes)
-mod = model.Model(mesh=mesh)
-real_solution = objects2d.ellipse(mesh, (5,5),(3,3))
-mod.solution = real_solution
-# Now we can create Model.
-
-# Model is one of the basic tomomak structures which stores information about geometry, solution and detectors.
-# At present we only have information about the geometry.
-mod = model.Model(mesh=mesh)
-
-# Now let's create synthetic 2D object to study.
-# We will consider triangle.
-real_solution = objects2d.ellipse(mesh, (5,5),(3,3))
-
-
-# Next step is to provide information about the detectors.
-# Let's create 15 fans with 22 detectors around the investigated object.
-# Each line will have 1 cm width and 0.2 Rad divergence.
-# Note that number of detectors = 330 < solution cells = 600, so it's impossible to get perfect solution.
-det = detectors2d.fan_detector_array(mesh=mesh,
-                                     focus_point=(5, 5),
-                                     radius=11,
-                                     fan_num=40,
-                                     line_num=10,
-                                     width=1,
-                                     divergence=0.2)
-det = detectors2d.two_pi_detector_array(mesh, (5,5), 10, 40)
-print(det)
-# Now we can calculate signal of each detector.
-# Of course in the real experiment you measure detector signals so you don't need this function.
-det_signal = signal.get_signal(real_solution, det)
-mod.detector_signal = det_signal
-mod.detector_geometry = det
-mod.plot2d(data_type='detector_geometry', equal_norm=True)
-solver = Solver()
-
-os.environ["TM_GPU"] = "1"
-solver.statistics = [statistics.RMS()]
-solver.constraints = [tomomak.constraints.basic.Positive()]
-
-solver.real_solution = real_solution
-
-solver.iterator = algebraic.SIRT()
-solver.iterator.alpha = np.full(100000, 0.1)
-steps = 1
-solver.solve(mod, steps=steps)
-solver.plot_statistics()
-
-os.environ["TM_GPU"] = "0"
-mod.solution = None
-solver.iterator = algebraic.SIRT()
-solver.constraints = [tomomak.constraints.basic.Positive()]
-solver.statistics = [statistics.RMS()]
-solver.iterator.alpha = np.full(100, 0.1)
-solver.solve(mod, steps=steps)
-solver.plot_statistics()
-
-mod.plot2d(data_type='detector_geometry')
+    det = detectors2d.fan_detector_array(mesh=mesh,
+                                         focus_point=(5, 5),
+                                         radius=11,
+                                         fan_num=1,
+                                         line_num=10,
+                                         width=1,
+                                         divergence=0.2)
+    end = time.time()
+    print("serial: ", end - start)
+    mod.detector_geometry = det
+    # mod.plot2d(data_type='detector_geometry')
+    start = time.time()
+    os.environ["TM_MP"] = "8"
+    det = detectors2d.fan_detector_array(mesh=mesh,
+                                            focus_point=(5, 5),
+                                            radius=11,
+                                            fan_num=40,
+                                            line_num=10,
+                                            width=1,
+                                            divergence=0.2)
+    end = time.time()
+    print("parallel: ", end - start)
+    mod.detector_geometry = det
+    mod.plot2d(data_type='detector_geometry')
+# det = detectors2d.two_pi_detector_array(mesh, (5,5), 10, 40)
+# print(det)
+# # Now we can calculate signal of each detector.
+# # Of course in the real experiment you measure detector signals so you don't need this function.
+# det_signal = signal.get_signal(real_solution, det)
+# mod.detector_signal = det_signal
+# mod.detector_geometry = det
+# mod.plot2d(data_type='detector_geometry', equal_norm=True)
+# solver = Solver()
+#
+# os.environ["TM_GPU"] = "1"
+# solver.statistics = [statistics.RMS()]
+# solver.constraints = [tomomak.constraints.basic.Positive()]
+#
+# solver.real_solution = real_solution
+#
+# solver.iterator = algebraic.SIRT()
+# solver.iterator.alpha = np.full(100000, 0.1)
+# steps = 1
+# solver.solve(mod, steps=steps)
 # solver.plot_statistics()
+#
+# os.environ["TM_GPU"] = "0"
+# mod.solution = None
+# solver.iterator = algebraic.SIRT()
+# solver.constraints = [tomomak.constraints.basic.Positive()]
+# solver.statistics = [statistics.RMS()]
+# solver.iterator.alpha = np.full(100, 0.1)
+# solver.solve(mod, steps=steps)
+# solver.plot_statistics()
+#
+# mod.plot2d(data_type='detector_geometry')
+# # solver.plot_statistics()
 #
 # # Now let's change to  algebraic reconstruction technique.
 # solver.iterator = algebraic.ART()

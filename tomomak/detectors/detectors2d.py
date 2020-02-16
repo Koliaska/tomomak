@@ -3,6 +3,9 @@
 import shapely.geometry
 import shapely.affinity
 import tomomak.util.geometry2d
+from tomomak.util.engine import muti_proc
+from multiprocessing import Pool
+import os
 import numpy as np
 
 
@@ -150,9 +153,19 @@ def fan_detector(mesh, p1, p2, width, number, index=(0, 1), angle=np.pi/2, *args
     return res
 
 
+@muti_proc
 def fan_detector_array(mesh, focus_point, radius, fan_num, line_num, width,
                        incline=0,  *args, **kwargs):
     """ Creates array of fan detectors around focus points.
+
+    Multiprocess acceleration is supported.
+    To turn it on run script with environmental variable TM_MP set to number of desired cores.
+    Or just write in your script:
+       import os
+       os.environ["TM_MP"] = "8"
+    If you use Windows, due to Python limitations, you have to guard your script with
+    if __name__ == "__main__":
+        ...your script
 
       Args:
           mesh (tomomak.main_structures.Mesh): mesh to work with.
@@ -168,6 +181,11 @@ def fan_detector_array(mesh, focus_point, radius, fan_num, line_num, width,
       Returns:
           ndarray: numpy array, representing fan of detectors on a given mesh.
       """
+    pass
+
+
+def _fan_detector_array(mesh, focus_point, radius, fan_num, line_num, width,
+                        incline=0,  *args, **kwargs):
     shape = [0]
     shape.extend(mesh.shape)
     res = np.zeros(shape)
@@ -184,6 +202,30 @@ def fan_detector_array(mesh, focus_point, radius, fan_num, line_num, width,
     print('\r \r ', end='')
     print('\r \r ', end='')
     return res
+
+
+def _fan_detector_array_mp(mesh, focus_point, radius, fan_num, line_num, width,
+                           incline=0, *args, **kwargs):
+    proc_num = int(os.getenv('TM_MP'))
+    pool = Pool(processes=proc_num)
+    print("Started multi-process calculation of 2D fan detector array on {} cores.".format(proc_num))
+    res = []
+    d_incline = np.pi * 2 / fan_num
+    focus_point = np.array(focus_point)
+    for i in range(fan_num):
+        p1 = np.array([focus_point[0] + radius * np.cos(incline), focus_point[1] + radius * np.sin(incline)])
+        r = (focus_point - p1) * 10
+        p2 = p1 + r
+        res.append(pool.apply_async(fan_detector, (mesh, p1, p2, width, line_num) + args, kwargs))
+        incline += d_incline
+    pool.close()
+    pool.join()
+    shape = [0]
+    shape.extend(mesh.shape)
+    final_res = np.zeros(shape)
+    for r in res:
+        final_res = np.append(final_res, r.get(), axis=0)
+    return final_res
 
 
 def parallel_detector(mesh, p1, p2, width, number, shift, index=(0, 1), *args, **kwargs):
