@@ -1,4 +1,4 @@
-from tomomak.main_structures import model
+from tomomak import model
 import numpy as np
 import unittest
 

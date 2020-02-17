@@ -72,8 +72,8 @@ def two_pi_detector_array(mesh, focus_point, radius, det_num,  *args, **kwargs):
     return res
 
 
-def line2d(mesh, p1, p2, width, divergence=0, index=(0, 1), response=1, radius_dependence=True,
-           broadcast=True, calc_area=True):
+def detector2d(mesh, p1, p2, width, divergence=0, index=(0, 1), response=1, radius_dependence=True,
+               broadcast=True, calc_area=True):
     """Generate intersection of one detector line with mesh cells.
 
     Source is isotropic.
@@ -147,7 +147,7 @@ def fan_detector(mesh, p1, p2, width, number, index=(0, 1), angle=np.pi/2, *args
     res = np.zeros(shape)
     for i in range(number):
         p1, p2 = line.coords
-        addition = np.array([line2d(mesh, p1, p2, width, index=index,  *args, **kwargs)])
+        addition = np.array([detector2d(mesh, p1, p2, width, index=index, *args, **kwargs)])
         res = np.append(res, addition, axis=0)
         line = shapely.affinity.rotate(line, rot_angle, origin=p1, use_radians=True)
     return res
@@ -263,7 +263,7 @@ def parallel_detector(mesh, p1, p2, width, number, shift, index=(0, 1), *args, *
     res = np.zeros(shape)
     for i in range(number):
         p1, p2 = line.coords
-        addition = np.array([line2d(mesh, p1, p2, width, index=index,  *args, **kwargs)])
+        addition = np.array([detector2d(mesh, p1, p2, width, index=index, *args, **kwargs)])
         res = np.append(res, addition, axis=0)
         line = line.parallel_offset(shift, 'left')
     return res

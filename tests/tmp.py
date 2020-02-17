@@ -52,8 +52,18 @@ if __name__ == "__main__":
     mesh = mesh.Mesh(axes)
     mod = model.Model(mesh=mesh)
     mod = model.Model(mesh=mesh)
-
-
+    from tomomak.detectors import detector_array
+    kw_list = []
+    kw_list.append({'mesh': mesh, 'p1': (-5, 0), 'p2': (15, 15), 'width': 0.5, 'divergence': 0.1})
+    kw_list.append({'mesh': mesh, 'p1': (-5, 5), 'p2': (15, 5), 'width': 0.5, 'divergence': 0.1})
+    det = detector_array.detector_array(func_name='tomomak.detectors.detectors2d.detector2d', kwargs_list=kw_list)
+    mod.detector_signal = [0, 0]
+    mod.detector_geometry = det
+    mod.plot2d(data_type='detector_geometry')
+    os.environ["TM_MP"] = "4"
+    det = detector_array.detector_array(func_name='tomomak.detectors.detectors2d.detector2d', kwargs_list=kw_list)
+    mod.detector_geometry = det
+    mod.plot2d(data_type='detector_geometry')
     #real_solution = objects2d.ellipse(mesh, (5,5),(3,3))
     import time
 

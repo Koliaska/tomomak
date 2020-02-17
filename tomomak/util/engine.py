@@ -32,6 +32,19 @@ class IteratorFactory:
 
 @decorator
 def muti_proc(func, *args, **kwargs):
+    """Decorator to enable multi process calculation.
+
+    If multi process acceleration is supported, original function should pass, while all the calculations are done in
+    the functions named _"function name" - single core execution and _"function name"_mp - multiprocessing execution.
+    See tomomak.detectors.detectors2d.fan_detector_array for example.
+    To turn multi process calculations on run script with environmental variable TM_MP set to number of desired cores.
+    Or just write in your script:
+       import os
+       os.environ["TM_MP"] = "8"
+    If you use Windows, due to Python limitations, you have to guard your script with
+    if __name__ == "__main__":
+        ...your script
+    """
     mp_enable = os.getenv('TM_MP')
     name = func.__name__
     module = importlib.import_module(func.__module__)
