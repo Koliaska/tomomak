@@ -57,7 +57,6 @@ class _RMSGPU(_RMSCPU):
 
         Args:
             solution (ndarray): supposed solution.
-            real_solution (ndarray): known solution.
             *args: not used, but needed to be here in order to work with Solver properly.
              **kwargs: not used, but needed to be here in order to work with Solver properly.
 

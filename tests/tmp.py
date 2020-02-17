@@ -62,20 +62,20 @@ if __name__ == "__main__":
     det = detectors2d.fan_detector_array(mesh=mesh,
                                          focus_point=(5, 5),
                                          radius=11,
-                                         fan_num=1,
+                                         fan_num=8,
                                          line_num=10,
                                          width=1,
                                          divergence=0.2)
     end = time.time()
     print("serial: ", end - start)
     mod.detector_geometry = det
-    # mod.plot2d(data_type='detector_geometry')
+    mod.plot2d(data_type='detector_geometry')
     start = time.time()
-    os.environ["TM_MP"] = "8"
+    os.environ["TM_MP"] = "4"
     det = detectors2d.fan_detector_array(mesh=mesh,
                                             focus_point=(5, 5),
                                             radius=11,
-                                            fan_num=40,
+                                            fan_num=8,
                                             line_num=10,
                                             width=1,
                                             divergence=0.2)

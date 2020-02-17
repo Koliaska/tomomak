@@ -189,18 +189,26 @@ def _fan_detector_array(mesh, focus_point, radius, fan_num, line_num, width,
     shape = [0]
     shape.extend(mesh.shape)
     res = np.zeros(shape)
+    fans = _prepare_fans(focus_point, radius, fan_num, incline)
+    for i, f in enumerate(fans):
+        res = np.append(res, fan_detector(mesh, f[0], f[1], width, line_num,  *args, **kwargs), axis=0)
+        print('\r', end='')
+        print("Generating array of fan detectors: ", str(i*100 // fan_num) + "% complete", end='')
+    print('\r \r ', end='')
+    print('\r \r ', end='')
+    return res
+
+
+def _prepare_fans(focus_point, radius, fan_num, incline):
     d_incline = np.pi * 2 / fan_num
     focus_point = np.array(focus_point)
+    res = []
     for i in range(fan_num):
         p1 = np.array([focus_point[0] + radius * np.cos(incline), focus_point[1] + radius * np.sin(incline)])
         r = (focus_point - p1) * 10
         p2 = p1 + r
-        res = np.append(res, fan_detector(mesh, p1, p2, width, line_num,  *args, **kwargs), axis=0)
-        print('\r', end='')
-        print("Generating array of fan detectors: ", str(i*100 // fan_num) + "% complete", end='')
+        res.append([p1, p2])
         incline += d_incline
-    print('\r \r ', end='')
-    print('\r \r ', end='')
     return res
 
 
@@ -210,14 +218,9 @@ def _fan_detector_array_mp(mesh, focus_point, radius, fan_num, line_num, width,
     pool = Pool(processes=proc_num)
     print("Started multi-process calculation of 2D fan detector array on {} cores.".format(proc_num))
     res = []
-    d_incline = np.pi * 2 / fan_num
-    focus_point = np.array(focus_point)
-    for i in range(fan_num):
-        p1 = np.array([focus_point[0] + radius * np.cos(incline), focus_point[1] + radius * np.sin(incline)])
-        r = (focus_point - p1) * 10
-        p2 = p1 + r
-        res.append(pool.apply_async(fan_detector, (mesh, p1, p2, width, line_num) + args, kwargs))
-        incline += d_incline
+    fans = _prepare_fans(focus_point, radius, fan_num, incline)
+    for i, f in enumerate(fans):
+        res.append(pool.apply_async(fan_detector, (mesh, f[0], f[1], width, line_num) + args, kwargs))
     pool.close()
     pool.join()
     shape = [0]

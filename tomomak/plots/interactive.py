@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Button
 
 
 class DetectorPlotSlider:
@@ -23,6 +22,7 @@ class DetectorPlotSlider:
             ax (matplotlib.axes.Axes): Plot axes.
         """
         self.ind = 0
+        self.slider = None
         self.data = data
         self.ax = ax
 
@@ -31,7 +31,7 @@ class DetectorPlotSlider:
 
         Changes detector index in plot title and rescales axes.
         """
-        new_title = 'Detector {}/{}'.format(self.ind+1 , self.data.shape[0])
+        new_title = 'Detector {}/{}'.format(self.ind + 1, self.data.shape[0])
         self.ax.set_title(new_title)
         self.ax.relim()
 

@@ -97,7 +97,6 @@ def detector_colormesh2d(data, axis1, axis2, title='', cb_title='',  style='colo
                 self.cb.draw_all()
             super().redraw()
 
-
     norm = None
     if equal_norm:
         norm = [min(np.min(data), 0), np.max(data)]
