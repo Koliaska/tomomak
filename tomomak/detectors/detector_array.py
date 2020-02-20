@@ -3,6 +3,7 @@ from multiprocessing import Pool
 import numpy as np
 import os
 import importlib
+from tomomak.util import text
 
 
 @muti_proc
@@ -49,12 +50,13 @@ def _detector_array(func_name, kwargs_list):
     module = importlib.import_module(module_name)
     func = getattr(module, func_name)
     list_len = len(kwargs_list)
+    print("Started calculation of  {} array.".format(func_name))
     for i, k in enumerate(kwargs_list):
         res.append(func(**k))
         print('\r', end='')
-        print("Generating detector array of: " + func_name +  str(i*100 // list_len) + " % complete", end='')
-    print('\r \r ', end='')
-    print('\r \r ', end='')
+        print("Generating detector array of {}. {}% complete.".format(func_name, i*100 // list_len), end='')
+    print('\r \r', end='')
+    print('\r \r', end='')
     return np.array(res)
 
 
@@ -68,6 +70,7 @@ def _detector_array_mp(func_name, kwargs_list):
     print("Started multi-process calculation of {} detector array on {} cores.".format(func_name, proc_num))
     for kw in kwargs_list:
         res.append(pool.apply_async(func, kwds=kw))
+    text.progress_mp(res, len(kwargs_list))
     pool.close()
     pool.join()
     final_res = []

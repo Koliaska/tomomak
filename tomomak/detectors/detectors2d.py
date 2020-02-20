@@ -7,6 +7,7 @@ from tomomak.util.engine import muti_proc
 from multiprocessing import Pool
 import os
 import numpy as np
+from tomomak.util import text
 
 
 def two_pi_det(mesh, position, index=(0, 1), response=1, radius_dependence=True, broadcast=True):
@@ -68,8 +69,8 @@ def two_pi_detector_array(mesh, focus_point, radius, det_num,  *args, **kwargs):
         print('\r', end='')
         print("Generating array of 2pi detectors: ", str(i * 100 // det_num) + "% complete", end='')
         incline += d_incline
-    print('\r \r ', end='')
-    print('\r \r ', end='')
+    print('\r \r', end='')
+    print('\r \r', end='')
     return res
 
 
@@ -195,8 +196,8 @@ def _fan_detector_array(mesh, focus_point, radius, fan_num, line_num, width,
         res = np.append(res, fan_detector(mesh, f[0], f[1], width, line_num,  *args, **kwargs), axis=0)
         print('\r', end='')
         print("Generating array of fan detectors: ", str(i*100 // fan_num) + "% complete", end='')
-    print('\r \r ', end='')
-    print('\r \r ', end='')
+    print('\r \r', end='')
+    print('\r \r', end='')
     return res
 
 
@@ -222,6 +223,7 @@ def _fan_detector_array_mp(mesh, focus_point, radius, fan_num, line_num, width,
     fans = _prepare_fans(focus_point, radius, fan_num, incline)
     for i, f in enumerate(fans):
         res.append(pool.apply_async(fan_detector, (mesh, f[0], f[1], width, line_num) + args, kwargs))
+    text.progress_mp(res, fan_num)
     pool.close()
     pool.join()
     shape = [0]

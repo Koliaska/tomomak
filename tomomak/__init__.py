@@ -1,4 +1,6 @@
 """TOMOMAK - a limited data tomography framework"""
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # Core interface
 from .model import Model

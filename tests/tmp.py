@@ -51,19 +51,20 @@ if __name__ == "__main__":
             cartesian.Axis1d(name="Y", units="cm", size=50, upper_limit=10)]
     mesh = mesh.Mesh(axes)
     mod = model.Model(mesh=mesh)
-    mod = model.Model(mesh=mesh)
     from tomomak.detectors import detector_array
+
+    os.environ["TM_MP"] = "4"
     kw_list = []
-    kw_list.append({'mesh': mesh, 'p1': (-5, 0), 'p2': (15, 15), 'width': 0.5, 'divergence': 0.1})
-    kw_list.append({'mesh': mesh, 'p1': (-5, 5), 'p2': (15, 5), 'width': 0.5, 'divergence': 0.1})
+    for i in range(100):
+        kw_list.append({'mesh': mesh, 'p1': (-5, 0), 'p2': (15, 15), 'width': 0.5, 'divergence': 0.1})
+        kw_list.append({'mesh': mesh, 'p1': (-5, 5), 'p2': (15, 5), 'width': 0.5, 'divergence': 0.1})
     det = detector_array.detector_array(func_name='tomomak.detectors.detectors2d.detector2d', kwargs_list=kw_list)
-    mod.detector_signal = [0, 0]
     mod.detector_geometry = det
-    mod.plot2d(data_type='detector_geometry')
+    # mod.plot2d(data_type='detector_geometry')
     os.environ["TM_MP"] = "4"
     det = detector_array.detector_array(func_name='tomomak.detectors.detectors2d.detector2d', kwargs_list=kw_list)
     mod.detector_geometry = det
-    mod.plot2d(data_type='detector_geometry')
+
     #real_solution = objects2d.ellipse(mesh, (5,5),(3,3))
     import time
 
@@ -73,7 +74,7 @@ if __name__ == "__main__":
                                          focus_point=(5, 5),
                                          radius=11,
                                          fan_num=8,
-                                         line_num=10,
+                                         line_num=40,
                                          width=1,
                                          divergence=0.2)
     end = time.time()

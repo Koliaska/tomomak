@@ -1,4 +1,5 @@
 import collections
+import time
 
 
 def density_units(units):
@@ -37,3 +38,21 @@ def detector_caption(mesh):
     title = r"{}, {}".format(vol_name, units)
     return title
 
+
+def progress_mp(res, task_num):
+    is_run = True
+    while is_run:
+        running, successful= 0, 0
+        for result in res:
+            try:
+                if result.successful():
+                    successful += 1
+            except ValueError:
+                running += 1
+        print('\r', end='')
+        print("Generating array of fan detectors: ", str(successful * 100 // task_num) + "% complete", end='')
+        time.sleep(1)
+        if successful == task_num:
+            is_run = False
+    print('\r \r', end='')
+    print('\r \r', end='')
