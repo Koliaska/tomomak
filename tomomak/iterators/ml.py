@@ -97,9 +97,7 @@ class _MLGPU(abstract_iterator.AbstractIterator):
 
     def step(self, model, step_num):
         # expected signal
-        for i in range(self.y_len):
-            tmp = cp.multiply(model.solution, model.detector_geometry[i])
-            self.y_expected[i] = cp.sum(tmp)
+        self.y_expected = signal.get_signal_gpu(model.solution, model.detector_geometry)
         # multiplication
         self.mult = cp.divide(self.w_det, self.y_expected)
         self.mult = cp.where(cp.isnan(self.mult), 0, self.mult)

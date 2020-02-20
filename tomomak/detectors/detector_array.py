@@ -57,6 +57,7 @@ def _detector_array(func_name, kwargs_list):
     print('\r \r ', end='')
     return np.array(res)
 
+
 def _detector_array_mp(func_name, kwargs_list):
     res = []
     module_name, func_name = func_name.rsplit('.', 1)

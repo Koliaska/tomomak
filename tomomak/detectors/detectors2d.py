@@ -37,6 +37,7 @@ def two_pi_det(mesh, position, index=(0, 1), response=1, radius_dependence=True,
         intersection_geometry = tomomak.util.array_routines.broadcast_object(intersection_geometry, index, mesh.shape)
     return intersection_geometry
 
+
 def two_pi_detector_array(mesh, focus_point, radius, det_num,  *args, **kwargs):
     """ Creates array of fan detectors around focus points.
 

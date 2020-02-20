@@ -19,9 +19,8 @@ def get_signal(solution, detector_geometry):
         ndarray: calculated signals.
 
     """
-    signal = np.zeros(detector_geometry.shape[0])
-    for i, ar in enumerate(detector_geometry):
-        signal[i] = get_signal_one_det(solution, ar)
+    all_but_first = tuple(range(1, solution.ndim + 1))
+    signal = np.sum(np.multiply(detector_geometry, solution), axis=all_but_first)
     return signal
 
 
@@ -38,11 +37,10 @@ def get_signal_gpu(solution, detector_geometry):
         ndarray: calculated signals.
 
     """
-    signal = cp.zeros(detector_geometry.shape[0])
-    for i, ar in enumerate(detector_geometry):
-        tmp = cp.multiply(solution, detector_geometry[i])
-        signal[i] = cp.sum(tmp)
+    all_but_first = tuple(range(1, solution.ndim + 1))
+    signal = cp.sum(cp.multiply(detector_geometry, solution), axis=all_but_first)
     return signal
+
 
 def get_signal_one_det(solution, one_detector_geometry):
     """Get detector signals from known object and geometry for one detector.
