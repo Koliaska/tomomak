@@ -47,53 +47,65 @@ import tomomak.constraints.basic
 
 if __name__ == "__main__":
 
-    axes = [cartesian.Axis1d(name="X", units="cm", size=50, upper_limit=10),
-            cartesian.Axis1d(name="Y", units="cm", size=50, upper_limit=10)]
-    mesh = mesh.Mesh(axes)
-    mod = model.Model(mesh=mesh)
-    from tomomak.detectors import detector_array
+    import trimesh
+    ver = np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0], [1, 0, 0]])
+    mesh1 = trimesh.convex.convex_hull(trimesh.Trimesh(vertices=ver))
+    mesh1.show()
+    ver2 = np.array([[0, 0, 0], [0, 0, 1], [0, 0.5, 0], [3, 0, 0]])
+    mesh2 = trimesh.convex.convex_hull( trimesh.Trimesh(vertices = ver + 0.2))
+    mesh2.show()
+    inter = trimesh.boolean.union((mesh1, mesh2))
+    inter.show()
+    print (inter.volume)
 
-    os.environ["TM_MP"] = "4"
-    kw_list = []
-    for i in range(100):
-        kw_list.append({'mesh': mesh, 'p1': (-5, 0), 'p2': (15, 15), 'width': 0.5, 'divergence': 0.1})
-        kw_list.append({'mesh': mesh, 'p1': (-5, 5), 'p2': (15, 5), 'width': 0.5, 'divergence': 0.1})
-    det = detector_array.detector_array(func_name='tomomak.detectors.detectors2d.detector2d', kwargs_list=kw_list)
-    mod.detector_geometry = det
+
+    # axes = [cartesian.Axis1d(name="X", units="cm", size=50, upper_limit=10),
+    #         cartesian.Axis1d(name="Y", units="cm", size=50, upper_limit=10)]
+    # mesh = mesh.Mesh(axes)
+    # mod = model.Model(mesh=mesh)
+    # from tomomak.detectors import detector_array
+    #
+    # os.environ["TM_MP"] = "4"
+    # kw_list = []
+    # for i in range(100):
+    #     kw_list.append({'mesh': mesh, 'p1': (-5, 0), 'p2': (15, 15), 'width': 0.5, 'divergence': 0.1})
+    #     kw_list.append({'mesh': mesh, 'p1': (-5, 5), 'p2': (15, 5), 'width': 0.5, 'divergence': 0.1})
+    # det = detector_array.detector_array(func_name='tomomak.detectors.detectors2d.detector2d', kwargs_list=kw_list)
+    # mod.detector_geometry = det
+    # # mod.plot2d(data_type='detector_geometry')
+    # os.environ["TM_MP"] = "4"
+    # det = detector_array.detector_array(func_name='tomomak.detectors.detectors2d.detector2d', kwargs_list=kw_list)
+    # mod.detector_geometry = det
+    #
+    # #real_solution = objects2d.ellipse(mesh, (5,5),(3,3))
+    # import time
+    #
+    # start = time.time()
+    #
+    # det = detectors2d.fan_detector_array(mesh=mesh,
+    #                                      focus_point=(5, 5),
+    #                                      radius=11,
+    #                                      fan_num=8,
+    #                                      line_num=40,
+    #                                      width=1,
+    #                                      divergence=0.2)
+    # end = time.time()
+    # print("serial: ", end - start)
+    # mod.detector_geometry = det
     # mod.plot2d(data_type='detector_geometry')
-    os.environ["TM_MP"] = "4"
-    det = detector_array.detector_array(func_name='tomomak.detectors.detectors2d.detector2d', kwargs_list=kw_list)
-    mod.detector_geometry = det
-
-    #real_solution = objects2d.ellipse(mesh, (5,5),(3,3))
-    import time
-
-    start = time.time()
-
-    det = detectors2d.fan_detector_array(mesh=mesh,
-                                         focus_point=(5, 5),
-                                         radius=11,
-                                         fan_num=8,
-                                         line_num=40,
-                                         width=1,
-                                         divergence=0.2)
-    end = time.time()
-    print("serial: ", end - start)
-    mod.detector_geometry = det
-    mod.plot2d(data_type='detector_geometry')
-    start = time.time()
-    os.environ["TM_MP"] = "4"
-    det = detectors2d.fan_detector_array(mesh=mesh,
-                                            focus_point=(5, 5),
-                                            radius=11,
-                                            fan_num=8,
-                                            line_num=10,
-                                            width=1,
-                                            divergence=0.2)
-    end = time.time()
-    print("parallel: ", end - start)
-    mod.detector_geometry = det
-    mod.plot2d(data_type='detector_geometry')
+    # start = time.time()
+    # os.environ["TM_MP"] = "4"
+    # det = detectors2d.fan_detector_array(mesh=mesh,
+    #                                         focus_point=(5, 5),
+    #                                         radius=11,
+    #                                         fan_num=8,
+    #                                         line_num=10,
+    #                                         width=1,
+    #                                         divergence=0.2)
+    # end = time.time()
+    # print("parallel: ", end - start)
+    # mod.detector_geometry = det
+    # mod.plot2d(data_type='detector_geometry')
 # det = detectors2d.two_pi_detector_array(mesh, (5,5), 10, 40)
 # print(det)
 # # Now we can calculate signal of each detector.
