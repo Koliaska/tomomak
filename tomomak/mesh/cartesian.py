@@ -148,18 +148,22 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         if type(axis2) is not Axis1d or type(axis3) is not Axis1d:
             raise NotImplementedError("Cell edges with such combination of axes are not supported.")
         shape = (self.size, axis2.size, axis3.size)
-        res = np.zeros(shape).tolist()
+        vertices = np.zeros(shape).tolist()
+        faces = np.zeros(shape).tolist()
         edge1 = self.cell_edges1d
         edge2 = axis2.cell_edges1d
         edge3 = axis3.cell_edges1d
-        for i, row in enumerate(res):
+        for i, row in enumerate(vertices):
             for j, col in enumerate(row):
                 for k, _ in enumerate(col):
-                    res[i][j][k] = [(edge1[i], edge2[j], edge3[k]), (edge1[i + 1], edge2[j], edge3[k]),
-                                    (edge1[i + 1], edge2[j + 1], edge3[k]), (edge1[i + 1], edge2[j], edge3[k + 1]),
-                                    (edge1[i + 1], edge2[j + 1], edge3[k + 1]), (edge1[i], edge2[j + 1], edge3[k]),
-                                    (edge1[i], edge2[j + 1], edge3[k + 1]), (edge1[i], edge2[j], edge3[k + 1])]
-        return res
+                    vertices[i][j][k] = [
+                        (edge1[i], edge2[j], edge3[k]), (edge1[i + 1], edge2[j], edge3[k]),
+                        (edge1[i + 1], edge2[j + 1], edge3[k]), (edge1[i], edge2[j + 1], edge3[k]),
+                        (edge1[i], edge2[j], edge3[k + 1]), (edge1[i + 1], edge2[j], edge3[k + 1]),
+                        (edge1[i + 1], edge2[j + 1], edge3[k + 1]), (edge1[i], edge2[j + 1], edge3[k + 1])]
+                    faces[i][j][k] = [(0, 3, 2, 1), (4, 5, 6, 7),
+                                      (2, 3, 7, 6), (4, 7, 3, 0), (0, 1, 5, 4), (1, 2, 6, 5)]
+        return vertices, faces
 
     def intersection(self, axis2):
         """See description in abstract axes.

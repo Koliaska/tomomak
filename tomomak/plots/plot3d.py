@@ -11,6 +11,7 @@ try:
     from tvtk.pyface.scene_editor import SceneEditor
     from mayavi.tools.mlab_scene_model import MlabSceneModel
     from mayavi.core.ui.mayavi_scene import MayaviScene
+    from tvtk.util.ctf import ColorTransferFunction
 except ImportError:
     mlab = None
 
@@ -69,10 +70,19 @@ def _build_contour3d(data, x, y, z, scene, title='', colormap='blue-red', limits
         else:
             min_val = limits[0]
             max_val = limits[1]
+
+
+
         if style == 33:  # special case to deal with Mayavi bug
             obj = scene.mlab.pipeline.volume(mlab.pipeline.scalar_field(x, y, z, data))
         else:
             obj = scene.mlab.pipeline.volume(mlab.pipeline.scalar_field(x, y, z, data), vmin=min_val, vmax=max_val)
+        # alpha channel
+        otf = obj._otf
+        otf.remove_all_points()
+        otf.add_point(min_val, 0)
+        otf.add_point(max_val * 0.21, 0.6)
+        otf.add_point(max_val, 0.6)
     else:
         raise AttributeError("Style {} is not supported".format(style))
 
@@ -207,7 +217,7 @@ def detector_contour3d(data, x, y, z,  title='', colormap='blue-red', limits=Non
 
 
 def mesh3d(data, axis1,  axis2, axis3,  title='', fill_scheme='viridis', *args, **kwargs):
-    vertex = axis1.cell_edges3d(axis2, axis3)
+    (vertex, faces) = axis1.cell_edges3d(axis2, axis3)
     norm = matplotlib.colors.Normalize(vmin=np.amin(data), vmax=np.amax(data))
     data = norm(data)
     colormap = plt.get_cmap(fill_scheme)

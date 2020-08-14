@@ -5,8 +5,9 @@ import shapely.geometry
 
 
 def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
-    """Create solution array, representing 2d polygon, defined by specified points on the given mesh.
+    """Create array, representing 2d polygon, defined by specified points on the given mesh.
 
+    Each value in the array corresponds to the intersection area of the given cell and the polygon.
     If there are more than 2 dimension in model, broadcasting to other dimensions is performed.
     If broadcasting is not needed private method _polygon may be used.
     Only axes which implements cell_edges2d method are supported.
@@ -21,15 +22,15 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
         mesh(tomomak.main_structures.Mesh): mesh to work with.
         points(An ordered sequence of point tuples, optional): Polygon points (x, y).
             default: ((0 ,0), (5, 5), (10, 0))
-        index(tuple of two ints, optional): axes to build object at. Default:  (0,1)
+        index(tuple of one or two ints, optional): axes to build object at. Default:  (0,1)
         calc_area(bool): If True, area of intersection with each cell is calculated, if False,
             only fact of intersecting with mesh cell is taken into account. Default: True.
 
     Returns:
-        ndarray: 2D numpy array, representing polygon on the given mesh.
+        ndarray: 1D or 2D numpy array, representing polygon on the given mesh.
 
     Raises:
-        TypeError if one of the axes is not  cartesian (tomomak.main_structures.mesh.cartesian).
+        TypeError if no combination of axes supports the cell_edges2d() method or all axes dimensions are > 2.
     """
     if isinstance(index, int):
         index = [index]
@@ -38,7 +39,7 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
     if mesh.axes[index[0]].dimension == 2:
         i1 = index[0]
         try:
-            cells = mesh.axes[i1].cell_edges1d()
+            cells = mesh.axes[i1].cell_edges2d()
             shape = (mesh.axes[i1].size,)
             res = np.zeros(shape)
             for i, row in enumerate(res):
@@ -49,11 +50,11 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
                 else:
                     inters = pol.intersects(cell)
                     if inters:
-                        res[i] = 1
+                        res[i] = cell.area
             return res
         except (TypeError, AttributeError) as e:
-            raise type(e)(e.message + "Custom axis should implement cell_edges1d method. "
-                                      "This method returns 1d list of ordered sequence of point tuples."
+            raise type(e)(e.message + "Custom axis should implement cell_edges2d method. "
+                                      "This method returns 2d list of ordered sequence of point tuples."
                                       " See docstring for more information.")
     # If axes are 1D
     elif mesh.axes[0].dimension == 1:
@@ -63,7 +64,7 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
             cells = mesh.axes[i1].cell_edges2d(mesh.axes[i2])
         except (TypeError, AttributeError):
             try:
-                cells = mesh.axes[i2].cell_edges2d(mesh.axes[i1])
+                cells = np.transpose(mesh.axes[i2].cell_edges2d(mesh.axes[i1]))
             except (TypeError, AttributeError) as e:
                 raise type(e)(e.message + "Custom axis should implement cell_edges2d method. "
                                           "This method returns 2d list of ordered sequence of point tuples."

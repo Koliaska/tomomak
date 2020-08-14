@@ -164,8 +164,14 @@ class Abstract1dAxis(AbstractAxis):
             axis3 (tomomak axis): another 1D axes of the same or other type.
 
         Returns:
-            3D list of lists of points (x, y) in cartesian coordinates: points of the polygon, representing the cell.
-            Size of the list is self.size x axis1.size
+            (vertices, faces)
+            vertices: 3D list of lists of points (x, y, z) in cartesian coordinates: vertices the cell.
+            Size of the list is self.size x axis1.size x axis3.size
+            faces: 3D list of lists of cell faces. Each face is a list of vertices, denoted in cw direction.
+            Some methods may work with faces=None
+             - in this case faces are created automatically for the convex hull of the vertices.
+            Size of the list is self.size x axis1.size x axis3.size
+
         """
 
 

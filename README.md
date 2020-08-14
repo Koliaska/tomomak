@@ -30,6 +30,8 @@ Required packages:
 * Shapely (for 2D geometry).
 * CuPy (for GPU acceleration).
 * Mayavi (for 3D visualization).
+* Trimesh (for 3D geometry)
+* Rtree (for ray casting in 3D geometry)
 
 If you don't use Anaconda:
 * SciPy

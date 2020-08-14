@@ -188,7 +188,7 @@ class Mesh:
                     new_ax = [self._axes[i] for i in p]
                     dat = np.array(new_data)
                     for i in range(3):
-                        np.moveaxis(dat, p[i], i)
+                        dat = np.moveaxis(dat, p[i], i)
                     plot = new_ax[index[0]].plot3d(dat, new_ax[index[1]], new_ax[index[2]],
                                                    self, data_type, *args, **kwargs)
                     return plot

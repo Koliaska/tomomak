@@ -41,23 +41,49 @@ from tomomak.transform import pipeline
 from tomomak.detectors import detectors2d, signal
 from tomomak.iterators import ml, algebraic
 from tomomak.iterators import statistics
+from tomomak.util import geometry3d
 import os
 import tomomak.constraints.basic
-
+import trimesh
 
 if __name__ == "__main__":
 
-    import trimesh
-    ver = np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0], [1, 0, 0]])
-    mesh1 = trimesh.convex.convex_hull(trimesh.Trimesh(vertices=ver))
+    axes = [cartesian.Axis1d(name="X", units="cm", size=20, upper_limit=10),
+            cartesian.Axis1d(name="Y", units="cm", size=20, upper_limit=10),
+            cartesian.Axis1d(name="Y", units="cm", size=20, upper_limit=10)]
+    mesh = mesh.Mesh(axes)
+    mod = model.Model(mesh=mesh)
+    geometry3d.show_cell(mesh)
+    print(geometry3d.volumes_3d(mesh))
+    ver = np.array([[0, 0, 0], [0, 0, 10], [0, 10, 0], [10, 0, 0]])
+    faces = np.array([[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
+    trm = geometry3d.get_trimesh(mesh)
+    mod.solution = geometry3d.grid_ray_intersection(trm, (-1.2, -1.2, -1.2), (10,10,10))
+    mod.plot3d(axes=True, style=3)
+    print(mod.solution)
+
+    mod.solution = geometry3d.grid_intersection3d(trm, ver, faces)
+    mod.plot3d(axes=True, style=3)
+    print(mod.solution)
+
+    ver = np.array([[0, 0, 0], [0, 0, 1], [0, 2, 0], [1, 0, 0]])
+    mesh1 = trimesh.Trimesh(vertices=ver, faces=[[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
     mesh1.show()
     ver2 = np.array([[0, 0, 0], [0, 0, 1], [0, 0.5, 0], [3, 0, 0]])
-    mesh2 = trimesh.convex.convex_hull( trimesh.Trimesh(vertices = ver + 0.2))
-    mesh2.show()
+    mesh2 = trimesh.Trimesh(vertices = ver + 0.2, faces=[[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
+    # mesh2.show()
     inter = trimesh.boolean.union((mesh1, mesh2))
-    inter.show()
+    # inter.show()
     print (inter.volume)
-
+    trimesh.Scene([mesh1, mesh2]).show()
+    # mesh1 = trimesh.convex.convex_hull(trimesh.Trimesh(vertices=ver))
+    # mesh1.show()
+    # ver2 = np.array([[0, 0, 0], [0, 0, 1], [0, 0.5, 0], [3, 0, 0]])
+    # mesh2 = trimesh.convex.convex_hull( trimesh.Trimesh(vertices = ver + 0.2))
+    # mesh2.show()
+    # inter = trimesh.boolean.union((mesh1, mesh2))
+    # inter.show()
+    # print (inter.volume)
 
     # axes = [cartesian.Axis1d(name="X", units="cm", size=50, upper_limit=10),
     #         cartesian.Axis1d(name="Y", units="cm", size=50, upper_limit=10)]
