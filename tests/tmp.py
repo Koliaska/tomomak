@@ -45,6 +45,7 @@ from tomomak.util import geometry3d
 import os
 import tomomak.constraints.basic
 import trimesh
+import tomomak.detectors.detectors3d as detectors3d
 
 if __name__ == "__main__":
     x = np.array([[4, 2, 1],[1,0, 5]])
@@ -53,14 +54,16 @@ if __name__ == "__main__":
     ver = np.array([[0, 0, 0], [0, 0, 10], [0, 10, 0], [10, 0, 0]])
     faces = np.array([[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
 
-    axes = [cartesian.Axis1d(name="X", units="cm", size=4, upper_limit=10),
-            cartesian.Axis1d(name="Y", units="cm", size=5, upper_limit=10),
-            cartesian.Axis1d(name="Z", units="cm", size=6, upper_limit=10)]
+    axes = [cartesian.Axis1d(name="X", units="cm", size=10, upper_limit=10),
+            cartesian.Axis1d(name="Y", units="cm", size=9, upper_limit=10),
+            cartesian.Axis1d(name="Z", units="cm", size=8, upper_limit=10)]
     mesh1 = trimesh.Trimesh(vertices=ver, faces=[[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
 
 
     mesh = mesh.Mesh(axes)
     mod = model.Model(mesh=mesh)
+    mod.detector_geometry = detectors3d.four_pi_detector_array(mesh, (5, 5, 5), 20, 20, 10)
+    mod.plot3d(axes=True, style=3, data_type='detector_geometry')
     mod.solution = np.log(objects3d.point_source(mesh, (5.5, 5.5,5.5))*100)
     mod.plot3d(axes=True, style=3)
     mod.solution = objects3d.trimesh_create(mesh, 'box',  extents=(6,16,12))

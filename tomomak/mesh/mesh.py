@@ -137,7 +137,7 @@ class Mesh:
         plot = self._axes[index[0]].plot1d(new_data, self, data_type, *args, **kwargs)
         return plot
 
-    def plot2d(self, data, index=0, data_type='solution', *args, **kwargs):
+    def plot2d(self, data, index=(0, 1), data_type='solution', *args, **kwargs):
         if isinstance(index, int):
             index = [index]
         # try to draw using 1 axis
@@ -151,10 +151,10 @@ class Mesh:
         # try to draw using 2 axes
         new_data = self._prepare_data(data, index, data_type)
         try:
-            plot = self._axes[index[0]].plot2d(new_data, self._axes[index[1]], self, data_type, *args, **kwargs)
+            plot = self._axes[index[0]].plot2d( self._axes[index[1]],new_data, self, data_type, *args, **kwargs)
         except NotImplementedError:
             new_data = new_data.transpose()
-            plot = self._axes[index[1]].plot2d(new_data, self._axes[index[0]], self, data_type, *args, **kwargs)
+            plot = self._axes[index[1]].plot2d( self._axes[index[0]],new_data, self, data_type, *args, **kwargs)
         return plot
 
     def plot3d(self, data, index=0, data_type='solution', *args, **kwargs):
@@ -197,12 +197,13 @@ class Mesh:
                     pass
         raise TypeError("plot3d is not implemented for such axes combination or other problem occurred.")
 
-    def axes_method3d(self, index, method_name):
+    def axes_method3d(self, index, method_name, *args, **kwargs):
         """Iterates over three axes combinations, until there is a combination for which this method is implemented.
 
         Args:
             index(tuple three ints): axes to look for method implementation at.
             method_name(str): method name.
+            *args, **kwargs: passed to method.
 
         Returns:
             result of the method execution.
@@ -216,7 +217,7 @@ class Mesh:
             try:
                 new_axes = [ax[i] for i in p]
                 func = getattr(new_axes[0], method_name)
-                res = func(new_axes[1], new_axes[2])
+                res = func(new_axes[1], new_axes[2], *args, **kwargs)
                 if isinstance(res, Iterable):
                     res = list(res)
                     for i in range(3):
@@ -230,12 +231,13 @@ class Mesh:
                 pass
         raise NotImplementedError("Custom axis should implement {} method.".format(method_name))
 
-    def mesh_method2d(self, index, method_name):
+    def mesh_method2d(self, index, method_name, *args, **kwargs):
         """Iterates over two axes combinations, until there is a combination for which this method is implemented.
 
         Args:
             index(tuple three ints): axes to look for method implementation at.
             method_name(str): method name.
+            *args, **kwargs: passed to method.
 
         Returns:
             result of the method execution.
@@ -245,12 +247,12 @@ class Mesh:
         """
         try:
             func = getattr(self.axes[index[0]], method_name)
-            res = func(self.axes[index[1]])
+            res = func(self.axes[index[1]], *args, **kwargs)
             return res
         except (NotImplementedError, AttributeError):
             try:
                 func = getattr(self.axes[index[1]], method_name)
-                res = func(self.axes[index[0]])
+                res = func(self.axes[index[0]], *args, **kwargs)
                 if isinstance(res, Iterable):
                     for j, item in enumerate(res):
                         res[j] = item.transpose()

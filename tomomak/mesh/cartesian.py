@@ -240,15 +240,15 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         plt.show()
         return plot, ax
 
-    def plot2d(self, data, axis2, mesh, data_type='solution', style='colormesh',
+    def plot2d(self, axis2, data,  mesh, data_type='solution', style='colormesh',
                fill_scheme='viridis', grid=False, equal_norm=False, title=None, *args, **kwargs):
         """Create 2D plot of the solution or detector geometry.
 
         matplotlib pcolormesh is used. Detector data is plotted on the interactive graph.
 
         Args:
-            data (2D ndarray): data to plot.
             axis2 (tomomak axis): second axis. Only cartesian.Axis1d is supported.
+            data (2D ndarray): data to plot.
             mesh (tomomak mesh): mesh to extract additional info.
             data_type (str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
             style (str, optional): Plot style. Available options: 'colormesh', 'contour'. Default: 'colormesh'.

@@ -213,8 +213,8 @@ def _cell_ray_inters(trimesh_element, p1, p2):
     return inters
 
 
-def volumes_3d(mesh, index=(0, 1, 2)):
-    """Get array of each cell volumes
+def cell_volumes(mesh, index=(0, 1, 2)):
+    """Get array of each cell volumes.
 
     Args:
         mesh(tomomak.main_structures.Mesh): mesh to work with.

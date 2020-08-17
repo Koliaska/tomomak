@@ -39,17 +39,15 @@ def two_pi_det(mesh, position, index=(0, 1), response=1, radius_dependence=True,
     return intersection_geometry
 
 
-def two_pi_detector_array(mesh, focus_point, radius, det_num,  *args, **kwargs):
-    """ Creates array of fan detectors around focus points.
+def two_pi_detector_array(mesh, focus_point, radius, det_num,
+                          index=(0, 1), response=1, radius_dependence=True, broadcast=True):
+    """ Creates array of 2pi detectors equally spaced around the focus points.
 
           Args:
               mesh (tomomak.main_structures.Mesh): mesh to work with.
               focus_point (tuple of 2 floats): Focus point (x, y).
               radius (float): radius of the circle around focus_point, where detectors are located.
-              fan_num (integer): number of fans.
-              line_num (integer): number of lines.
-              width (float): width of each line.
-              incline (float): incline of first detector fan in Rad from the (1, 0) direction. Default: 0.
+              det_num (integer): number of detectors.
               *args: fan_detector arguments.
               **kwargs: fan_detector keyword arguments.
 
@@ -64,7 +62,7 @@ def two_pi_detector_array(mesh, focus_point, radius, det_num,  *args, **kwargs):
     focus_point = np.array(focus_point)
     for i in range(det_num):
         p = np.array([focus_point[0] + radius * np.cos(incline), focus_point[1] + radius * np.sin(incline)])
-        addition = np.array([two_pi_det(mesh, p,  *args, **kwargs),])
+        addition = np.array([two_pi_det(mesh, p, index, response, radius_dependence, broadcast), ])
         res = np.append(res, addition, axis=0)
         print('\r', end='')
         print("Generating array of 2pi detectors: ", str(i * 100 // det_num) + "% complete", end='')
