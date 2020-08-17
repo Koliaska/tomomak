@@ -53,9 +53,9 @@ if __name__ == "__main__":
     ver = np.array([[0, 0, 0], [0, 0, 10], [0, 10, 0], [10, 0, 0]])
     faces = np.array([[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
 
-    axes = [cartesian.Axis1d(name="X", units="cm", size=10, upper_limit=10),
-            cartesian.Axis1d(name="Y", units="cm", size=10, upper_limit=10),
-            cartesian.Axis1d(name="Y", units="cm", size=10, upper_limit=10)]
+    axes = [cartesian.Axis1d(name="X", units="cm", size=4, upper_limit=10),
+            cartesian.Axis1d(name="Y", units="cm", size=5, upper_limit=10),
+            cartesian.Axis1d(name="Z", units="cm", size=6, upper_limit=10)]
     mesh1 = trimesh.Trimesh(vertices=ver, faces=[[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
 
 

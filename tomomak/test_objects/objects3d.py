@@ -87,7 +87,7 @@ def point_source(mesh, point, index=(0, 1, 2), density=1, broadcast=True):
     zero = np.argwhere(distances == 0)
     if zero.size:
         sorted_dist = np.sort(distances, axis=None)
-        distances[tuple(zero[0])] = sorted_dist[1] / (2 ** 4/3) # distance to the radius,
+        distances[tuple(zero[0])] = sorted_dist[1] / (2 ** 4/3)  # distance to the radius,
         # limiting 1/2 volume of the sphere with R = 1/2 distance
     distances = 1 / (distances ** 2) * density
     if broadcast:

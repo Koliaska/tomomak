@@ -1,6 +1,7 @@
 import numpy as np
 from tomomak.util import array_routines
 import itertools
+from collections.abc import Iterable
 
 
 class Mesh:
@@ -195,6 +196,69 @@ class Mesh:
                 except NotImplementedError:
                     pass
         raise TypeError("plot3d is not implemented for such axes combination or other problem occurred.")
+
+    def axes_method3d(self, index, method_name):
+        """Iterates over three axes combinations, until there is a combination for which this method is implemented.
+
+        Args:
+            index(tuple three ints): axes to look for method implementation at.
+            method_name(str): method name.
+
+        Returns:
+            result of the method execution.
+
+        Raises:
+            NotImplementedError if combination is not found.
+        """
+        ax = [self.axes[index[i]] for i in (0, 1, 2)]
+        ind_lst = list(itertools.permutations((0, 1, 2), 3))
+        for p in ind_lst:
+            try:
+                new_axes = [ax[i] for i in p]
+                func = getattr(new_axes[0], method_name)
+                res = func(new_axes[1], new_axes[2])
+                if isinstance(res, Iterable):
+                    res = list(res)
+                    for i in range(3):
+                        for j, item in enumerate(res):
+                            res[j] = np.moveaxis(item, p[i], i)
+                else:
+                    for i in range(3):
+                        res = np.moveaxis(res, p[i], i)
+                return res
+            except (NotImplementedError, AttributeError):
+                pass
+        raise NotImplementedError("Custom axis should implement {} method.".format(method_name))
+
+    def mesh_method2d(self, index, method_name):
+        """Iterates over two axes combinations, until there is a combination for which this method is implemented.
+
+        Args:
+            index(tuple three ints): axes to look for method implementation at.
+            method_name(str): method name.
+
+        Returns:
+            result of the method execution.
+
+        Raises:
+            NotImplementedError if combination is not found.
+        """
+        try:
+            func = getattr(self.axes[index[0]], method_name)
+            res = func(self.axes[index[1]])
+            return res
+        except (NotImplementedError, AttributeError):
+            try:
+                func = getattr(self.axes[index[1]], method_name)
+                res = func(self.axes[index[0]])
+                if isinstance(res, Iterable):
+                    for j, item in enumerate(res):
+                        res[j] = item.transpose()
+                else:
+                    res = res.transpose()
+                return res
+            except (NotImplementedError, AttributeError):
+                raise TypeError("Custom axis should implement {} method.".format(method_name))
 
     def draw_mesh(self):
         pass
