@@ -94,6 +94,19 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         """
         return self._volumes
 
+    def cartesian_coordinates(self, *axes):
+        """See description in abstract axes.
+        """
+        if not axes:
+            return self.coordinates
+        for a in axes:
+            if type(a) is not Axis1d:
+                raise NotImplementedError("Cell edges with such combination of axes are not supported.")
+        axes = list(axes)
+        axes.insert(0, self)
+        axes = [a.coordinates for a in axes]
+        return np.meshgrid(*axes, indexing='ij')
+
     @property
     def coordinates(self):
         """See description in abstract axes.
@@ -289,10 +302,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         """
         if type(axis2) is not Axis1d or type(axis3) is not Axis1d:
             raise NotImplementedError("3D plots with such combination of axes are not supported.")
-        x = self.coordinates
-        y = axis2.coordinates
-        z = axis3.coordinates
-        x_grid, y_grid, z_grid = np.meshgrid(x, y, z, indexing='ij')
+        x_grid, y_grid, z_grid = self.cartesian_coordinates(axis2, axis3)
         if axes:
             axes = ('{}, {}'.format(self.name, self.units),
                     '{}, {}'.format(axis2.name, axis2.units),

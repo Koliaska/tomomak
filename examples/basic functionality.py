@@ -9,6 +9,7 @@ from tomomak.detectors import detectors2d, signal
 from tomomak.iterators import ml, algebraic
 from tomomak.iterators import statistics
 import tomomak.constraints.basic
+import numpy as np
 
 
 # This is an example of a basic framework functionality.

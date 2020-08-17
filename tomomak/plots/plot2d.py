@@ -36,8 +36,12 @@ def colormesh2d(data, axis1, axis2, title='', style='colormesh', fill_scheme='vi
         y = axis2.cell_edges1d
         func = ax.pcolormesh
     elif style == 'contour':
-        x = axis1.coordinates
-        y = axis2.coordinates
+        try:
+            coordinates = axis1.cartesian_coordinates(axis2)
+        except NotImplementedError:
+            coordinates = axis2.cartesian_coordinates(axis1).transpose()
+        x = coordinates[0][:, 0]
+        y = coordinates[1][0]
         func = ax.contourf
     z = data.transpose()
     if norm is not None:

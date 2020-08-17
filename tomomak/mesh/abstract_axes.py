@@ -39,13 +39,24 @@ class AbstractAxis(ABC):
             ndarray of floats: cell volumes.
         """
 
+    @abstractmethod
+    def cartesian_coordinates(self, *axes):
+        """Get cartesian coordinates of each cell.
+
+        Args:
+            *axes (tomomak axis): additional tomomak axes.
+
+        Returns:
+           ndarray: cartesian coordinates of each cell centers in the form of numpy.meshgrid.
+        """
+
     @property
     @abstractmethod
     def coordinates(self):
-        """Get coordinates of each cell.
+        """Get cartesian coordinates of each cell.
 
         Returns:
-           iterable of floats or points (list of floats): coodinates if each cell centers.
+           iterable of floats or points (list of floats): coordinates of each cell centers.
         """
 
     @property

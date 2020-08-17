@@ -33,7 +33,7 @@ import tomomak.constraints.basic
 
 from tomomak import model
 from tomomak.solver import *
-from tomomak.test_objects import objects2d
+from tomomak.test_objects import objects2d, objects3d
 from tomomak.mesh import mesh
 from tomomak.mesh import cartesian
 from tomomak.transform import rescale
@@ -47,17 +47,28 @@ import tomomak.constraints.basic
 import trimesh
 
 if __name__ == "__main__":
+    x = np.array([[4, 2, 1],[1,0, 5]])
+    print(np.argwhere(x == 0))
 
-    axes = [cartesian.Axis1d(name="X", units="cm", size=20, upper_limit=10),
-            cartesian.Axis1d(name="Y", units="cm", size=20, upper_limit=10),
-            cartesian.Axis1d(name="Y", units="cm", size=20, upper_limit=10)]
-    mesh = mesh.Mesh(axes)
-    mod = model.Model(mesh=mesh)
-    geometry3d.show_cell(mesh)
-    print(geometry3d.volumes_3d(mesh))
     ver = np.array([[0, 0, 0], [0, 0, 10], [0, 10, 0], [10, 0, 0]])
     faces = np.array([[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
-    trm = geometry3d.get_trimesh(mesh)
+
+    axes = [cartesian.Axis1d(name="X", units="cm", size=10, upper_limit=10),
+            cartesian.Axis1d(name="Y", units="cm", size=10, upper_limit=10),
+            cartesian.Axis1d(name="Y", units="cm", size=10, upper_limit=10)]
+    mesh1 = trimesh.Trimesh(vertices=ver, faces=[[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
+
+
+    mesh = mesh.Mesh(axes)
+    mod = model.Model(mesh=mesh)
+    mod.solution = np.log(objects3d.point_source(mesh, (5.5, 5.5,5.5))*100)
+    mod.plot3d(axes=True, style=3)
+    mod.solution = objects3d.trimesh_create(mesh, 'box',  extents=(6,16,12))
+    print(mod.solution)
+    mod.plot3d(axes=True, style=3)
+
+
+    trm = geometry3d.get_trimesh_grid(mesh)
     mod.solution = geometry3d.grid_ray_intersection(trm, (-1.2, -1.2, -1.2), (10,10,10))
     mod.plot3d(axes=True, style=3)
     print(mod.solution)

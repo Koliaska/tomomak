@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 
-def get_trimesh(mesh, index=(0, 1, 2)):
+def get_trimesh_grid(mesh, index=(0, 1, 2)):
     """Get array of trimesh objects (3D meshes) corresponding to each grid cell.
 
     Helper function. Trimesh objects are used for complex 3d calculations.
@@ -71,7 +71,25 @@ def get_trimesh(mesh, index=(0, 1, 2)):
     return trimesh_list
 
 
-def grid_intersection3d(trimesh_list, vertices, faces=None):
+def get_trimesh_obj(faces, vertices=None):
+    """Get trimesh object with given faces and vertices.
+
+    Args:
+        vertices: a list of lists of points (x, y, z) in cartesian coordinates: vertices the cell.
+        faces: a list of lists of cell faces. Each face is a list of vertices, denoted in cw direction.
+            If faces is None, faces are created automatically for the convex hull of the vertices. Default:  None.
+
+    Returns:
+        Trimesh: trimesh representation of the object.
+    """
+    if faces is None:
+        obj3d = trimesh.convex.convex_hull(trimesh.Trimesh(vertices=vertices))
+    else:
+        obj3d = trimesh.Trimesh(vertices=vertices, faces=faces)
+    return obj3d
+
+
+def grid_intersection3d(trimesh_list, obj3d):
     """Create array, representing intersection volume of each object in list  with given object.
 
     List of object is usually a list, containing each cell of the used 3D grid.
@@ -80,9 +98,7 @@ def grid_intersection3d(trimesh_list, vertices, faces=None):
 
     Args:
         trimesh_list: a list  containing trimesh representation of each cell (e.g. obtained with get_trimesh function).
-        vertices: a list of lists of points (x, y, z) in cartesian coordinates: vertices the cell.
-        faces: a list of lists of cell faces. Each face is a list of vertices, denoted in cw direction.
-            If faces is None, faces are created automatically for the convex hull of the vertices. Default:  None.
+        obj3d(Trimesh): trimesh representation of the object.
 
     Returns:
         ndarray: numpy array, representing intersection volume of each object in list  with given object.
@@ -90,24 +106,21 @@ def grid_intersection3d(trimesh_list, vertices, faces=None):
     Raises:
         TypeError if trimesh_list has 0 or > 3 dimensions.
     """
-    if faces is None:
-        obj3d = trimesh.convex.convex_hull(trimesh.Trimesh(vertices=vertices))
-    else:
-        obj3d = trimesh.Trimesh(vertices=vertices, faces=faces)
     list_dim = len(_dim(trimesh_list))
     if list_dim == 3:
         shape = (len(trimesh_list), len(trimesh_list[0]), len(trimesh_list[0][0]))
         res = np.zeros(shape)
-        # sys.stderr = open(os.devnull, "w")  # supressing console for trimesh calculations
+        sys.stderr = open(os.devnull, "w")  # supressing console for trimesh calculations
         for i, row in enumerate(res):
             for j, col in enumerate(row):
                 for k, _ in enumerate(col):
                     try:
-                        inters = trimesh.boolean.intersection((obj3d, trimesh_list[i][j][k])).volume
-                    except subprocess.CalledProcessError:
+                        inters = trimesh.boolean.intersection((obj3d, trimesh_list[i][j][k]))
+                        inters = inters.volume
+                    except (subprocess.CalledProcessError, ValueError):
                         inters = 0
                     res[i, j, k] = inters
-        # sys.stderr = sys.__stderr__
+        sys.stderr = sys.__stderr__
         return res
     elif list_dim == 2:
         shape = (len(trimesh_list), len(trimesh_list[0]))
@@ -144,7 +157,6 @@ def _get_cells3d(index, mesh):
     for p in ind_lst:
         try:
             new_axes = [ax[i] for i in p]
-
             (vertices, faces) = new_axes[0].cell_edges3d(new_axes[1], new_axes[2])
             for i in range(3):
                 vertices = np.moveaxis(vertices, p[i], i)
@@ -152,7 +164,8 @@ def _get_cells3d(index, mesh):
             return vertices.tolist(), faces.tolist()
         except NotImplementedError:
             pass
-    raise TypeError("Custom axis should implement cell_edges3d method. " " See docstring for more information.")
+    raise NotImplementedError("Custom axis should implement cell_edges3d method. "
+                              " See docstring for more information.")
 
 
 def _get_cells2d(index, mesh):
@@ -223,6 +236,7 @@ def _cell_ray_inters(trimesh_element, p1, p2):
         inters = 0
     return inters
 
+
 def volumes_3d(mesh, index=(0, 1, 2)):
     """Get array of each cell volumes
 
@@ -235,11 +249,95 @@ def volumes_3d(mesh, index=(0, 1, 2)):
     """
     if isinstance(index, int):
         index = [index]
-    trimesh_list = get_trimesh(mesh, index)
+    trimesh_list = get_trimesh_grid(mesh, index)
     volumes = np.zeros_like(trimesh_list)
     for idx, value in np.ndenumerate(trimesh_list):
         volumes[idx] = value.volume
     return volumes
+
+
+def cell_distances(mesh, p, index=(0, 1, 2)):
+    """Get distance to each cell on 3D mesh.
+
+    Args:
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        p (list of three floats): list representing a point in 3D coordinates.
+        index (tuple of 1/2/3 ints, optional): axes to calculate distance at. Default:  (0,1,2)
+
+    Returns:
+        ndarray: array with distances.
+
+    Raises
+        TypeError if axis dimension is > 3.
+        """
+    if isinstance(index, int):
+        index = [index]
+    p = np.array(p)
+    if mesh.axes[index[0]].dimension == 3:
+        try:
+            cell_coordinates = mesh.axes[index[0]].cartesian_coordinates()
+            shape = mesh.axes[index[0]].size
+            distances = np.zeros(shape)
+            for i, _ in enumerate(distances):
+                distances[i] = np.sqrt(np.sum(
+                    (np.array([c - cell_coordinates[ind][i] for ind, c in enumerate(p)]) ** 2)))
+        except (TypeError, AttributeError) as e:
+            raise type(e)(e.message + "Custom axis should implement cartesian_coordinates method. "
+                                      " See docstring for more information.")
+    # If one axis is 2D
+    elif mesh.axes[index[0]].dimension == 2 or mesh.axes[index[1]].dimension == 2:
+        cell_coordinates = _get_coordinates2d(index, mesh)
+        shape = (mesh.axes[index[0]].size, mesh.axes[index[1]].size)
+        distances = np.zeros(shape)
+        for i, row in enumerate(distances):
+            for j, col in enumerate(row):
+                distances[i, j] = np.sqrt(np.sum(
+                    (np.array([c - cell_coordinates[ind][i, j] for ind, c in enumerate(p)]) ** 2)))
+    # If axes are 1D
+    elif mesh.axes[index[0]].dimension == mesh.axes[index[1]].dimension == mesh.axes[index[2]].dimension == 1:
+        cell_coordinates = _get_coordinates3d(index, mesh)
+        shape = (mesh.axes[index[0]].size, mesh.axes[index[1]].size, mesh.axes[index[2]].size)
+        distances = np.zeros(shape)
+        for i, row in enumerate(distances):
+            for j, col in enumerate(row):
+                for k, _ in enumerate(col):
+                    distances[i, j, k] = np.sqrt(np.sum(
+                        (np.array([c - cell_coordinates[ind][i, j, k] for ind, c in enumerate(p)]) ** 2)))
+    else:
+        raise TypeError("3D objects can be built on the 1D,2D and 3D axes only.")
+    return distances
+
+
+def _get_coordinates3d(index, mesh):
+    ax = [mesh.axes[index[i]] for i in (0, 1, 2)]
+    ind_lst = list(itertools.permutations((0, 1, 2), 3))
+    for p in ind_lst:
+        try:
+            new_axes = [ax[i] for i in p]
+            coordinates = new_axes[0].cartesian_coordinates(new_axes[1], new_axes[2])
+            for i in range(3):
+                for j in range(3):
+                    coordinates[j] = np.moveaxis(coordinates[j], p[i], i)
+            return coordinates
+        except NotImplementedError:
+            pass
+    raise NotImplementedError("Custom axis should implement cartesian_coordinates method. "
+                              " See docstring for more information.")
+
+
+def _get_coordinates2d(index, mesh):
+    try:
+        coordinates = mesh.axes[index[0]].cartesian_coordinates(mesh.axes[index[1]])
+        return coordinates
+    except NotImplementedError:
+        try:
+            coordinates = mesh.axes[index[1]].cartesian_coordinates(mesh.axes[index[0]])
+            for j in range(3):
+                coordinates[j] = coordinates[j].transpose()
+            return coordinates
+        except NotImplementedError:
+            raise TypeError(
+                "Custom axis should implement cartesian_coordinates method. " " See docstring for more information.")
 
 
 def make_regular(data, x_grid, y_grid, z_grid, interp_size):
@@ -282,7 +380,7 @@ def show_cell(mesh, index=(0,1,2), cell_index=(0,0,0)):
     """
     if isinstance(index, int):
         index = [index]
-    trimesh_list = get_trimesh(mesh, index)
+    trimesh_list = get_trimesh_grid(mesh, index)
     for i in cell_index:
         trimesh_list = trimesh_list[i]
     trimesh_list.show()

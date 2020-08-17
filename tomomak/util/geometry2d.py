@@ -95,7 +95,6 @@ def cell_areas(mesh, index):
 
     Returns:
         ndarray: 2D or 1D ndarray with cell areas.
-
     """
 
     # If axis is 2D
@@ -134,6 +133,9 @@ def cell_distances(mesh, index, p):
 
     Returns:
         ndarray: 2D or 1D ndarray with distances.
+
+    Raises
+        TypeError if axis dimension is > 2.
         """
     p1 = shapely.geometry.Point(p)
     # If axis is 2D
@@ -141,8 +143,9 @@ def cell_distances(mesh, index, p):
         i1 = index[0]
         shape = (mesh.axes[i1].size,)
         r = np.zeros(shape)
+        coordinates = mesh.axes[i1].cartesian_coordinates()
         for i, row in enumerate(r):
-            p2 = shapely.geometry.Point(mesh.axes[i1].coordinates[i])
+            p2 = shapely.geometry.Point(coordinates[0][i], coordinates[1][i])
             r[i] = p1.distance(p2)
     # If axes are 1D
     elif mesh.axes[0].dimension == 1:
@@ -150,8 +153,14 @@ def cell_distances(mesh, index, p):
         i2 = index[1]
         shape = (mesh.axes[i1].size, mesh.axes[i2].size)
         r = np.zeros(shape)
+        try:
+            coordinates = mesh.axes[i1].cartesian_coordinates(mesh.axes[i2])
+        except NotImplementedError:
+            coordinates = mesh.axes[i2].cartesian_coordinates(mesh.axes[i1]).transpose()
         for i, row in enumerate(r):
             for j, _ in enumerate(row):
-                p2 = shapely.geometry.Point(mesh.axes[i1].coordinates[i], mesh.axes[i2].coordinates[j])
+                p2 = shapely.geometry.Point(coordinates[0][i, j], coordinates[1][i, j])
                 r[i, j] = p1.distance(p2)
+    else:
+        raise TypeError("Only 1D and 2D axes may be used for 2D distance calculation.")
     return r

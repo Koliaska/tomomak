@@ -130,7 +130,13 @@ def pyramid(mesh, center=(0, 0), size=(10, 10), index=(0, 1), height=1, broadcas
     """
     rect = rectangle(mesh, center, size, index, height, broadcast=False)
     mask = np.zeros(rect.shape)
-    coord = [mesh.axes[0].coordinates, mesh.axes[1].coordinates]
+    try:
+        coordinates = mesh.axes[0].cartesian_coordinates(mesh.axes[1])
+    except NotImplementedError:
+        coordinates = mesh.axes[1].cartesian_coordinates(mesh.axes[0]).transpose()
+    x = coordinates[0][:, 0]
+    y = coordinates[1][0]
+    coord = [x, y]
     for i, row in enumerate(mask):
         for j, _ in enumerate(row):
             cell_coord = [coord[0][i], coord[1][j]]
@@ -172,7 +178,13 @@ def cone(mesh, center=(3, 4), ax_len=(4, 3), index=(0, 1), height=1, cone_type='
     """
     ell = ellipse(mesh, center, ax_len, index, height, resolution, broadcast=False)
     mask = np.zeros(ell.shape)
-    coord = [mesh.axes[0].coordinates, mesh.axes[1].coordinates]
+    try:
+        coordinates = mesh.axes[0].cartesian_coordinates(mesh.axes[1])
+    except NotImplementedError:
+        coordinates = mesh.axes[1].cartesian_coordinates(mesh.axes[0]).transpose()
+    x = coordinates[0][:, 0]
+    y = coordinates[1][0]
+    coord = [x, y]
     for i, row in enumerate(mask):
         for j, _ in enumerate(row):
             cell_coord = [coord[0][i], coord[1][j]]

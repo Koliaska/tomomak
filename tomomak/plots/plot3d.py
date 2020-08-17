@@ -71,8 +71,6 @@ def _build_contour3d(data, x, y, z, scene, title='', colormap='blue-red', limits
             min_val = limits[0]
             max_val = limits[1]
 
-
-
         if style == 33:  # special case to deal with Mayavi bug
             obj = scene.mlab.pipeline.volume(mlab.pipeline.scalar_field(x, y, z, data))
         else:
@@ -83,6 +81,7 @@ def _build_contour3d(data, x, y, z, scene, title='', colormap='blue-red', limits
         otf.add_point(min_val, 0)
         otf.add_point(max_val * 0.21, 0.6)
         otf.add_point(max_val, 0.6)
+        obj.volume.property.shade = False
     else:
         raise AttributeError("Style {} is not supported".format(style))
 

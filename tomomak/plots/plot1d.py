@@ -38,7 +38,7 @@ def bar1d(data, axis, title='', ylabel='', filled=True, fill_scheme='viridis', e
            ylabel=ylabel, title=title)
     if grid:
         ax.grid()
-    plot = ax.bar(axis.coordinates, data, width=axis.volumes, color=color, edgecolor=edgecolor,  *args, **kwargs)
+    plot = ax.bar(axis.coordinates, data, width=axis.volumes, color=color, edgecolor=edgecolor, *args, **kwargs)
     if norm is not None:
         plt.ylim(norm[0], norm[1])
     return plot, ax
