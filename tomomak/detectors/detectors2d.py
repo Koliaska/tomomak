@@ -52,7 +52,7 @@ def two_pi_detector_array(mesh, focus_point, radius, det_num,
               **kwargs: fan_detector keyword arguments.
 
           Returns:
-              ndarray: numpy array, representing fan of detectors on a given mesh.
+              ndarray: numpy array, representing group of 2pi detectors on a given mesh.
           """
     shape = [0]
     shape.extend(mesh.shape)

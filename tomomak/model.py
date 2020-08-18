@@ -1,5 +1,6 @@
 import numbers
 import pickle
+import numpy as np
 
 
 class Model:
@@ -75,7 +76,7 @@ class Model:
 
     @detector_geometry.setter
     def detector_geometry(self, value):
-        self._detector_geometry = value
+        self._detector_geometry = np.array(value)
         self._check_self_consistency()
 
     @property
