@@ -130,6 +130,7 @@ def line_detector(mesh, p1, p2, radius, calc_volume, index=(0, 1, 2),
         if radius is not None:
             raise AttributeError("Radius is not used when calc_volume is False. Set radius to None.")
         volumes = geometry3d.grid_ray_intersection(trimesh_list, p1, p2)
+        print(volumes)
     volumes *= response
     if radius_dependence:
         if distances is None:

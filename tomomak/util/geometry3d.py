@@ -201,13 +201,8 @@ def grid_ray_intersection(trimesh_list, p1, p2):
 
 def _cell_ray_inters(trimesh_element, p1, p2):
     try:
-        locations, index_ray, index_tri = trimesh_element.ray.intersects_location(
-            ray_origins=(p1,),
-            ray_directions=(p2,))
-        if len(locations) > 0:
-            inters = trimesh_element.volume
-        else:
-            inters = 0
+        direction = (np.array(p2)-np.array(p1),)
+        inters = int(trimesh_element.ray.intersects_any((p1,), direction))
     except subprocess.CalledProcessError:
         inters = 0
     return inters

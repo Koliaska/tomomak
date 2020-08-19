@@ -66,7 +66,10 @@ if __name__ == "__main__":
 
     mesh = mesh.Mesh(axes)
     mod = model.Model(mesh=mesh)
-    mod.detector_geometry = [detectors3d.line_detector(mesh, (5,5,12), (10,2,0), 0.2, calc_volume=True,radius_dependence=False)]
+    trm = geometry3d.get_trimesh_grid(mesh)
+    mod.solution = geometry3d.grid_ray_intersection(trm,(5,5,12), (10,2,0))
+    mod.plot3d(axes=True, style=3)
+    mod.detector_geometry = [detectors3d.line_detector(mesh, (5,5,12), (10,2,0), None, calc_volume=False,radius_dependence=False)]
     mod.plot3d(axes=True, style=3, data_type='detector_geometry')
     mod.detector_geometry = detectors3d.four_pi_detector_array(mesh, (5, 5, 5), 20, 20, 10)
     mod.plot3d(axes=True, style=3, data_type='detector_geometry')
