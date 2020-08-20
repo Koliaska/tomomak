@@ -2,6 +2,7 @@ import copy
 import matplotlib.pyplot as plt
 import os
 import time
+import numpy as np
 
 
 class Solver:
@@ -112,6 +113,7 @@ class Solver:
             print("Statistics summary:")
             for s in self.statistics:
                 print("  {}: {}".format(s, s.data[-1]))
+        model.solution = np.array(model.solution, dtype='float')
 
     def plot_statistics(self):
         if self.statistics is not None:

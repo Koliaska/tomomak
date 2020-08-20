@@ -22,13 +22,18 @@ real_solution = tm.test_objects.objects2d.ellipse(mesh, (5, 5), (3, 3))
 noise = np.random.normal(0, 0.05, real_solution.shape)
 mod.solution = real_solution + noise
 # Now it's time to do plotting
-mod.plot3d()
+mod.plot3d(style=1)
 # You can play with the Mayavi pipeline (upper left corner) in order to get better-looking figure.
 # For example try to change Data minimum in contours tab of the isoSurface, or opacity in Actor tab.
 # There are other predefined styles which you can use as a starting position for plot generation.
-# Also let's add coordinate axes.
+# Also let's add coordinate axes and change the style.
 mod.plot3d(style=2, axes=True)
 # Try to change Point size in Actor tab.
+# Another style:
+mod.plot3d(style=3, axes=True)
+# Open Mayavi pipeline -> Volumes -> CTF and try to change alpha channel curve (opacity) -> press update CTF.
+# This way, for example, you can hide the outer layers to look inside the object.
+
 
 # You can also plot detector geometry this way.
 # Let's create test geometry. You can switch between detectors with the bottom slider.
