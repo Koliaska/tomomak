@@ -1,7 +1,11 @@
 import tomomak.util.geometry3d as geometry3d
 import tomomak.util.array_routines as array_routines
+from tomomak.util.engine import muti_proc
+from tomomak.util import text
 import numpy as np
 import trimesh
+from multiprocessing import Pool
+import os
 
 
 def four_pi_det(mesh, position, index=(0, 1, 2), response=1, radius_dependence=True, broadcast=True):
@@ -89,7 +93,7 @@ def line_detector(mesh, p1, p2, radius, calc_volume, index=(0, 1, 2),
     Args:
         mesh (tomomak.main_structures.Mesh): mesh to work with.
         p1 (tuple of 3 floats): Detector origin (x, y, z).:
-        p2 (tuple of 3 floats): Detector line of sight direction(x, y, z).
+        p2 (tuple of 3 floats): Another point characterizing detector line of sight direction (p1->p2).
         radius (float): Line of sight radius. If calc_volume is True, radius should be set to None.
         calc_volume (bool): If true, volume of intersection of each cell and detector line of sight is calculated. Slow.
             If false, only fact of intersection of line of sight ray and cell is taken into account.
@@ -113,16 +117,8 @@ def line_detector(mesh, p1, p2, radius, calc_volume, index=(0, 1, 2),
     distances = None
     if calc_volume:
         distances = geometry3d.cell_distances(mesh, p1, index)
-        max_dist = np.max(distances) * 1.2
-        v1 = np.array((0, 0, -1))
-        v2 = np.array(p2) - np.array(p1)
-        rot_matr = _rotation_matrix_from_vectors(v1, v2)
-        rot_vector = np.dot(rot_matr, v1) * max_dist / 2
-        rot_vector += np.array(p1)
-        shift = np.array([rot_vector, ]).transpose()
-        footer = np.array([[0, 0, 0, 1]])
-        transform_matrix = np.append(rot_matr, shift, axis=1)
-        transform_matrix = np.append(transform_matrix, footer, axis=0)
+        max_dist = np.max(distances) * 1.3
+        transform_matrix = geometry3d.trimesh_transform_matrix(p1, p2, max_dist / 2)
         obj3d = trimesh.creation.cylinder(radius, max_dist)
         obj3d.apply_transform(transform_matrix)
         volumes = geometry3d.grid_intersection3d(trimesh_list, obj3d)
@@ -130,7 +126,6 @@ def line_detector(mesh, p1, p2, radius, calc_volume, index=(0, 1, 2),
         if radius is not None:
             raise AttributeError("Radius is not used when calc_volume is False. Set radius to None.")
         volumes = geometry3d.grid_ray_intersection(trimesh_list, p1, p2)
-        print(volumes)
     volumes *= response
     if radius_dependence:
         if distances is None:
@@ -141,20 +136,226 @@ def line_detector(mesh, p1, p2, radius, calc_volume, index=(0, 1, 2),
     return volumes
 
 
-def _rotation_matrix_from_vectors(vec1, vec2):
-    """Find the rotation matrix that aligns vec1 to vec2
+def cone_detector(mesh, p1, p2, divergence, index=(0, 1, 2),
+                  response=1, radius_dependence=True, broadcast=True):
+    """Generate intersection of detector with cone-like line of sight and mesh cells.
 
-    From stackoverflow
     Args:
-        vec1: A 3d "source" vector
-        vec2: A3d "destination" vector
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        p1 (tuple of 3 floats): Detector origin (x, y, z).:
+        p2 (tuple of 3 floats): Another point characterizing detector line of sight direction (p1->p2).
+        divergence (float): Cone divergence in radians.
+        index (tuple of 3 ints, optional): axes to build object at. Default: (0,1, 2).
+        response (float, optional): Detector response = amplification * detector area.
+            E.g. detector signal at 1m from source, emitting 4*pi particles at given time interval. Default: 1.
+        radius_dependence (bool, optional): if True, signal is divided by 4 *pi *r^2
+        broadcast (bool, optional): If true, resulted array is broadcasted to fit Mesh shape.
+            If False, 2d array is returned, even if Mesh is not 2D. Default: True.
 
-    Returns: A transform matrix (3x3) which when applied to vec1, aligns it with vec2.
+    Returns:
+        ndarray: numpy array, representing one detector on a given mesh.
     """
-    a, b = (vec1 / np.linalg.norm(vec1)).reshape(3), (vec2 / np.linalg.norm(vec2)).reshape(3)
-    v = np.cross(a, b)
-    c = np.dot(a, b)
-    s = np.linalg.norm(v)
-    kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
-    rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2))
-    return rotation_matrix
+    if isinstance(index, int):
+        index = [index]
+    trimesh_list = geometry3d.get_trimesh_grid(mesh, index)
+    distances = geometry3d.cell_distances(mesh, p1, index)
+    max_dist = np.max(distances) * 1.3
+    transform_matrix = geometry3d.trimesh_transform_matrix(p1, p2, max_dist)
+    radius = max_dist * np.sin(divergence)
+    obj3d = trimesh.creation.cone(radius, max_dist)
+    obj3d.apply_transform(transform_matrix)
+    volumes = geometry3d.grid_intersection3d(trimesh_list, obj3d)
+    volumes *= response
+    if radius_dependence:
+        volumes /= 4 * np.pi * distances ** 2
+    if broadcast:
+        volumes = array_routines.broadcast_object(volumes, index, mesh.shape)
+    return volumes
+
+
+def custom_detector(mesh, vertices, detector_origin=None, index=(0, 1, 2),
+                    response=1, radius_dependence=True, broadcast=True):
+    """ Generate intersection of detector with line of sight defined by given vertices and mesh cells.
+
+    Note that for a typical detector all vertices should lay outside of the mesh.
+
+    Args:
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        vertices (array-like): a list of lists of points (x, y, z) in cartesian coordinates,
+            characterizing detector line of sight.
+        detector_origin (tuple of 3 ints, optional): If detector_origin is defined,
+            distance to this point is calculated for radius_dependence.
+            Otherwise distance to first vertices is calculated.
+        index (tuple of 3 ints, optional): axes to build object at. Default: (0,1, 2).
+        response (float, optional): Detector response = amplification * detector area.
+            E.g. detector signal at 1m from source, emitting 4*pi particles at given time interval. Default: 1.
+        radius_dependence (bool, optional): if True, signal is divided by 4 *pi *r^2.
+        broadcast (bool, optional): If true, resulted array is broadcasted to fit Mesh shape.
+            If False, 2d array is returned, even if Mesh is not 2D. Default: True.
+
+    Returns:
+        ndarray: numpy array, representing one detector on a given mesh.
+    """
+    if isinstance(index, int):
+        index = [index]
+    obj3d = geometry3d.get_trimesh_obj(vertices)
+    trimesh_list = geometry3d.get_trimesh_grid(mesh, index)
+    volumes = geometry3d.grid_intersection3d(trimesh_list, obj3d)
+    volumes *= response
+    if radius_dependence:
+        if detector_origin is None:
+            detector_origin = vertices[0]
+        distances = geometry3d.cell_distances(mesh, detector_origin, index)
+        volumes /= 4 * np.pi * distances ** 2
+    if broadcast:
+        volumes = array_routines.broadcast_object(volumes, index, mesh.shape)
+    return volumes
+
+
+def aperture_detector(mesh, detector_vertices, aperture_vertices, detector_origin=None, index=(0, 1, 2),
+                      response=1, radius_dependence=True, broadcast=True):
+    """Generate intersection of detector with line of sight, defined by detector and aperture planes, and mesh cells.
+
+    Args:
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        detector_vertices (array-like): a list of lists of points (x, y, z) in cartesian coordinates,
+            characterizing detector plane.
+        aperture_vertices(array-like): a list of lists of points (x, y, z) in cartesian coordinates,
+            characterizing aperture plane.
+        detector_origin (tuple of 3 ints, optional): If detector_origin is defined,
+            distance to this point is calculated for radius_dependence.
+            Otherwise distance to the mean of detector_vertices is calculated.
+        index (tuple of 3 ints, optional): axes to build object at. Default: (0, 1, 2).
+        response (float, optional): Detector response = amplification * detector area.
+            E.g. detector signal at 1m from source, emitting 4*pi particles at given time interval. Default: 1.
+        radius_dependence (bool, optional): if True, signal is divided by 4 *pi *r^2.
+        broadcast (bool, optional): If true, resulted array is broadcasted to fit Mesh shape.
+            If False, 2d array is returned, even if Mesh is not 2D. Default: True.
+
+    Returns:
+        ndarray: numpy array, representing one detector on a given mesh.
+    """
+    if isinstance(index, int):
+        index = [index]
+    if detector_origin is None:
+        detector_origin = np.mean(detector_vertices, axis=0)
+    distances = geometry3d.cell_distances(mesh, detector_origin, index)
+    max_dist = np.max(distances) * 2
+    ver_list = []
+    detector_vertices = np.asarray(detector_vertices)
+    aperture_vertices = np.array(aperture_vertices)
+    # generate points for line of sight
+    for det_p in detector_vertices:
+        ver_list.append(det_p)
+        for ap_p in aperture_vertices:
+            direction = (ap_p - det_p) / np.linalg.norm((ap_p - det_p))
+            ver_list.append(det_p + direction * max_dist)
+    return custom_detector(mesh, ver_list, detector_origin, index, response, radius_dependence, broadcast)
+
+
+@muti_proc
+def fan_detector(mesh, p0, boundary_points, number, det_type='cone', index=(0, 1, 2), *args, **kwargs):
+    """ Generate 1d or d2 fan of line or cone detectors.
+
+    For 2d fan multiprocess acceleration is supported.
+    To turn it on run script with environmental variable TM_MP set to number of desired cores.
+    Or just write in your script:
+       import os
+       os.environ["TM_MP"] = "8"
+    If you use Windows, due to Python limitations, you have to guard your script with
+    if __name__ == "__main__":
+        ...your script
+
+    Args:
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        p0 (tuple of 3 floats): Detector origin (x, y, z).:: Detector origin (x, y, z).
+        boundary_points (tuple of 2 or four points): points, defining boundary detector line of sights.
+         If 2 points are defined, 1d fan is generated. Detector lines are evenly spaced between (p0->boundary_points[0])
+         and (p0->boundary_points[1]) vectors.
+         If 4 points are defined, 2d fan is generated.
+         Detector lines are evenly spaced between the four planes, defined by p0 and four boundary points.
+        number (int or tuple of 2 ints): number of detectors for 1d fan. Or number of columns and rows in 2d fan.
+        det_type (str): Detector type. Available options: 'cone', 'line'. Default: 'cone'.
+        index (tuple of 3 ints, optional): axes to build object at. Default: (0,1, 2).
+        *args: passed to cone_detector or line_detector functions.
+        **kwargs: passed to cone_detector or line_detector functions.
+
+    Returns:
+        ndarray: numpy array, representing array of detectors on a given mesh.
+    """
+    pass
+
+
+def _fan_detector(mesh, p0, boundary_points, number, det_type='cone', index=(0, 1, 2), *args, **kwargs):
+    p0 = np.array(p0)
+    boundary_points = np.array(boundary_points)
+    detectors = []
+    if boundary_points.shape[0] == 2:
+        detectors = _generate_detector_line(number, boundary_points[0], boundary_points[1],
+                                            p0, detectors, det_type, mesh, index, *args, **kwargs)
+    elif boundary_points.shape[0] == 4:
+        col_num = number[0]
+        row_num = number[1]
+        col_step1 = (boundary_points[2] - boundary_points[0]) / (col_num - 1)
+        col_step2 = (boundary_points[3] - boundary_points[1]) / (col_num - 1)
+        print("Generating array of fan detectors: 0% complete", end='')
+        for j in range(col_num):
+            points = np.array([[boundary_points[0] + col_step1 * j], [boundary_points[1] + col_step2 * j]])
+            det = _generate_detector_line(row_num, points[0], points[1],
+                                          p0, det_type, mesh, index, *args, **kwargs)
+            detectors.extend(det)
+            print('\r', end='')
+            print("Generating array of fan detectors: ", str(j * 100 // col_num) + "% complete", end='')
+        print('\r \r', end='')
+        print('\r \r', end='')
+    else:
+        raise AttributeError('Array of boundary_points should contain 2 or 4 points.')
+    return np.array(detectors)
+
+
+def _generate_detector_line(n, bp1, bp2, p0, det_type, mesh, index, *args, **kwargs):
+    step = (bp2 - bp1) / (n - 1)
+    detectors = []
+    for i in range(n):
+        p2 = bp1 + step * i
+        if det_type == 'cone':
+            det = cone_detector(mesh, p0, p2, index=index, *args, **kwargs)
+        elif det_type == 'line':
+            det = line_detector(mesh, p0, p2, index=index, *args, **kwargs)
+        else:
+            raise AttributeError('detector type {} is unknown'.format(det_type))
+        detectors.append(det)
+    return detectors
+
+
+def _fan_detector_mp(mesh, p0, boundary_points, number, det_type='cone', index=(0, 1, 2), *args, **kwargs):
+    p0 = np.array(p0)
+    boundary_points = np.array(boundary_points)
+    detectors = []
+    if boundary_points.shape[0] == 2:
+        detectors = _generate_detector_line(number, boundary_points[0], boundary_points[1],
+                                            p0, detectors, det_type, mesh, index, *args, **kwargs)
+    elif boundary_points.shape[0] == 4:
+        proc_num = int(os.getenv('TM_MP'))
+        pool = Pool(processes=proc_num)
+        res = []
+        print("Started multi-process calculation of 2D fan detector array on {} cores.".format(proc_num))
+        col_num = number[0]
+        row_num = number[1]
+        col_step1 = (boundary_points[2] - boundary_points[0]) / (col_num - 1)
+        col_step2 = (boundary_points[3] - boundary_points[1]) / (col_num - 1)
+        for j in range(col_num):
+            points = np.array([[boundary_points[0] + col_step1 * j], [boundary_points[1] + col_step2 * j]])
+            res.append(pool.apply_async(_generate_detector_line, (row_num, points[0], points[1],
+                                                                  p0, det_type, mesh, index) + args, kwargs))
+        text.progress_mp(res, col_num)
+        pool.close()
+        pool.join()
+        shape = [0]
+        shape.extend(mesh.shape)
+        detectors = np.zeros(shape)
+        for r in res:
+            detectors = np.append(detectors, r.get(), axis=0)
+    else:
+        raise AttributeError('Array of boundary_points should contain 2 or 4 points.')
+    return np.array(detectors)

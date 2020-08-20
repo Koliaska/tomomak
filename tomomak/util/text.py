@@ -42,7 +42,7 @@ def detector_caption(mesh):
 def progress_mp(res, task_num):
     is_run = True
     while is_run:
-        running, successful= 0, 0
+        running, successful = 0, 0
         for result in res:
             try:
                 if result.successful():

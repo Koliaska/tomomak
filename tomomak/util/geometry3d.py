@@ -76,12 +76,12 @@ def get_trimesh_grid(mesh, index=(0, 1, 2)):
     return trimesh_list
 
 
-def get_trimesh_obj(faces, vertices=None):
+def get_trimesh_obj(vertices, faces=None):
     """Get trimesh object with given faces and vertices.
 
     Args:
-        vertices: a list of lists of points (x, y, z) in cartesian coordinates: vertices the cell.
-        faces: a list of lists of cell faces. Each face is a list of vertices, denoted in cw direction.
+        vertices (array-like): a list of lists of points (x, y, z) in cartesian coordinates.
+        faces (array-like): a list of lists of cell faces. Each face is a list of vertices, denoted in cw direction.
             If faces is None, faces are created automatically for the convex hull of the vertices. Default:  None.
 
     Returns:
@@ -324,3 +324,47 @@ def show_cell(mesh, index=(0, 1, 2), cell_index=(0, 0, 0)):
     for i in cell_index:
         trimesh_list = trimesh_list[i]
     trimesh_list.show()
+
+
+def trimesh_transform_matrix(p1, p2, shift):
+    """Create trimesh 4x4 transformation matrix suitable for trimesh creation routines.
+
+    Args:
+        p1 (tuple of 3 floats): Detector origin (x, y, z).:
+        p2 (tuple of 3 floats): Detector line of sight direction(x, y, z).
+        shift (float): shift  in z direction of the trimesh object center.
+
+    Returns:
+        4x4 ndarray: transformation matrix.
+    """
+    v1 = np.array((0, 0, -1))
+    v2 = np.array(p2) - np.array(p1)
+    rot_matr = rotation_matrix_from_vectors(v1, v2)
+    rot_vector = np.dot(rot_matr, v1) * shift
+    rot_vector += np.array(p1)
+    shift = np.array([rot_vector, ]).transpose()
+    footer = np.array([[0, 0, 0, 1]])
+    transform_matrix = np.append(rot_matr, shift, axis=1)
+    transform_matrix = np.append(transform_matrix, footer, axis=0)
+    return transform_matrix
+
+
+def rotation_matrix_from_vectors(vec1, vec2):
+    """Find the rotation matrix that aligns vec1 to vec2
+
+    From stackoverflow
+    Args:
+        vec1: A 3d "source" vector
+        vec2: A3d "destination" vector
+
+    Returns: A transform matrix (3x3) which when applied to vec1, aligns it with vec2.
+    """
+    a, b = (vec1 / np.linalg.norm(vec1)).reshape(3), (vec2 / np.linalg.norm(vec2)).reshape(3)
+    v = np.cross(a, b)
+    c = np.dot(a, b)
+    s = np.linalg.norm(v)
+    if s == 0:
+        return np.eye(3)
+    kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+    rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2))
+    return rotation_matrix

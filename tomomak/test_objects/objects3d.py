@@ -13,7 +13,7 @@ def figure(mesh, vertices, faces=None, index=(0, 1, 2), density=1, broadcast=Tru
 
     Args:
         mesh (tomomak.main_structures.Mesh): mesh to work with.
-        vertices: a list of lists of points (x, y, z) in cartesian coordinates: vertices the cell.
+        vertices: a list of lists of points (x, y, z) in cartesian coordinates.
         faces: a list of lists of cell faces. Each face is a list of vertices, denoted in cw direction.
             If faces is None, faces are created automatically for the convex hull of the vertices. Default:  None.
         index(tuple of one, two or three ints, optional): axes to build object at. Default:  (0, 1, 2)
@@ -24,7 +24,7 @@ def figure(mesh, vertices, faces=None, index=(0, 1, 2), density=1, broadcast=Tru
     Returns:
         ndarray:  numpy array, representing figure on the given mesh.
     """
-    obj3d = geometry3d.get_trimesh_obj(faces, vertices)
+    obj3d = geometry3d.get_trimesh_obj(vertices, faces)
     return _create_figure(mesh, obj3d, index, density, broadcast)
 
 

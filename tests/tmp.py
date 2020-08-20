@@ -25,6 +25,7 @@ from tomomak.detectors import detectors2d, signal
 from tomomak.iterators import ml, algebraic
 from tomomak.iterators import statistics
 import tomomak.constraints.basic
+import time
 
 # conda remove vtk conda remove mayavi and installing with pip install vtk and pip install mayavi. Thanks for your help!
 
@@ -49,8 +50,7 @@ import tomomak.detectors.detectors3d as detectors3d
 from scipy.spatial.transform import Rotation as R
 
 if __name__ == "__main__":
-    x = np.array([[4, 2, 1],[1,0, 5]])
-    print(np.argwhere(x == 0))
+
     import scipy.spatial.transform.rotation as rotation
     ver = np.array([[0, 0, 0], [0, 0, 10], [0, 10, 0], [10, 0, 0]])
     faces = np.array([[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
@@ -58,17 +58,34 @@ if __name__ == "__main__":
     b = [[0,-1,0]]
 
 
-    axes = [cartesian.Axis1d(name="X", units="cm", size=10, upper_limit=10),
-            cartesian.Axis1d(name="Y", units="cm", size=10, upper_limit=10),
-            cartesian.Axis1d(name="Z", units="cm", size=10, upper_limit=10)]
+    axes = [cartesian.Axis1d(name="X", units="cm", size=5, upper_limit=10),
+            cartesian.Axis1d(name="Y", units="cm", size=5, upper_limit=10),
+            cartesian.Axis1d(name="Z", units="cm", size=5, upper_limit=10)]
     mesh1 = trimesh.Trimesh(vertices=ver, faces=[[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
 
 
     mesh = mesh.Mesh(axes)
     mod = model.Model(mesh=mesh)
-    trm = geometry3d.get_trimesh_grid(mesh)
-    mod.solution = geometry3d.grid_ray_intersection(trm,(5,5,12), (10,2,0))
-    mod.plot3d(axes=True, style=3)
+    start = time.time()
+    mod.detector_geometry = detectors3d.fan_detector(mesh, (-5, 5, 5), [[5, 2, 6], [5, 7, 6], [5, 2, 4], [5, 7, 4]], number=[4,4], divergence=0.3)
+    end = time.time()
+    print("Time serial: ", end - start)
+    os.environ["TM_MP"] = "4"
+    start = time.time()
+    mod.detector_geometry = detectors3d.fan_detector(mesh, (-5, 5, 5), [[5, 2, 6], [5, 7, 6], [5, 2, 4], [5, 7, 4]], number=[4,4], divergence=0.3)
+    end = time.time()
+    print("Time parallel: ", end - start)
+    mod.plot3d(axes=True, style=3, data_type='detector_geometry')
+    mod.detector_geometry = detectors3d.fan_detector(mesh, (-5, 5, 5), [[5, 2, 5], [5, 7, 5]], number=3, divergence=0.3)
+    mod.plot3d(axes=True, style=3, data_type='detector_geometry')
+    mod.detector_geometry = [detectors3d.aperture_detector(mesh, [(4,-5,4), (6,-5,4), (4,-5,6), (6, -5, 6)], [(4,0,4), (6,0,4), (4,0,6), (6, 0, 6)], radius_dependence=False)]
+    mod.plot3d(axes=True, style=3, data_type='detector_geometry')
+    mod.detector_geometry = [detectors3d.custom_detector(mesh, ver,radius_dependence=False) ]
+    mod.plot3d(axes=True, style=3, data_type='detector_geometry')
+    mod.detector_geometry = [detectors3d.line_detector(mesh, (5,5,12), (10,2,0), 1, calc_volume=True,radius_dependence=False)]
+    mod.plot3d(axes=True, style=3, data_type='detector_geometry')
+    mod.detector_geometry = [detectors3d.cone_detector(mesh, (5, 5, 20), (5,5,0), 0.3,  radius_dependence=True)]
+    mod.plot3d(axes=True, style=3, data_type='detector_geometry')
     mod.detector_geometry = [detectors3d.line_detector(mesh, (5,5,12), (10,2,0), None, calc_volume=False,radius_dependence=False)]
     mod.plot3d(axes=True, style=3, data_type='detector_geometry')
     mod.detector_geometry = detectors3d.four_pi_detector_array(mesh, (5, 5, 5), 20, 20, 10)

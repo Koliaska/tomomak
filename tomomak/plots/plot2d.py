@@ -57,6 +57,7 @@ def colormesh2d(data, axis1, axis2, title='', style='colormesh', fill_scheme='vi
         ax.grid()
     return plot, ax, fig, cb
 
+
 def detector_colormesh2d(data, axis1, axis2, title='', cb_title='',  style='colormesh',  fill_scheme='viridis',
                          grid=False, equal_norm=False, *args, **kwargs):
     """Prepare bar plot for 2D detector data visualization with interactive elements.

@@ -79,7 +79,7 @@ def _build_contour3d(data, x, y, z, scene, title='', colormap='blue-red', limits
         otf = obj._otf
         otf.remove_all_points()
         otf.add_point(min_val, 0)
-        otf.add_point(max_val * 0.21, 0.6)
+        otf.add_point(min_val + (max_val - min_val) * 0.3, 0.6)
         otf.add_point(max_val, 0.6)
         obj.volume.property.shade = False
     else:
@@ -205,14 +205,11 @@ def detector_contour3d(data, x, y, z,  title='', colormap='blue-red', limits=Non
             self.plot.mlab_source.trait_set(scalars=data[self.index])
 
         # the layout of the dialog created
-        view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene),
-                         height=700, width=800, show_label=False),
-                    HGroup('_', 'Detector'),
-                    resizable=True, title="Detectors")
+        view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene), height=700, width=800, show_label=False),
+                    HGroup('_', 'Detector'), resizable=True, title="Detectors")
 
     visualization = Visualization()
     visualization.configure_traits()
-
 
 
 def mesh3d(data, axis1,  axis2, axis3,  title='', fill_scheme='viridis', *args, **kwargs):
