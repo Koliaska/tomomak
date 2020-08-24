@@ -132,7 +132,7 @@ def pyramid(mesh, center=(0, 0), size=(10, 10), index=(0, 1), height=1, broadcas
     mask = np.zeros(rect.shape)
     try:
         coordinates = mesh.axes[0].cartesian_coordinates(mesh.axes[1])
-    except NotImplementedError:
+    except (NotImplementedError, TypeError):
         coordinates = mesh.axes[1].cartesian_coordinates(mesh.axes[0]).transpose()
     x = coordinates[0][:, 0]
     y = coordinates[1][0]
@@ -180,7 +180,7 @@ def cone(mesh, center=(3, 4), ax_len=(4, 3), index=(0, 1), height=1, cone_type='
     mask = np.zeros(ell.shape)
     try:
         coordinates = mesh.axes[0].cartesian_coordinates(mesh.axes[1])
-    except NotImplementedError:
+    except (NotImplementedError, TypeError):
         coordinates = mesh.axes[1].cartesian_coordinates(mesh.axes[0]).transpose()
     x = coordinates[0][:, 0]
     y = coordinates[1][0]

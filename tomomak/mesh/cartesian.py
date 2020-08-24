@@ -54,10 +54,10 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     def _create_using_coordinates(self, coordinates, lower_limit):
         if (any(np.diff(coordinates)) < 0 and coordinates[-1] > lower_limit
                 or any(np.diff(coordinates)) > 0 and coordinates[-1] < lower_limit):
-            raise Exception("Coordinates are not monotonous.")
+            raise ValueError("Coordinates are not monotonous.")
         if (coordinates[-1] > lower_limit > coordinates[0]
                 or coordinates[-1] < lower_limit < coordinates[0]):
-            raise Exception("lower_limit is inside of the first segment.")
+            raise ValueError("lower_limit is inside of the first segment.")
         self._size = len(coordinates)
         self._coordinates = coordinates
         dv = np.diff(coordinates)
@@ -68,8 +68,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             self._volumes[i + 1] = 2 * dv[i] - self._volumes[i]
         for i, v in enumerate(self._volumes):
             if v <= 0:
-                raise Exception("Point № {} of the coordinates is inside of the previous segment. "
-                                "Increase the distance between the points.".format(i))
+                raise ValueError("Point № {} of the coordinates is inside of the previous segment. "
+                                 "Increase the distance between the points.".format(i))
         self._calc_cell_edges(lower_limit)
 
     def _calc_cell_edges(self, lower_limit):
@@ -101,23 +101,17 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             return self.coordinates
         for a in axes:
             if type(a) is not Axis1d:
-                raise NotImplementedError("Cell edges with such combination of axes are not supported.")
+                raise TypeError("Cell edges with such combination of axes are not supported.")
         axes = list(axes)
         axes.insert(0, self)
-        axes = [a.coordinates for a in axes]
-        return np.meshgrid(*axes, indexing='ij')
+        coord = [a.coordinates for a in axes]
+        return np.array(np.meshgrid(*coord, indexing='ij'))
 
     @property
     def coordinates(self):
         """See description in abstract axes.
         """
         return self._coordinates
-
-    @property
-    def cell_edges1d(self):
-        """See description in abstract axes.
-        """
-        return self._cell_edges
 
     @property
     def cell_edges(self):
@@ -143,12 +137,12 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     def cell_edges2d(self, axis2):
         """See description in abstract axes.
         """
-        if type(axis2) is not Axis1d:
-            raise NotImplementedError("Cell edges with such combination of axes are not supported.")
+        if type(axis2) is not type(self):
+            raise TypeError("Cell edges with such combination of axes are not supported.")
         shape = (self.size, axis2.size)
         res = np.zeros(shape).tolist()
-        edge1 = self.cell_edges1d
-        edge2 = axis2.cell_edges1d
+        edge1 = self.cell_edges
+        edge2 = axis2.cell_edges
         for i, row in enumerate(res):
             for j, _ in enumerate(row):
                 res[i][j] = [(edge1[i], edge2[j]), (edge1[i + 1], edge2[j]),
@@ -159,13 +153,13 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         """See description in abstract axes.
         """
         if type(axis2) is not Axis1d or type(axis3) is not Axis1d:
-            raise NotImplementedError("Cell edges with such combination of axes are not supported.")
+            raise TypeError("Cell edges with such combination of axes are not supported.")
         shape = (self.size, axis2.size, axis3.size)
         vertices = np.zeros(shape).tolist()
         faces = np.zeros(shape).tolist()
-        edge1 = self.cell_edges1d
-        edge2 = axis2.cell_edges1d
-        edge3 = axis3.cell_edges1d
+        edge1 = self.cell_edges
+        edge2 = axis2.cell_edges
+        edge3 = axis3.cell_edges
         for i, row in enumerate(vertices):
             for j, col in enumerate(row):
                 for k, _ in enumerate(col):
@@ -181,7 +175,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     def intersection(self, axis2):
         """See description in abstract axes.
         """
-        if type(axis2) is not Axis1d:
+        if type(axis2) is not type(self):
             raise TypeError("Cell edges with such combination of axes are not supported.")
 
         intersection = np.zeros([self.size, axis2.size])
@@ -194,8 +188,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         j_start = 0
         for i, row in enumerate(intersection):
             for j in range(j_start, len(row)):
-                dist = inters_len(self.cell_edges1d[i], self.cell_edges1d[i + 1],
-                                  axis2.cell_edges1d[j], axis2.cell_edges1d[j + 1])
+                dist = inters_len(self.cell_edges[i], self.cell_edges[i + 1],
+                                  axis2.cell_edges[j], axis2.cell_edges[j + 1])
                 if not dist and j != j_start:
                     j_start = j-1
                     break
@@ -236,7 +230,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             plot, ax, _ = plot1d.detector_bar1d(data, self, title, y_label, filled,
                                                 fill_scheme, edge_color, grid, equal_norm, *args, **kwargs)
         else:
-            raise AttributeError("data type {} is unknown".format(data_type))
+            raise ValueError("data type {} is unknown".format(data_type))
         plt.show()
         return plot, ax
 
@@ -262,9 +256,10 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         Returns:
             matplotlib plot, matplotlib axis
         """
-        if type(axis2) is not Axis1d:
-            raise NotImplementedError("2D plots with such combination of axes are not supported.")
-
+        # if type(axis2) is not Axis1d:
+        #     raise NotImplementedError("2D plots with such combination of axes are not supported.")
+        if 'cartesian_coordinates' in kwargs:
+            raise TypeError('cartesian_coordinates is an invalid keyword argument for plot2d of cartesian axes.')
         if data_type == 'solution':
             if title is None:
                 units = util.text.density_units([self.units, axis2.units])
@@ -273,10 +268,10 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         elif data_type == 'detector_geometry':
             title = 'Detector 1/{}'.format(data.shape[0])
             cb_title = util.text.detector_caption(mesh)
-            plot, ax, _ = plot2d.detector_colormesh2d(data, self, axis2, title, cb_title, style, fill_scheme, grid,
-                                                      equal_norm, *args, **kwargs)
+            plot, ax, _ = plot2d.detector_plot2d(data, self, axis2, title, cb_title, style, fill_scheme, grid,
+                                                 equal_norm, True, 'colormesh', *args, **kwargs)
         else:
-            raise AttributeError('data type {} is unknown'.format(data_type))
+            raise ValueError('data type {} is unknown'.format(data_type))
         plt.show()
         return plot, ax
 
@@ -300,8 +295,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         Returns:
             0, 0: placeholder
         """
-        if type(axis2) is not Axis1d or type(axis3) is not Axis1d:
-            raise NotImplementedError("3D plots with such combination of axes are not supported.")
+        # if type(axis2) is not Axis1d or type(axis3) is not Axis1d:
+        #     raise NotImplementedError("3D plots with such combination of axes are not supported.")
         x_grid, y_grid, z_grid = self.cartesian_coordinates(axis2, axis3)
         if axes:
             axes = ('{}, {}'.format(self.name, self.units),
@@ -346,6 +341,6 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             plot3d.detector_contour3d(new_data, x_grid, y_grid, z_grid,
                                       title=title, colormap=colormap, axes=axes, *args, **kwargs)
         else:
-            raise AttributeError('data type {} is unknown'.format(data_type))
+            raise ValueError('data type {} is unknown'.format(data_type))
 
         return 0, 0

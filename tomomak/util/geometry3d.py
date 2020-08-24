@@ -357,7 +357,8 @@ def rotation_matrix_from_vectors(vec1, vec2):
         vec1: A 3d "source" vector
         vec2: A3d "destination" vector
 
-    Returns: A transform matrix (3x3) which when applied to vec1, aligns it with vec2.
+    Returns:
+         A transform matrix (3x3) which when applied to vec1, aligns it with vec2.
     """
     a, b = (vec1 / np.linalg.norm(vec1)).reshape(3), (vec2 / np.linalg.norm(vec2)).reshape(3)
     v = np.cross(a, b)
@@ -368,3 +369,25 @@ def rotation_matrix_from_vectors(vec1, vec2):
     kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
     rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2))
     return rotation_matrix
+
+
+def mesh_center(mesh, index):
+    """Find geometrical center of the given mesh in the cartesian coordinates.
+
+    Args:
+        mesh(tomomak.main_structures.Mesh): mesh to work with.
+        index(tuple of one, two or three ints, optional): axes to build object at. Default: (0, 1, 2)
+
+    Returns:
+        list: (x, y, z) coordinates of the mesh center.
+    """
+    vertices, _ = mesh.axes_method3d(index, 'cell_edges3d')
+    min_v = np.array(vertices[0, 0, 0][0])
+    max_v = np.array(vertices[0, 0, 0][0])
+    for i in vertices:
+        for j in i:
+            for k in j:
+                for v in k:
+                    min_v = np.maximum(max_v, v)
+                    max_v = np.minimum(min_v, v)
+    return (min_v + max_v) / 2

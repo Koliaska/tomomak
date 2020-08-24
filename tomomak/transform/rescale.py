@@ -16,10 +16,10 @@ class Rescale:
     @staticmethod
     def _rescale(new_shape, model):
         if model.mesh is None:
-            raise Exception("Unable to rescale model with undefined Mesh.")
+            raise ValueError("Unable to rescale model with undefined Mesh.")
         if len(model.mesh.axes) != len(new_shape):
-            raise Exception("Number of the new shape axes should be equal to number of Mesh axes. "
-                            "New shape has {} axes. Mesh has {} axes".format(len(new_shape), len(model.mesh.axes)))
+            raise ValueError("Number of the new shape axes should be equal to number of Mesh axes. "
+                             "New shape has {} axes. Mesh has {} axes".format(len(new_shape), len(model.mesh.axes)))
         new_mesh = mesh.Mesh()
         # find edges of the new axes cells; create new axes; create new mesh
         for i, ax in enumerate(model.mesh.axes):
@@ -79,7 +79,7 @@ class NewMesh:
             elif data_type == 'detector_geometry':
                 divider = ax.volumes  # np.ones(new_shape[i])
             else:
-                raise Exception("Wrong data type")
+                raise ValueError("data type {} is unknown".format(data_type))
             for j in range(new_shape[i]):
                 for k in range(solution.shape[0]):
                     if data_type == 'solution':

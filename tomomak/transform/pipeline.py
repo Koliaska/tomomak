@@ -60,7 +60,7 @@ class Pipeline:
             if self._position - steps < 0:
                 raiser = 1
         if raiser:
-            raise Exception("Unable to {} since final index is out of range.".format(type_text))
+            raise IndexError("Unable to {} since final index is out of range.".format(type_text))
 
     def forward(self, steps=1):
         self._check_forward(steps, forward=True, type_text='perform transformation')

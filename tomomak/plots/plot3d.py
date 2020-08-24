@@ -81,7 +81,7 @@ def _build_contour3d(data, x, y, z, scene, title='', colormap='blue-red', limits
         otf.add_point(max_val, 0.6)
         obj.volume.property.shade = False
     else:
-        raise AttributeError("Style {} is not supported".format(style))
+        raise ValueError("Style {} is not supported".format(style))
 
     # colorbar
     cb = scene.mlab.colorbar(title=title, orientation='vertical')

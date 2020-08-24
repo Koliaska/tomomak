@@ -82,11 +82,11 @@ class Mesh:
         Returns:
             numpy.array: Integrated or summed array.
         Raises:
-            AttributeError: if integration type is unknown.
+            ValueError: if integration type is unknown.
         """
 
         if integrate_type not in ['integrate', 'sum']:
-            raise AttributeError('Integration type is unknown.')
+            raise ValueError('Integration type is unknown.')
         if isinstance(index, int):
             index = [index]
         axis_shift = 0
@@ -127,7 +127,7 @@ class Mesh:
             for i, d in enumerate(data):
                 new_data[i] = self.sum_other(d, index)
         else:
-            raise AttributeError('data type {} is unknown'.format(data_type))
+            raise ValueError('data type {} is unknown'.format(data_type))
         return new_data
 
     def plot1d(self, data, index=0, data_type='solution', *args, **kwargs):
@@ -146,15 +146,19 @@ class Mesh:
                 new_data = self._prepare_data(data, index[0], data_type)
                 plot = self._axes[index[0]].plot2d(new_data, self, data_type,  *args, **kwargs)
                 return plot
-            except (NotImplementedError, TypeError):
+            except (NotImplementedError, TypeError, AttributeError):
                 index.append(index[0] + 1)
         # try to draw using 2 axes
         new_data = self._prepare_data(data, index, data_type)
         try:
-            plot = self._axes[index[0]].plot2d( self._axes[index[1]],new_data, self, data_type, *args, **kwargs)
-        except NotImplementedError:
-            new_data = new_data.transpose()
-            plot = self._axes[index[1]].plot2d( self._axes[index[0]],new_data, self, data_type, *args, **kwargs)
+            plot = self._axes[index[0]].plot2d(self._axes[index[1]], new_data, self, data_type, *args, **kwargs)
+        except (NotImplementedError, TypeError, AttributeError):
+            if data_type == 'solution':
+                new_data = new_data.transpose()
+            else:
+                new_data = new_data.transpose((0, 2, 1))
+
+            plot = self._axes[index[1]].plot2d(self._axes[index[0]], new_data, self, data_type, *args, **kwargs)
         return plot
 
     def plot3d(self, data, index=0, data_type='solution', *args, **kwargs):
@@ -193,7 +197,7 @@ class Mesh:
                     plot = new_ax[index[0]].plot3d(dat, new_ax[index[1]], new_ax[index[2]],
                                                    self, data_type, *args, **kwargs)
                     return plot
-                except NotImplementedError:
+                except (NotImplementedError, TypeError):
                     pass
         raise TypeError("plot3d is not implemented for such axes combination or other problem occurred.")
 
@@ -227,7 +231,7 @@ class Mesh:
                     for i in range(3):
                         res = np.moveaxis(res, p[i], i)
                 return res
-            except (NotImplementedError, AttributeError):
+            except (NotImplementedError, TypeError):
                 pass
         raise NotImplementedError("Custom axis should implement {} method.".format(method_name))
 
@@ -243,13 +247,13 @@ class Mesh:
             result of the method execution.
 
         Raises:
-            NotImplementedError if combination is not found.
+            TypeError if combination is not found.
         """
         try:
             func = getattr(self.axes[index[0]], method_name)
             res = func(self.axes[index[1]], *args, **kwargs)
             return res
-        except (NotImplementedError, AttributeError):
+        except (NotImplementedError, TypeError):
             try:
                 func = getattr(self.axes[index[1]], method_name)
                 res = func(self.axes[index[0]], *args, **kwargs)
@@ -259,7 +263,7 @@ class Mesh:
                 else:
                     res = res.transpose()
                 return res
-            except (NotImplementedError, AttributeError):
+            except (NotImplementedError, TypeError):
                 raise TypeError("Custom axis should implement {} method.".format(method_name))
 
     def draw_mesh(self):

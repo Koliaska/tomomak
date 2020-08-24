@@ -62,13 +62,13 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
         i2 = index[1]
         try:
             cells = mesh.axes[i1].cell_edges2d(mesh.axes[i2])
-        except (TypeError, AttributeError):
+        except (TypeError, AttributeError, NotImplementedError):
             try:
                 cells = np.transpose(mesh.axes[i2].cell_edges2d(mesh.axes[i1]))
-            except (TypeError, AttributeError) as e:
-                raise type(e)(e.message + "Custom axis should implement cell_edges2d method. "
-                                          "This method returns 2d list of ordered sequence of point tuples."
-                                          " See docstring for more information.")
+            except (NotImplementedError, TypeError) as e:
+                raise type(e)("Custom axis should implement cell_edges2d method. "
+                              "This method returns 2d list of ordered sequence of point tuples."
+                              " See docstring for more information.")
     else:
         raise TypeError("2D objects can be built on the 1D and 2D axes only.")
     shape = (mesh.axes[i1].size, mesh.axes[i2].size)
@@ -102,7 +102,7 @@ def cell_areas(mesh, index):
         i1 = index[0]
         shape = (mesh.axes[i1].size,)
         ds = np.zeros(shape)
-        cells = mesh.axes[i1].cell_edges1d()
+        cells = mesh.axes[i1].cell_edges2d()
         for i, row in enumerate(ds):
             cell = shapely.geometry.Polygon(cells[i])
             ds[i] = cell.area
@@ -115,7 +115,7 @@ def cell_areas(mesh, index):
         try:
             cells = mesh.axes[i1].cell_edges2d(mesh.axes[i2])
         except (TypeError, AttributeError):
-            cells = mesh.axes[i2].cell_edges2d(mesh.axes[i1])
+            cells = np.transpose(mesh.axes[i2].cell_edges2d(mesh.axes[i1]))
         for i, row in enumerate(ds):
             for j, _ in enumerate(row):
                 cell = shapely.geometry.Polygon(cells[i][j])
@@ -155,8 +155,9 @@ def cell_distances(mesh, index, p):
         r = np.zeros(shape)
         try:
             coordinates = mesh.axes[i1].cartesian_coordinates(mesh.axes[i2])
-        except NotImplementedError:
-            coordinates = mesh.axes[i2].cartesian_coordinates(mesh.axes[i1]).transpose()
+        except (NotImplementedError, TypeError):
+            coordinates = mesh.axes[i2].cartesian_coordinates(mesh.axes[i1])
+            coordinates = (coordinates[0].transpose(), coordinates[1].transpose())
         for i, row in enumerate(r):
             for j, _ in enumerate(row):
                 p2 = shapely.geometry.Point(coordinates[0][i, j], coordinates[1][i, j])

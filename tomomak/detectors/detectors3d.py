@@ -109,7 +109,7 @@ def line_detector(mesh, p1, p2, radius, calc_volume, index=(0, 1, 2),
         ndarray: numpy array, representing one detector on a given mesh.
 
     Raises:
-        AttributeError if excess parameter radius is not None when calc_volume = False.
+        ValueError if excess parameter radius is not None when calc_volume = False.
     """
     if isinstance(index, int):
         index = [index]
@@ -124,7 +124,7 @@ def line_detector(mesh, p1, p2, radius, calc_volume, index=(0, 1, 2),
         volumes = geometry3d.grid_intersection3d(trimesh_list, obj3d)
     else:
         if radius is not None:
-            raise AttributeError("Radius is not used when calc_volume is False. Set radius to None.")
+            raise ValueError("Radius is not used when calc_volume is False. Set radius to None.")
         volumes = geometry3d.grid_ray_intersection(trimesh_list, p1, p2)
     volumes *= response
     if radius_dependence:
@@ -159,7 +159,7 @@ def cone_detector(mesh, p1, p2, divergence, index=(0, 1, 2),
         index = [index]
     trimesh_list = geometry3d.get_trimesh_grid(mesh, index)
     distances = geometry3d.cell_distances(mesh, p1, index)
-    max_dist = np.max(distances) * 1.3
+    max_dist = np.max(distances) * 1.3 / np.cos(divergence / 2)
     transform_matrix = geometry3d.trimesh_transform_matrix(p1, p2, max_dist)
     radius = max_dist * np.sin(divergence)
     obj3d = trimesh.creation.cone(radius, max_dist)
@@ -239,7 +239,9 @@ def aperture_detector(mesh, detector_vertices, aperture_vertices, detector_origi
         index = [index]
     if detector_origin is None:
         detector_origin = np.mean(detector_vertices, axis=0)
+
     distances = geometry3d.cell_distances(mesh, detector_origin, index)
+    mesh_center = np.array(geometry3d.mesh_center(mesh, index))
     max_dist = np.max(distances) * 2
     ver_list = []
     detector_vertices = np.asarray(detector_vertices)
@@ -249,7 +251,9 @@ def aperture_detector(mesh, detector_vertices, aperture_vertices, detector_origi
         ver_list.append(det_p)
         for ap_p in aperture_vertices:
             direction = (ap_p - det_p) / np.linalg.norm((ap_p - det_p))
-            ver_list.append(det_p + direction * max_dist)
+            center_direction = (mesh_center - ap_p) / np.linalg.norm((mesh_center - ap_p))
+            cos = np.dot(direction, center_direction) / (np.linalg.norm(direction) * np.linalg.norm(center_direction))
+            ver_list.append(det_p + direction * max_dist / np.abs(cos))
     return custom_detector(mesh, ver_list, detector_origin, index, response, radius_dependence, broadcast)
 
 
@@ -309,7 +313,7 @@ def _fan_detector(mesh, p0, boundary_points, number, det_type='cone', index=(0, 
         print('\r \r', end='')
         print('\r \r', end='')
     else:
-        raise AttributeError('Array of boundary_points should contain 2 or 4 points.')
+        raise ValueError('Array of boundary_points should contain 2 or 4 points.')
     return np.array(detectors)
 
 
@@ -323,7 +327,7 @@ def _generate_detector_line(n, bp1, bp2, p0, det_type, mesh, index, *args, **kwa
         elif det_type == 'line':
             det = line_detector(mesh, p0, p2, index=index, *args, **kwargs)
         else:
-            raise AttributeError('detector type {} is unknown'.format(det_type))
+            raise ValueError('detector type {} is unknown'.format(det_type))
         detectors.append(det)
     return detectors
 
@@ -357,5 +361,5 @@ def _fan_detector_mp(mesh, p0, boundary_points, number, det_type='cone', index=(
         for r in res:
             detectors = np.append(detectors, r.get(), axis=0)
     else:
-        raise AttributeError('Array of boundary_points should contain 2 or 4 points.')
+        raise ValueError('Array of boundary_points should contain 2 or 4 points.')
     return np.array(detectors)

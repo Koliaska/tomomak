@@ -60,3 +60,4 @@ class DetectorPlotSlider:
         self.ind = (self.ind - 1) % self.data.shape[0]
         self.slider.set_val(self.ind)
 
+

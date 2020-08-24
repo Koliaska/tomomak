@@ -3,9 +3,43 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 from matplotlib.widgets import Button, Slider
 from . import interactive
+from matplotlib.patches import Polygon
+from matplotlib.collections import PatchCollection
 
 
-def colormesh2d(data, axis1, axis2, title='', style='colormesh', fill_scheme='viridis', grid=False, norm=None, *args,  **kwargs):
+def patches(data, axis1, axis2, title='', style='colormesh', fill_scheme='viridis',
+                grid=False, norm=None, *args,  **kwargs):
+    cmap = plt.get_cmap(fill_scheme)
+    fig, ax = plt.subplots()
+    try:
+        edges = axis1.cell_edges2d(axis2)
+    except TypeError:
+        edges = axis2.cell_edges2d(axis1).transpose()
+    z = data
+    patches = []
+    x_max, x_min = edges[0][0][0]
+    y_max, y_min = edges[0][0][1]
+    for row in edges:
+        for points in row:
+            polygon = Polygon(points)
+            patches.append(polygon)
+            for p in points:
+                x_max = max(x_max, p[0])
+                x_min = min(x_min, p[0])
+                y_max = max(y_max, p[1])
+                y_min = min(y_min, p[1])
+    pc = PatchCollection(patches, alpha=1)
+    pc.set_array(np.array(z).flatten())
+    ax.add_collection(pc)
+    cb = fig.colorbar(pc, ax=ax, cmap=cmap)
+    ax.set_xlim((x_min, x_max))
+    ax.set_ylim((y_min, y_max))
+    _set_labels(ax, title, axis1, axis2)
+    return pc, ax, fig, cb
+
+
+def colormesh2d(data, axis1, axis2, title='', style='colormesh', fill_scheme='viridis',
+                grid=False, norm=None, *args,  **kwargs):
     """Prepare bar plot for 2D data visualization.
 
      matplotlib.pyplot.pcolormesh  is used.
@@ -32,34 +66,33 @@ def colormesh2d(data, axis1, axis2, title='', style='colormesh', fill_scheme='vi
     cmap = plt.get_cmap(fill_scheme)
     fig, ax = plt.subplots()
     if style == 'colormesh':
-        x = axis1.cell_edges1d
-        y = axis2.cell_edges1d
+        x = axis1.cell_edges
+        y = axis2.cell_edges
         func = ax.pcolormesh
+        z = data.transpose()
     elif style == 'contour':
         try:
             coordinates = axis1.cartesian_coordinates(axis2)
-        except NotImplementedError:
+        except TypeError:
             coordinates = axis2.cartesian_coordinates(axis1).transpose()
-        x = coordinates[0][:, 0]
-        y = coordinates[1][0]
-        func = ax.contourf
-    z = data.transpose()
+        x = coordinates[0].flatten()
+        y = coordinates[1].flatten()
+        func = ax.tricontourf
+        # data = data.transpose()
+        z = data.flatten()
     if norm is not None:
         plot = func(x, y, z, cmap=cmap, vmin=norm[0], vmax=norm[1], *args,  **kwargs)
     else:
         plot = func(x, y, z, cmap=cmap, *args, **kwargs)
     cb = fig.colorbar(plot, ax=ax)
-    ax.set_title(title)
-    xlabel = "{}, {}".format(axis1.name, axis1.units)
-    ylabel = "{}, {}".format(axis2.name, axis2.units)
-    ax.set(xlabel=xlabel, ylabel=ylabel)
+    _set_labels(ax, title, axis1, axis2)
     if grid:
         ax.grid()
     return plot, ax, fig, cb
 
 
-def detector_colormesh2d(data, axis1, axis2, title='', cb_title='',  style='colormesh',  fill_scheme='viridis',
-                         grid=False, equal_norm=False, *args, **kwargs):
+def detector_plot2d(data, axis1, axis2, title='', cb_title='', style='colormesh', fill_scheme='viridis',
+                    grid=False, equal_norm=False, transpose=True, plot_type='colormesh', *args, **kwargs):
     """Prepare bar plot for 2D detector data visualization with interactive elements.
 
     matplotlib.pyplot.pcolormesh  is used. Interactive elements are Next and Prev buttons to change detectors.
@@ -94,7 +127,9 @@ def detector_colormesh2d(data, axis1, axis2, title='', cb_title='',  style='colo
             self.slider = slider
 
         def redraw(self):
-            y_data = np.transpose(self.data[self.ind])
+            y_data = self.data[self.ind]
+            if transpose:
+                y_data = np.transpose(y_data)
             plot.set_array(y_data.flatten())
             if self.norm is None:
                 normalization = colors.Normalize(np.min(y_data), np.max(y_data))
@@ -105,7 +140,12 @@ def detector_colormesh2d(data, axis1, axis2, title='', cb_title='',  style='colo
     norm = None
     if equal_norm:
         norm = [min(np.min(data), 0), np.max(data)]
-    plot, ax, fig, cb = colormesh2d(data[0], axis1, axis2, title, style,  fill_scheme, grid, norm, *args, **kwargs)
+    if plot_type =='colormesh':
+        plot, ax, fig, cb = colormesh2d(data[0], axis1, axis2, title, style,  fill_scheme, grid, norm, *args, **kwargs)
+    elif plot_type =='patches':
+        plot, ax, fig, cb = patches(data[0], axis1, axis2, title, style, fill_scheme, grid, norm, *args, **kwargs)
+    else:
+        raise ValueError('plot_type {} is unknown. See docstring for more information.'.format(plot_type))
     cb.set_label(cb_title)
 
     # slider
@@ -124,4 +164,11 @@ def detector_colormesh2d(data, axis1, axis2, title='', cb_title='',  style='colo
     b_next.on_clicked(callback.next)
     b_prev.on_clicked(callback.prev)
     return plot, ax, (slider, b_next, b_prev)
+
+
+def _set_labels(ax, title, axis1, axis2):
+    ax.set_title(title)
+    xlabel = "{}, {}".format(axis1.name, axis1.units)
+    ylabel = "{}, {}".format(axis2.name, axis2.units)
+    ax.set(xlabel=xlabel, ylabel=ylabel)
 

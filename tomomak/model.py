@@ -78,6 +78,7 @@ class Model:
     def detector_geometry(self, value):
         self._detector_geometry = value
         self._check_self_consistency()
+        self._detector_geometry = np.array(self._detector_geometry)
 
     def add_detector(self, det):
         self._detector_geometry = np.append(self._detector_geometry, det, axis=0)
@@ -122,18 +123,18 @@ class Model:
                     raise TypeError("detector_signal should be 1D iterable of numbers")
                 signal_len = len(self._detector_signal)
                 if geometry_len != signal_len:
-                    raise Exception("detector_signal and detector_geometry should have same length. "
+                    raise ValueError("detector_signal and detector_geometry should have same length. "
                                     "detector_geometry len is {}; detector signal len is {}."
                                     .format(geometry_len, signal_len))
             if self._solution is not None:
                 if self._solution.shape != self._detector_geometry[0].shape:
-                    raise Exception("Each slice in detector_geometry should have same shape as solution. "
+                    raise ValueError("Each slice in detector_geometry should have same shape as solution. "
                                     "detector_geometry[0] shape is {}; solution shape is {}."
                                     .format(self._detector_geometry[0].shape, self._solution.shape))
         if self._mesh is not None:
             def check_shapes(val, name):
                 if self.mesh.shape != val.shape:
-                    raise Exception("mesh shape is inconsistent with {}. mesh shape is {} while {} is {}."
+                    raise ValueError("mesh shape is inconsistent with {}. mesh shape is {} while {} is {}."
                                     .format(name, self.mesh.shape, name, val.shape))
             if self.detector_geometry is not None:
                 val = self.detector_geometry[0]
@@ -147,42 +148,42 @@ class Model:
     def plot1d(self, index=0, data_type="solution", **kwargs):
         if data_type == "solution":
             if self._solution is None:
-                raise Exception("Solution is not defined.")
+                raise ValueError("Solution is not defined.")
             data = self._solution
         elif data_type == "detector_geometry":
             if self._detector_geometry is None:
-                raise Exception("detector_geometry is not defined.")
+                raise ValueError("detector_geometry is not defined.")
             data = self._detector_geometry
         else:
-            raise AttributeError("data type {} is unknown".format(data_type))
+            raise ValueError("data type {} is unknown".format(data_type))
         plot = self._mesh.plot1d(data, index, data_type,  **kwargs)
         return plot
 
     def plot2d(self, index=0, data_type="solution", **kwargs):
         if data_type == "solution":
             if self._solution is None:
-                raise Exception("Solution is not defined.")
+                raise ValueError("Solution is not defined.")
             data = self._solution
         elif data_type == "detector_geometry":
             if self._detector_geometry is None:
-                raise Exception("detector_geometry is not defined.")
+                raise ValueError("detector_geometry is not defined.")
             data = self._detector_geometry
         else:
-            raise AttributeError("data type {} is unknown".format(data_type))
+            raise ValueError("data type {} is unknown".format(data_type))
         plot = self._mesh.plot2d(data, index, data_type,  **kwargs)
         return plot
 
     def plot3d(self, index=0, data_type="solution", **kwargs):
         if data_type == "solution":
             if self._solution is None:
-                raise Exception("Solution is not defined.")
+                raise ValueError("Solution is not defined.")
             data = self._solution
         elif data_type == "detector_geometry":
             if self._detector_geometry is None:
-                raise Exception("detector_geometry is not defined.")
+                raise ValueError("detector_geometry is not defined.")
             data = self._detector_geometry
         else:
-            raise AttributeError("data type {} is unknown".format(data_type))
+            raise ValueError("data type {} is unknown".format(data_type))
         plot = self._mesh.plot3d(data, index, data_type,  **kwargs)
         return plot
 

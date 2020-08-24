@@ -144,16 +144,6 @@ class Abstract1dAxis(AbstractAxis):
             plot data, specific for each implementation.
         """
 
-    @property
-    @abstractmethod
-    def cell_edges1d(self):
-        """Get edges of a cell in cartesian coordinates.
-
-        Returns:
-            1D list of points (x, y) in cartesian coordinates: points, representing the cell.
-            Size of the list is self.size.
-        """
-
     @abstractmethod
     def cell_edges2d(self, axis2):
         """Get edges of a cell on a mesh consisting of this and another 1D axis in cartesian coordinates.
