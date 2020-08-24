@@ -62,35 +62,6 @@ from tomomak.iterators import statistics
 import tomomak.constraints.basic
 import numpy as np
 
-axes = [cartesian.Axis1d(name="X", units="cm", size=5, upper_limit=10),
-    cartesian.Axis1d(name="Y", units="cm", size=5, upper_limit=10),
-    cartesian.Axis1d(name="Z", units="cm", size=5, upper_limit=10)]
-
-
-mesh = mesh.Mesh(axes)
-mod = model.Model(mesh=mesh)
-start = time.time()
-mod.detector_geometry = [detectors3d.aperture_detector(mesh, [(4,-5,4), (6,-5,4), (4,-5,6), (6, -5, 6)], [(4,0,4), (6,0,4), (4,0,6), (6, 0, 6)], radius_dependence=False)]
-mod.plot3d(axes=True, style=3, data_type='detector_geometry')
-mod.detector_geometry = detectors3d.fan_detector(mesh, (-5, 5, 5), [[5, 2, 5], [5, 7, 5]], number=3, divergence=0.3)
-mod.plot3d(axes=True, style=3, data_type='detector_geometry')
-mod.detector_geometry = [detectors3d.aperture_detector(mesh, [(4,-5,4), (6,-5,4), (4,-5,6), (6, -5, 6)], [(4,0,4), (6,0,4), (4,0,6), (6, 0, 6)], radius_dependence=False)]
-mod.plot3d(axes=True, style=3, data_type='detector_geometry')
-
-mod.plot3d(axes=True, style=3, data_type='detector_geometry')
-mod.detector_geometry = [detectors3d.line_detector(mesh, (5,5,12), (10,2,0), 1, calc_volume=True,radius_dependence=False)]
-mod.plot3d(axes=True, style=3, data_type='detector_geometry')
-mod.detector_geometry = [detectors3d.cone_detector(mesh, (5, 5, 20), (5,5,0), 0.3,  radius_dependence=True)]
-mod.plot3d(axes=True, style=3, data_type='detector_geometry')
-mod.detector_geometry = [detectors3d.line_detector(mesh, (5,5,12), (10,2,0), None, calc_volume=False,radius_dependence=False)]
-mod.plot3d(axes=True, style=3, data_type='detector_geometry')
-mod.detector_geometry = detectors3d.four_pi_detector_array(mesh, (5, 5, 5), 20, 20, 10)
-mod.plot3d(axes=True, style=3, data_type='detector_geometry')
-mod.solution = np.log(objects3d.point_source(mesh, (5.5, 5.5,5.5))*100)
-mod.plot3d(axes=True, style=3)
-mod.solution = objects3d.trimesh_create(mesh, 'box',  extents=(6,16,12))
-print(mod.solution)
-mod.plot3d(axes=True, style=3)
 
 # This is an example of a basic framework functionality.
 # You will learn how to use framework, steps you need to follow in order to get the solution.
@@ -100,15 +71,17 @@ mod.plot3d(axes=True, style=3)
 # Let's create coordinate mesh. First axis will consist of 20 segments. Second - of 30 segments.
 # This means that solution will be described by the 20x30 array.
 
-axes = [cartesian.Axis1d(name="Y", units="cm", size=30, upper_limit=10),
-        polar.Axis1d(name="phi", units="rad", size=18),  ]
+axes = [polar.Axis1d(name="phi", units="rad", size=18),
+        cartesian.Axis1d(name="Y", units="cm", size=30, upper_limit=10)]
 mesh = mesh.Mesh(axes)
 # Now we can create Model.
 # Model is one of the basic tomomak structures which stores information about geometry, solution and detectors.
 # At present we only have information about the geometry.
 mod = model.Model(mesh=mesh)
+
 # Now let's create synthetic 2D object to study.
 # We will consider triangle.
+
 real_solution = objects2d.polygon(mesh, [(-5, 1), (0, 8), (5, 2)])
 # Model.solution is the solution we are looking for.
 # It will be obtained at the end of this example.
@@ -116,9 +89,11 @@ real_solution = objects2d.polygon(mesh, [(-5, 1), (0, 8), (5, 2)])
 # you can use it as first approximation by setting Model.solution = *supposed solution*.
 # Recently we've generated test object, which is, of course, real solution.
 # A trick to visualize this object is to temporarily use it as model solution.
+
 mod.solution = real_solution
-mod.plot2d(style='colormesh', cartesian_coordinates=True)
-mod.plot2d()
+
+# mod.plot2d(style='colormesh', cartesian_coordinates=True)
+# mod.plot2d()
 # # You can also make 1D plot. In this case data will be integrated over 2nd axis.
 # mod.plot1d(index=0)
 # # After we've visualized our test object, it's time to set model solution to None and try to find this solution fairly.
@@ -142,9 +117,9 @@ det_signal = signal.get_signal(real_solution, det)
 mod.detector_signal = det_signal
 mod.detector_geometry = det
 # Let's take a look at the detectors geometry:
-mod.plot2d(data_type='detector_geometry', cartesian_coordinates=True )
+mod.plot2d(data_type='detector_geometry', cartesian_coordinates=True, equal_norm=True )
 # It's also possible to get short model summary by converting the model object to string.
-print(mod)
+
 
 # The next step is optional. You can perform transformation with existing geometry,
 # e.g. switch to another coordinate system or to basic function space.

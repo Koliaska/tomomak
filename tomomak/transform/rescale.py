@@ -103,6 +103,7 @@ class NewMesh:
             new_detector_geometry = np.zeros(new_shape)
             for i, geom in enumerate(detector_geometry):
                 new_detector_geometry[i] = self._new_mesh(self.new_mesh, model, geom, 'detector_geometry')
+
         else:
             new_detector_geometry = None
         model.mesh = self.new_mesh

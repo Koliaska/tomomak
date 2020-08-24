@@ -7,8 +7,25 @@ from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
 
-def patches(data, axis1, axis2, title='', style='colormesh', fill_scheme='viridis',
-                grid=False, norm=None, *args,  **kwargs):
+def patches(data, axis1, axis2, title='', fill_scheme='viridis', norm=None, *args,  **kwargs):
+    """Prepare patches plot for 2D data visualization.
+
+    Works with arbitrary axes types.
+    Args:
+        data (ndarray): 2D array of data.
+        axis1 (axis): corresponding tomomak axis № 1.
+        axis2 (axis): corresponding tomomak axis № 2.
+        title (str, optional): Plot title. default: ''.
+        fill_scheme (pyplot colormap, optional): pyplot colormap to be used in the plot. default: 'viridis'.
+        *args, **kwargs: not used.
+
+    Returns:
+         pc: PatchCollection.
+         ax (axes.Axes ): axes.Axes object or array of Axes objects.
+             See matplotlib Axes class
+         fig (matplotlib.figure): The figure module.
+         cb (matplotlib.pyplot.colorbar): colorbar on the right of the axis.
+    """
     cmap = plt.get_cmap(fill_scheme)
     fig, ax = plt.subplots()
     try:
@@ -30,8 +47,11 @@ def patches(data, axis1, axis2, title='', style='colormesh', fill_scheme='viridi
                 y_min = min(y_min, p[1])
     pc = PatchCollection(patches, alpha=1)
     pc.set_array(np.array(z).flatten())
+    if norm is not None:
+        pc.set_clim(norm[0], norm[1])
     ax.add_collection(pc)
     cb = fig.colorbar(pc, ax=ax, cmap=cmap)
+
     ax.set_xlim((x_min, x_max))
     ax.set_ylim((y_min, y_max))
     _set_labels(ax, title, axis1, axis2)
@@ -140,10 +160,10 @@ def detector_plot2d(data, axis1, axis2, title='', cb_title='', style='colormesh'
     norm = None
     if equal_norm:
         norm = [min(np.min(data), 0), np.max(data)]
-    if plot_type =='colormesh':
+    if plot_type == 'colormesh':
         plot, ax, fig, cb = colormesh2d(data[0], axis1, axis2, title, style,  fill_scheme, grid, norm, *args, **kwargs)
-    elif plot_type =='patches':
-        plot, ax, fig, cb = patches(data[0], axis1, axis2, title, style, fill_scheme, grid, norm, *args, **kwargs)
+    elif plot_type == 'patches':
+        plot, ax, fig, cb = patches(data[0], axis1, axis2, title, fill_scheme, norm, *args, **kwargs)
     else:
         raise ValueError('plot_type {} is unknown. See docstring for more information.'.format(plot_type))
     cb.set_label(cb_title)

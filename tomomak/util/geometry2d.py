@@ -64,7 +64,8 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
             cells = mesh.axes[i1].cell_edges2d(mesh.axes[i2])
         except (TypeError, AttributeError, NotImplementedError):
             try:
-                cells = np.transpose(mesh.axes[i2].cell_edges2d(mesh.axes[i1]))
+                cells = np.array(mesh.axes[i2].cell_edges2d(mesh.axes[i1]), dtype=object)
+                cells =np.transpose(cells)
             except (NotImplementedError, TypeError) as e:
                 raise type(e)("Custom axis should implement cell_edges2d method. "
                               "This method returns 2d list of ordered sequence of point tuples."
@@ -115,7 +116,7 @@ def cell_areas(mesh, index):
         try:
             cells = mesh.axes[i1].cell_edges2d(mesh.axes[i2])
         except (TypeError, AttributeError):
-            cells = np.transpose(mesh.axes[i2].cell_edges2d(mesh.axes[i1]))
+            cells = np.transpose(np.array(mesh.axes[i2].cell_edges2d(mesh.axes[i1]), dtype=object))
         for i, row in enumerate(ds):
             for j, _ in enumerate(row):
                 cell = shapely.geometry.Polygon(cells[i][j])

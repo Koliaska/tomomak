@@ -78,7 +78,8 @@ class Model:
     def detector_geometry(self, value):
         self._detector_geometry = value
         self._check_self_consistency()
-        self._detector_geometry = np.array(self._detector_geometry)
+        if value is not None:
+            self._detector_geometry = np.array(self._detector_geometry)
 
     def add_detector(self, det):
         self._detector_geometry = np.append(self._detector_geometry, det, axis=0)

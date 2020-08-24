@@ -47,7 +47,7 @@ class Axis1d(cartesian.Axis1d):
         else:
             raise TypeError("Cell edges with such combination of axes are not supported.")
 
-    def cell_edges3d(self, axis2, axis3):  #########
+    def cell_edges3d(self, axis2, axis3):
         pass
 
     @staticmethod
@@ -89,8 +89,7 @@ class Axis1d(cartesian.Axis1d):
                     if title is None:
                         units = util.text.density_units([self.units, axis2.units])
                         title = r"Density, {}".format(units)
-                    plot, ax, _, _ = plot2d.patches(data, self, axis2, title, style, fill_scheme, grid, equal_norm,
-                                                    *args, **kwargs)
+                    plot, ax, _, _ = plot2d.patches(data, self, axis2, title, fill_scheme, *args, **kwargs)
                 elif data_type == 'detector_geometry':
                     title = 'Detector 1/{}'.format(data.shape[0])
                     cb_title = util.text.detector_caption(mesh)

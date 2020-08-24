@@ -157,7 +157,6 @@ class Mesh:
                 new_data = new_data.transpose()
             else:
                 new_data = new_data.transpose((0, 2, 1))
-
             plot = self._axes[index[1]].plot2d(self._axes[index[0]], new_data, self, data_type, *args, **kwargs)
         return plot
 
