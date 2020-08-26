@@ -1,13 +1,12 @@
 from . import cartesian
 import numpy as np
-import re
+from . import abstract_axes
 import matplotlib.pyplot as plt
-from tomomak.plots import plot1d, plot2d, plot3d
-import warnings
+from tomomak.plots import plot2d
 from tomomak import util
 
 
-class Axis1d(cartesian.Axis1d):
+class Axis1d(abstract_axes.Abstract1dAxis):
     RESOLUTION2D = 20
 
     def __init__(self, coordinates=None, edges=None, lower_limit=0, upper_limit=2*np.pi, size=None, name="", units=""):
@@ -17,10 +16,10 @@ class Axis1d(cartesian.Axis1d):
     def _check_self_consistency(self):
         if np.any(self.cell_edges < 0):
             raise ValueError("Grid edges are < 0. Polar coordinates should be > 0 and < 2*pi.")
-        elif np.any(self.cell_edges > 2*np.pi):
+        elif np.any(self.cell_edges > 2 * np.pi):
             raise ValueError("Grid edges are > 2*pi. Polar coordinates should be > 0 and < 2*pi.")
 
-    def cell_edges2d(self, axis2):
+    def cell_edges2d_cartesian(self, axis2):
         # 2D polar coordinate system
         if type(axis2) is cartesian.Axis1d:
             shape = (self.size, axis2.size)
@@ -46,14 +45,14 @@ class Axis1d(cartesian.Axis1d):
         else:
             raise TypeError("Cell edges with such combination of axes are not supported.")
 
-    def cell_edges3d(self, axis2, axis3):
+    def cell_edges3d_cartesian(self, axis2, axis3):
         # #Cylindrical coordinates
         if type(axis2) is cartesian.Axis1d and type(axis3) is cartesian.Axis1d:
             shape = (self.size, axis2.size, axis3.size)
             vertices = np.zeros(shape).tolist()
             faces = np.zeros(shape).tolist()
             edge3 = axis3.cell_edges
-            edges2d = self.cell_edges2d(axis2)
+            edges2d = self.cell_edges2d_cartesian(axis2)
             # precalculate faces for 2 cases - 1) standard, 2) - center of the mesh
             face = list()
             # left and right faces

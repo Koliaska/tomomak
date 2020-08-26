@@ -29,7 +29,7 @@ def get_trimesh_grid(mesh, index=(0, 1, 2)):
         index = [index]
     if mesh.axes[index[0]].dimension == 3:
         try:
-            (vertices, faces) = mesh.axes[index[0]].cell_edges3d()
+            (vertices, faces) = mesh.axes[index[0]].cell_edges3d_cartesian()
             shape = mesh.axes[index[0]].size
             trimesh_list = np.zeros(shape).tolist()
             for i, _ in enumerate(trimesh_list):

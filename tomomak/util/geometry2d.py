@@ -39,7 +39,7 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
     if mesh.axes[index[0]].dimension == 2:
         i1 = index[0]
         try:
-            cells = mesh.axes[i1].cell_edges2d()
+            cells = mesh.axes[i1].cell_edges2d_cartesian()
             shape = (mesh.axes[i1].size,)
             res = np.zeros(shape)
             for i, row in enumerate(res):
@@ -61,10 +61,10 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
         i1 = index[0]
         i2 = index[1]
         try:
-            cells = mesh.axes[i1].cell_edges2d(mesh.axes[i2])
+            cells = mesh.axes[i1].cell_edges2d_cartesian(mesh.axes[i2])
         except (TypeError, AttributeError, NotImplementedError):
             try:
-                cells = np.array(mesh.axes[i2].cell_edges2d(mesh.axes[i1]), dtype=object)
+                cells = np.array(mesh.axes[i2].cell_edges2d_cartesian(mesh.axes[i1]), dtype=object)
                 cells =np.transpose(cells)
             except (NotImplementedError, TypeError) as e:
                 raise type(e)("Custom axis should implement cell_edges2d method. "
@@ -103,7 +103,7 @@ def cell_areas(mesh, index):
         i1 = index[0]
         shape = (mesh.axes[i1].size,)
         ds = np.zeros(shape)
-        cells = mesh.axes[i1].cell_edges2d()
+        cells = mesh.axes[i1].cell_edges2d_cartesian()
         for i, row in enumerate(ds):
             cell = shapely.geometry.Polygon(cells[i])
             ds[i] = cell.area
@@ -114,9 +114,9 @@ def cell_areas(mesh, index):
         shape = (mesh.axes[i1].size, mesh.axes[i2].size)
         ds = np.zeros(shape)
         try:
-            cells = mesh.axes[i1].cell_edges2d(mesh.axes[i2])
+            cells = mesh.axes[i1].cell_edges2d_cartesian(mesh.axes[i2])
         except (TypeError, AttributeError):
-            cells = np.transpose(np.array(mesh.axes[i2].cell_edges2d(mesh.axes[i1]), dtype=object))
+            cells = np.transpose(np.array(mesh.axes[i2].cell_edges2d_cartesian(mesh.axes[i1]), dtype=object))
         for i, row in enumerate(ds):
             for j, _ in enumerate(row):
                 cell = shapely.geometry.Polygon(cells[i][j])

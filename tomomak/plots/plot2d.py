@@ -29,9 +29,9 @@ def patches(data, axis1, axis2, title='', fill_scheme='viridis', norm=None, *arg
     cmap = plt.get_cmap(fill_scheme)
     fig, ax = plt.subplots()
     try:
-        edges = axis1.cell_edges2d(axis2)
+        edges = axis1.cell_edges2d_cartesian(axis2)
     except TypeError:
-        edges = axis2.cell_edges2d(axis1).transpose()
+        edges = axis2.cell_edges2d_cartesian(axis1).transpose()
     z = data
     patches = []
     x_max, x_min = edges[0][0][0]

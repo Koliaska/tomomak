@@ -211,7 +211,7 @@ def detector_contour3d(data, x, y, z,  title='', colormap='blue-red', limits=Non
 
 
 def mesh3d(data, axis1,  axis2, axis3,  title='', fill_scheme='viridis', *args, **kwargs):
-    (vertex, faces) = axis1.cell_edges3d(axis2, axis3)
+    (vertex, faces) = axis1.cell_edges3d_cartesian(axis2, axis3)
     norm = matplotlib.colors.Normalize(vmin=np.amin(data), vmax=np.amax(data))
     data = norm(data)
     colormap = plt.get_cmap(fill_scheme)

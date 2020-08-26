@@ -71,7 +71,7 @@ import numpy as np
 # This means that solution will be described by the 20x30 array.
 
 axes = [polar.Axis1d(name="phi", units="cm", size=20),
-        cartesian.Axis1d(name="R", units="m", size=19, upper_limit=10),
+        cartesian.Axis1d(name="R", units="cm", size=19, upper_limit=10),
 
         cartesian.Axis1d(name="Z", units="cm", size=18, upper_limit=10),
             ]
