@@ -241,7 +241,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         matplotlib pcolormesh is used. Detector data is plotted on the interactive graph.
 
         Args:
-            axis2 (tomomak axis): second axis. Only cartesian.Axis1d is supported.
+            axis2 (tomomak axis): second axis.
             data (2D ndarray): data to plot.
             mesh (tomomak mesh): mesh to extract additional info.
             data_type (str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
@@ -276,13 +276,13 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         return plot, ax
 
     def plot3d(self, data, axis2, axis3, mesh, data_type='solution', colormap='blue-red', axes=False,
-               interp_size=50, *args, **kwargs):
-        """Create 2D plot of the solution or detector geometry.
+               cartesian_coordinates=False, interp_size=None, *args, **kwargs):
+        """Create 3D plot of the solution or detector geometry.
 
         Args:
             data (3D ndarray): data to plot.
-            axis2 (tomomak axis): second axis. Only cartesian.Axis1d is supported.
-            axis3 (tomomak axis): third axis. Only cartesian.Axis1d is supported.
+            axis2 (tomomak axis): second axis.
+            axis3 (tomomak axis): third axis.
             mesh (tomomak mesh): mesh to extract additional info.
             data_type (str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
             colormap (str, optional): Colormap. Default: 'viridis'.
@@ -297,22 +297,32 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         """
         # if type(axis2) is not Axis1d or type(axis3) is not Axis1d:
         #     raise NotImplementedError("3D plots with such combination of axes are not supported.")
-        x_grid, y_grid, z_grid = self.cartesian_coordinates(axis2, axis3)
+        # x_grid, y_grid, z_grid = self.cartesian_coordinates(axis2, axis3)
+        if cartesian_coordinates:
+            x_grid, y_grid, z_grid = self.cartesian_coordinates(axis2, axis3)
+
+        else:
+            coord = [self.coordinates, axis2.coordinates, axis3.coordinates]
+            x_grid, y_grid, z_grid = np.array(np.meshgrid(*coord, indexing='ij'))
         if axes:
             axes = ('{}, {}'.format(self.name, self.units),
                     '{}, {}'.format(axis2.name, axis2.units),
                     '{}, {}'.format(axis3.name, axis3.units))
-
         if data_type == 'solution':
             # title
             units = util.text.density_units([self.units, axis2.units, axis3.units])
             title = re.sub('[${}]', '', r"   Density, {}".format(units))
             # irregular axes
-            if not all((self.regular, axis2.regular, axis3.regular)):
-                warnings.warn("Since axes are not regular, linear interpolation with {} points used. "
-                              "You can change interpolation size with interp_size attribute.".format(interp_size**3))
+            if not all((self.regular, axis2.regular, axis3.regular)) or \
+                    (cartesian_coordinates and not all(type(x) == Axis1d for x in (self, axis2, axis3))):
+                if interp_size is None:
+                    interp_size = 50
+                    warnings.warn("Since axes are not regular, linear interpolation with {} points used. "
+                                  "You can change interpolation size with interp_size attribute."
+                                  .format(interp_size**3))
                 x_grid, y_grid, z_grid, new_data = \
                     util.geometry3d.make_regular(data, x_grid, y_grid, z_grid, interp_size)
+                new_data = np.nan_to_num(new_data)
             else:
                 new_data = data
             # plot
@@ -323,9 +333,13 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             # title
             title = '   ' + re.sub('[${}]', '', util.text.detector_caption(mesh))
             # irregular ax4s
-            if not all((self.regular, axis2.regular, axis3.regular)):
-                warnings.warn("Since axes are not regular, linear interpolation with {} points used."
-                              "You can change interpolation size with interp_size attribute.".format(interp_size ** 3))
+            if not all((self.regular, axis2.regular, axis3.regular)) or \
+                    (cartesian_coordinates and not all(type(x) == Axis1d for x in (self, axis2, axis3))):
+                if interp_size is None:
+                    interp_size = 50
+                    warnings.warn("Since axes are not regular, linear interpolation with {} points used. "
+                                  "You can change interpolation size with interp_size attribute."
+                                  .format(interp_size ** 3))
                 x_grid_n, y_grid_n, z_grid_n = x_grid, y_grid, z_grid
                 new_data = np.zeros((data.shape[0], interp_size,  interp_size,  interp_size))
                 # interpolate data for each detector
@@ -336,6 +350,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                     print('\r', end='')
                     print("...", str((i+1) * 100 // data.shape[0]) + "% complete", end='')
                 print('\r \r', end='')
+                new_data = np.nan_to_num(new_data)
             else:
                 new_data = data
             plot3d.detector_contour3d(new_data, x_grid, y_grid, z_grid,

@@ -1,5 +1,7 @@
 import numbers
 import pickle
+import itertools
+import warnings
 import numpy as np
 
 
@@ -145,6 +147,11 @@ class Model:
                 val = self.solution
                 name = "solution"
                 check_shapes(val, name)
+            # Check axes units
+            for comb in itertools.combinations(self._mesh.axes, 2):
+                if type(comb[0]) == type(comb[1]) and comb[0].units != comb[1].units:
+                    warnings.warn("Axes {} and {} have different units which may cause incorrect result interpretation."
+                                  .format(comb[0].name, comb[1].name))
 
     def plot1d(self, index=0, data_type="solution", **kwargs):
         if data_type == "solution":

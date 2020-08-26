@@ -8,7 +8,7 @@ from tomomak import util
 
 
 class Axis1d(cartesian.Axis1d):
-    RESOLUTION2D = 10
+    RESOLUTION2D = 20
 
     def __init__(self, coordinates=None, edges=None, lower_limit=0, upper_limit=2*np.pi, size=None, name="", units=""):
         super().__init__(coordinates, edges, lower_limit, upper_limit, size, name, units)
@@ -29,13 +29,12 @@ class Axis1d(cartesian.Axis1d):
             edge_r = axis2.cell_edges
             for i, row in enumerate(res):
                 for j, _ in enumerate(row):
-                    points = [(edge_r[j], edge_p[i]), (edge_r[j + 1], edge_p[i])]
+                    points = [(edge_r[j], edge_p[i])]
                     p_step = (edge_p[i + 1] - edge_p[i]) / self.RESOLUTION2D
                     for k in range(self.RESOLUTION2D):
                         points.append((edge_r[j + 1], edge_p[i] + k * p_step))
                     points.append((edge_r[j + 1], edge_p[i + 1]))
                     if edge_r[j] > 0:
-                        points.append((edge_r[j], edge_p[i + 1]))
                         for k in range(self.RESOLUTION2D):
                             points.append((edge_r[j], edge_p[i + 1] - k * p_step))
                     for k, p in enumerate(points):
@@ -48,7 +47,66 @@ class Axis1d(cartesian.Axis1d):
             raise TypeError("Cell edges with such combination of axes are not supported.")
 
     def cell_edges3d(self, axis2, axis3):
-        pass
+        # #Cylindrical coordinates
+        if type(axis2) is cartesian.Axis1d and type(axis3) is cartesian.Axis1d:
+            shape = (self.size, axis2.size, axis3.size)
+            vertices = np.zeros(shape).tolist()
+            faces = np.zeros(shape).tolist()
+            edge3 = axis3.cell_edges
+            edges2d = self.cell_edges2d(axis2)
+            # precalculate faces for 2 cases - 1) standard, 2) - center of the mesh
+            face = list()
+            # left and right faces
+            face.append((0, 1, self.RESOLUTION2D * 2 + 3, self.RESOLUTION2D * 2 + 2))
+            face.append((self.RESOLUTION2D + 1, self.RESOLUTION2D + 2,
+                         self.RESOLUTION2D * 3 + 4, self.RESOLUTION2D * 3 + 3))
+            # first front and back faces
+            face.append((2, 1, 0, self.RESOLUTION2D * 2 + 1))
+            face.append((self.RESOLUTION2D * 2 + 2, self.RESOLUTION2D * 2 + 3,
+                         self.RESOLUTION2D * 2 + 4, self.RESOLUTION2D * 4 + 3))
+            # first top and bot face
+            face.append((1, 2, self.RESOLUTION2D * 2 + 4, self.RESOLUTION2D * 2 + 3))
+            face.append((0, self.RESOLUTION2D * 2 + 2, self.RESOLUTION2D * 4 + 3, self.RESOLUTION2D * 2 + 1))
+            for i in range(self.RESOLUTION2D - 1):
+                # front
+                face.append((i + 3, i + 2, self.RESOLUTION2D * 2 - i + 1, self.RESOLUTION2D * 2 - i))
+                # back
+                face.append((self.RESOLUTION2D * 2 + 4 + i, self.RESOLUTION2D * 2 + 5 + i,
+                             self.RESOLUTION2D * 4 + 2 - i, self.RESOLUTION2D * 4 - i + 3))
+                # top
+                face.append((i + 2, i + 3, self.RESOLUTION2D * 2 + i + 5, self.RESOLUTION2D * 2 + i + 4))
+                # bottom
+                face.append((self.RESOLUTION2D * 2 - i, self.RESOLUTION2D * 2 - i + 1,
+                             self.RESOLUTION2D * 4 - i + 3, self.RESOLUTION2D * 4 - i + 2))
+            faces_center = list()
+            # left and right faces as triangles
+            faces_center.append((0, 1, self.RESOLUTION2D + 2))
+            faces_center.append((self.RESOLUTION2D + 2, 1, self.RESOLUTION2D + 3))
+            faces_center.append((self.RESOLUTION2D + 1, 0, self.RESOLUTION2D + 2))
+            faces_center.append((self.RESOLUTION2D + 1, self.RESOLUTION2D + 2, self.RESOLUTION2D * 2 + 3))
+            for i in range(self.RESOLUTION2D):
+                # front
+                faces_center.append((i + 2, i + 1, 0))
+                # back
+                faces_center.append((self.RESOLUTION2D + 3 + i, self.RESOLUTION2D + 4 + i, self.RESOLUTION2D + 2))
+                # top as triangles
+                faces_center.append((i + 1, self.RESOLUTION2D + i + 4, self.RESOLUTION2D + i + 3))
+                faces_center.append((i + 2, self.RESOLUTION2D + i + 4, i + 1))
+            for i, row in enumerate(vertices):
+                for j, col in enumerate(row):
+                    for k, _ in enumerate(col):
+                        vertices[i][j][k] = []
+                        for e in edges2d[i][j]:
+                            vertices[i][j][k].append((e[0], e[1], edge3[k]))
+                        for e in edges2d[i][j]:
+                            vertices[i][j][k].append((e[0], e[1], edge3[k + 1]))
+                        if len(edges2d[i][j]) == self.RESOLUTION2D * 2 + 2:
+                            faces[i][j][k] = face
+                        else:
+                            faces[i][j][k] = faces_center
+            return vertices, faces
+        else:
+            raise TypeError("Cell edges with such combination of axes are not supported.")
 
     @staticmethod
     def _to_cartesian2d(r, phi):
@@ -72,14 +130,29 @@ class Axis1d(cartesian.Axis1d):
                     for j, _ in enumerate(row):
                         x[i, j], y[i, j] = self._to_cartesian2d(r_ar[j], phi_ar[i])
                 return x, y
+        if len(axes) == 2:
+            shape = (self.size, axes[0].size, axes[1].size)
+            x = np.zeros(shape)
+            y = np.zeros(shape)
+            z = np.zeros(shape)
+            # Cylindrical coordinates
+            if type(axes[0]) is cartesian.Axis1d and type(axes[1]) is cartesian.Axis1d:
+                x2d, y2d = self.cartesian_coordinates(axes[0])
+                z_axis = axes[1].coordinates
+                for i, row in enumerate(x):
+                    for j, col in enumerate(row):
+                        for k, _ in enumerate(col):
+                            x[i, j, k] = x2d[i, j]
+                            y[i, j, k] = y2d[i, j]
+                            z[i, j, k] = z_axis[k]
+                return x, y, z
         raise TypeError("cartesian_coordinate with such combination of axes are not supported.")
 
     def plot2d(self, axis2, data,  mesh, data_type='solution', style='colormesh', fill_scheme='viridis',
                cartesian_coordinates=False, grid=False, equal_norm=False, title=None, *args, **kwargs):
         if cartesian_coordinates:
             if type(axis2) is not cartesian.Axis1d:
-                raise TypeError("2D plots in cartesian coordinates"
-                                          " with such combination of axes are not supported.")
+                raise TypeError("2D plots in cartesian coordinates with such combination of axes are not supported.")
             old_name = (self.name, axis2.name)
             old_units = (self.units, axis2.units)
             self.name, axis2.name = 'X', 'Y'
@@ -104,8 +177,27 @@ class Axis1d(cartesian.Axis1d):
             self.name, axis2.name = old_name
             self.units, axis2.units = old_units
         else:
-            plot, ax = super().plot2d(axis2, data,  mesh, data_type, style, fill_scheme, grid, equal_norm, title, *args, **kwargs)
+            plot, ax = super().plot2d(axis2, data,  mesh, data_type, style,
+                                      fill_scheme, grid, equal_norm, title, *args, **kwargs)
         return plot, ax
 
-    def plot3d(self, data, axis2, axis3, data_type, *args, **kwargs):
-        pass
+    def plot3d(self, data, axis2, axis3, mesh, data_type='solution', colormap='blue-red', axes=False,
+               cartesian_coordinates=False, interp_size=None, *args, **kwargs):
+        if cartesian_coordinates:
+            old_name = (self.name, axis2.name, axis3.name)
+            old_units = (self.units, axis2.units, axis3.units)
+            self.name, axis2.name, axis3.name = 'X', 'Y', 'Z'
+            if type(axis2) == cartesian.Axis1d:
+                self.units = axis2.units
+                axis3.units = axis2.units
+            elif type(axis3) == cartesian.Axis1d:
+                self.units = axis3.units
+                axis2.units = axis3.units
+            else:
+                raise TypeError("Unable to determine axes units while converting to cartesian coordinates")
+        plot, ax = super().plot3d(data, axis2, axis3, mesh, data_type, colormap, axes,
+                                  cartesian_coordinates, interp_size, *args, **kwargs)
+        if cartesian_coordinates:
+            self.name, axis2.name, axis3.name = old_name
+            self.units, axis2.units, axis3.units = old_units
+        return plot, ax

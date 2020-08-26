@@ -176,12 +176,12 @@ class Mesh:
         try:
             plot = self._axes[index[0]].plot3d(new_data, self._axes[index[1]], self, data_type, *args, **kwargs)
             return plot
-        except (NotImplementedError,  TypeError):
+        except (NotImplementedError,  TypeError, AttributeError):
             try:
                 new_data = new_data.transpose()
                 plot = self._axes[index[1]].plot3d(new_data, self._axes[index[0]], self, data_type, *args, **kwargs)
                 return plot
-            except (NotImplementedError, TypeError):
+            except (NotImplementedError, TypeError, AttributeError):
                 index.append(index[1] + 1)
         # try to draw using 3 axes
         if len(self.axes) > 2:
