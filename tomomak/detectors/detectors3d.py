@@ -42,7 +42,10 @@ def four_pi_det(mesh, position, index=(0, 1, 2), response=1, radius_dependence=T
 
 def four_pi_detector_array(mesh, focus_point, radius, theta_num, phi_num, index=(0, 1, 2),
                            response=1, radius_dependence=True, broadcast=True):
-    """ Creates array of 4pi detectors equally spaced around the focus points.
+    """ Creates array of 4pi detectors equally spaced by angles around the focus points.
+
+        Note that detectors are evenly spaced by angles in spherical coordinates,
+         but not uniformly distributed around the sphere.
           Args:
               mesh (tomomak.main_structures.Mesh): mesh to work with.
               focus_point (tuple of 2 floats): Focus point (x, y).

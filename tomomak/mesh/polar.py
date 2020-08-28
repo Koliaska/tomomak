@@ -7,7 +7,11 @@ from tomomak import util
 
 
 class Axis1d(abstract_axes.Abstract1dAxis):
-    RESOLUTION2D = 20
+    """
+    polar + cartesian -> 2d polar
+    polar + cartesian + cartesian -> 3d cylindrical
+    """
+    RESOLUTION2D = 10
 
     def __init__(self, coordinates=None, edges=None, lower_limit=0, upper_limit=2*np.pi, size=None, name="", units=""):
         super().__init__(coordinates, edges, lower_limit, upper_limit, size, name, units)
@@ -46,14 +50,15 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             raise TypeError("Cell edges with such combination of axes are not supported.")
 
     def cell_edges3d_cartesian(self, axis2, axis3):
-        # #Cylindrical coordinates
+        # Cylindrical coordinates
         if type(axis2) is cartesian.Axis1d and type(axis3) is cartesian.Axis1d:
             shape = (self.size, axis2.size, axis3.size)
             vertices = np.zeros(shape).tolist()
             faces = np.zeros(shape).tolist()
             edge3 = axis3.cell_edges
             edges2d = self.cell_edges2d_cartesian(axis2)
-            # precalculate faces for 2 cases - 1) standard, 2) - center of the mesh
+            # Precalculate faces for 2 cases - 1) standard, 2) - center of the mesh
+            # 1) standart
             face = list()
             # left and right faces
             face.append((0, 1, self.RESOLUTION2D * 2 + 3, self.RESOLUTION2D * 2 + 2))
@@ -77,6 +82,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 # bottom
                 face.append((self.RESOLUTION2D * 2 - i, self.RESOLUTION2D * 2 - i + 1,
                              self.RESOLUTION2D * 4 - i + 3, self.RESOLUTION2D * 4 - i + 2))
+            # 2) - center of the mesh
             faces_center = list()
             # left and right faces as triangles
             faces_center.append((0, 1, self.RESOLUTION2D + 2))
@@ -103,7 +109,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                             faces[i][j][k] = face
                         else:
                             faces[i][j][k] = faces_center
-            return vertices, faces
+            return np.array(vertices, dtype=object), np.array(faces, dtype=object)
         else:
             raise TypeError("Cell edges with such combination of axes are not supported.")
 

@@ -41,21 +41,20 @@ def broadcast_object(ar, index, shape):
         # Moving current axes to the end in order to prepare shape for numpy broadcast
         shape = list(shape)
         index = list(index)
-        index.reverse()
         current_shape = []
         for i, ind in enumerate(index):
-            val = shape.pop(ind)
+            val = shape[ind]
             current_shape.append(val)
-        current_shape.reverse()
+        sorted_index = np.sort(index)[::-1]
+        for i, ind in enumerate(sorted_index):
+            del shape[ind]
         for ind in current_shape:
             shape.append(ind)
         # broadcasting
         ar = np.broadcast_to(ar, shape)
-        index.reverse()
         # making correct axes order
         ind_len = len(index)
-        for i, ind in enumerate(index):
-            ar = np.moveaxis(ar, -ind_len + i, ind)
+        ar = np.moveaxis(ar, range(-ind_len, -ind_len + len(index)), index)
         return ar
 
 

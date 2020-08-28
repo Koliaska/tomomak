@@ -53,7 +53,7 @@ from tomomak import model
 from tomomak.solver import *
 from tomomak.test_objects import objects2d
 from tomomak.mesh import mesh
-from tomomak.mesh import cartesian, polar
+from tomomak.mesh import cartesian, polar, toroidal
 from tomomak.transform import rescale
 from tomomak.transform import pipeline
 from tomomak.detectors import detectors2d, signal
@@ -62,51 +62,83 @@ from tomomak.iterators import statistics
 import tomomak.constraints.basic
 import numpy as np
 
-# This is an example of a basic framework functionality.
-# You will learn how to use framework, steps you need to follow in order to get the solution.
-# More advanced features are described in advanced examples.
-
-# The first step is to create coordinate system. We will consider 2D cartesian coordinates.
-# Let's create coordinate mesh. First axis will consist of 20 segments. Second - of 30 segments.
-# This means that solution will be described by the 20x30 array.
-
-axes = [polar.Axis1d(name="phi", units="cm", size=20),
-        cartesian.Axis1d(name="R", units="cm", size=19, upper_limit=10),
-
-        cartesian.Axis1d(name="Z", units="cm", size=18, upper_limit=10),
-            ]
-mesh = Mesh(axes)
-mod = Model(mesh=mesh)
-
-# The next step - is to create a synthetic object.
-# Let's create 2D circle. Since our mesh is 3D it will be automatically broadcasted to 3rd dimension,
-# so we get a cylinder.
-real_solution = objects2d.ellipse(mesh, (0, 0), (3, 3))
-
-# Now let's add some noise to this object in order to simulate realistic distribution.
-noise = np.random.normal(0, 0.05, real_solution.shape)
-mod.solution = real_solution + noise
-mod.plot2d(cartesian_coordinates=True, )
-# Now it's time to do plotting
-mod.plot3d(style=1, axes=True, cartesian_coordinates=True)
-
-# You can play with the Mayavi pipeline (upper left corner) in order to get better-looking figure.
-# For example try to change Data minimum in contours tab of the isoSurface, or opacity in Actor tab.
-# There are other predefined styles which you can use as a starting position for plot generation.
-# Also let's add coordinate axes and change the style.
-
+# let's start by creating a 3D cartesian coordinate system.
+# Since 3D tomography is much slower than 2D, in the example we will use 10x10x10 grid,
+# but you can increase these values.
+axes = [toroidal.Axis1d(radius=20, name="theta", units="cm", size=20),
+        polar.Axis1d(name="phi", units="phi", size=11),
+        cartesian.Axis1d(name="Z", units="cm", size=10, upper_limit=10)]
+mesh = mesh.Mesh(axes)
+mod = model.Model(mesh=mesh)
+# geometry3d.show_cell(mesh, cell_index=(1, 1, 1))
+# Now let's create a test object. It will be a sphere-like source with 1/R^2 density.
+# Note that several object types are supported, including arbitrary objects, defined by vertices and faces,
+# however calculation of the most objects intersection with each grid cell will take significant time.
+# This is the price to pay for the versatility of the framework.
+real_solution = objects2d.ellipse(mesh, (0, 0), (4, 9), index=(1, 2))
+# Let's plot the data in different ways.
+mod.solution = real_solution
+mod.plot2d(index=(1,2), cartesian_coordinates=True)
+mod.plot3d(axes=True, style=3, cartesian_coordinates=True)
 # Open Mayavi pipeline -> Volumes -> CTF and try to change alpha channel curve (opacity) -> press update CTF.
 # This way, for example, you can hide the outer layers to look inside the object.
+mod.plot3d(axes=True, style=2)
+# Open Mayavi pipeline -> IsoSurface -> Actor and try to change Point size or opacity.
+
+# Ok, now let's add some detectors
+mod.solution = None
+# We will use an array of hermetic detectors.
+# Note that several object types are supported,
+# however calculation of the most detector line of sights intersection with each grid cell will take significant time.
+# The good news is that you need to do these calculations only once for a given geometry.
+# After that it is recommended to save calculation results, for example using >> mod.save("3dtomography.tmm")
+# There are ways to accelerate the calculations using multiprocess (see GPU and CPU acceleration example)
+# for example with detector_array function. Also detector line of sights may be represented as zero-width rays
+# (line_detector function with parameter calc_volume = False), which is much faster, but usually not recommended.
+mod.detector_geometry = detectors3d.four_pi_detector_array(mesh, focus_point=(0,0, 0),
+                                                           radius=45, theta_num=20, phi_num=20)
+
+mod.plot3d(axes=True, style=3, data_type='detector_geometry', cartesian_coordinates=True)
+# You can add other detectors - just uncomment the line and append the result  using mod.add_detector(det)
+# det = [detectors3d.aperture_detector(mesh, [(4, -5, 4), (6, -5, 4), (4, -5, 6), (6, -5, 6)],
+#                                      [(4, 0, 4), (6, 0, 4), (4, 0, 6), (6, 0, 6)])]
+# det = [detectors3d.aperture_detector(mesh, [(4, -5, 4), (6, -5, 4), (4, -5, 6), (6, -5, 6)],
+#                                                        [(4, 0, 4), (6, 0, 4), (4, 0, 6), (6, 0, 6)])]
+# ver = np.array([[0, 0, 0], [0, 0, 10], [0, 10, 0], [10, 0, 0]])
+# det = [detectors3d.custom_detector(mesh, ver, radius_dependence=False)]
+# det = [detectors3d.line_detector(mesh, (5, 5, 12), (10, 2, 0), 1, calc_volume=True)]
+# det = [detectors3d.cone_detector(mesh, (5, 5, 20), (5, 5, 0), 0.3)]
+# det = [detectors3d.line_detector(mesh, (5, 5, 12), (10, 2, 0), None, calc_volume=False)]
+# det = detectors3d.fan_detector(mesh, (-5, 5, 5), [[5, 2, 6], [5, 7, 6], [5, 2, 4], [5, 7, 4]],
+#                                number=[4, 4], divergence=0.3)
+det_signal = signal.get_signal(real_solution, mod.detector_geometry)
+mod.detector_signal = det_signal
+# Now let's find the solution
+solver = Solver()
+solver.statistics = [statistics.RN(), statistics.RMS()]
+solver.real_solution = real_solution
+solver.iterator = ml.ML()
+steps = 1500
+solver.solve(mod, steps=steps)
+mod.save("tor.tmm")
+# Now we can see the solution.
+mod.plot3d(axes=True, style=3, cartesian_coordinates=True)
+mod.plot2d(index=(1,2), cartesian_coordinates=True)
+
+solver.plot_statistics()
+# Of course, the result we got is not ideal due to limitations of our synthetic experiment.
+# Luckily there are ways to improve our calculations, described in the more advanced examples.
 
 
-# You can also plot detector geometry this way.
-# Let's create test geometry. You can switch between detectors with the bottom slider.
-# In this example we will use same norm for all detectors.
-mod.detector_geometry = np.array([mod.solution, mod.solution + noise, mod.solution + noise * 2])
-mod.plot3d(data_type='detector_geometry', equal_norm=True, cartesian_coordinates=True)
-# And that's how you deal with basic 3D plotting. for later usage. I
+axes = [toroidal.Axis1d(radius = 10, name="theta", units="rad", size=7),
+        polar.Axis1d(name="phi", units="rad", size=12),
+        cartesian.Axis1d(name="R", units="cm", size=8, upper_limit=9)]
 
+mesh = mesh.Mesh(axes)
+vertices, faces = axes[0].cell_edges3d_cartesian(axes[1], axes[2])
+geometry3d.show_cell(mesh, cell_index=(3, 3, 3))
 
+#
 # And that's it. You get solution, which is, of course, not perfect,
 # but world is not easy when you work with the limited data.
 # There are number of ways to improve your solution, which will be described in other examples.

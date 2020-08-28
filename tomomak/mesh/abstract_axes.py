@@ -368,6 +368,7 @@ class Abstract1dAxis(AbstractAxis):
                 x_grid, y_grid, z_grid, new_data = \
                     util.geometry3d.make_regular(data, x_grid, y_grid, z_grid, interp_size)
                 new_data = np.nan_to_num(new_data)
+                new_data = np.clip(new_data, np.amin(data), np.amax(data))
             else:
                 new_data = data
             # plot
@@ -392,10 +393,12 @@ class Abstract1dAxis(AbstractAxis):
                 for i, d in enumerate(data):
                     x_grid, y_grid, z_grid, new_data[i] \
                         = util.geometry3d.make_regular(d, x_grid_n, y_grid_n, z_grid_n, interp_size)
+                    new_data[i] = np.nan_to_num(new_data[i])
+                    new_data[i] = np.clip(new_data[i], np.amin(data[i]), np.amax(data[i]))
                     print('\r', end='')
                     print("...", str((i+1) * 100 // data.shape[0]) + "% complete", end='')
                 print('\r \r', end='')
-                new_data = np.nan_to_num(new_data)
+
             else:
                 new_data = data
             plot3d.detector_contour3d(new_data, x_grid, y_grid, z_grid,
@@ -457,7 +460,7 @@ class Abstract2dAxis(AbstractAxis):
         """
 
     @abstractmethod
-    def cell_edges2d(self):
+    def cell_edges2d_cartesian(self):
         """
 
         Args:
@@ -467,7 +470,7 @@ class Abstract2dAxis(AbstractAxis):
         """
 
     @abstractmethod
-    def cell_edges3d(self, axis2):
+    def cell_edges3d_cartesian(self, axis2):
         """
 
         Args:
@@ -491,7 +494,7 @@ class Abstract3dAxis(AbstractAxis):
         """
 
     @abstractmethod
-    def cell_edges3d(self):
+    def cell_edges3d_cartesian(self):
         """
 
         Args:

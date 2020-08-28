@@ -14,8 +14,8 @@ def polygon(mesh, points=((0, 0), (5, 5), (10, 0)), index=(0, 1), density=1, bro
 
     If there are more than 2 dimension in model, broadcasting to other dimensions is performed.
     If broadcasting is not needed private method _polygon may be used.
-    Only axes which implements cell_edges2d method are supported.
-    cell_edges2d method should  accept second axe and return 2d list of ordered sequence of point tuples for two 1d axes
+    Only axes which implements cell_edges2d_cartesian method are supported.
+    cell_edges2d_cartesian method should  accept second axe and return 2d list of ordered sequence of point tuples for two 1d axes
     or 1d list of ordered sequence of point tuples for one 2d axis.
     Each point tuple represents cell borders in the 2D cartesian coordinates.
     E.g. borders of the cell of two cartesian axes with edges (0,7) and (0,5)

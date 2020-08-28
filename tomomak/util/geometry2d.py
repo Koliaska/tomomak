@@ -10,8 +10,8 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
     Each value in the array corresponds to the intersection area of the given cell and the polygon.
     If there are more than 2 dimension in model, broadcasting to other dimensions is performed.
     If broadcasting is not needed private method _polygon may be used.
-    Only axes which implements cell_edges2d method are supported.
-    cell_edges2d method should  accept second axe and return 2d list of ordered sequence of point tuples for two 1d axes
+    Only axes which implements cell_edges2d_cartesian method are supported.
+    cell_edges2d_cartesian method should  accept second axe and return 2d list of ordered sequence of point tuples for two 1d axes
     or 1d list of ordered sequence of point tuples for one 2d axis.
     Each point tuple represents cell borders in the 2D cartesian coordinates.
     E.g. borders of the cell of two cartesian axes with edges (0,7) and (0,5)
@@ -30,7 +30,7 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
         ndarray: 1D or 2D numpy array, representing polygon on the given mesh.
 
     Raises:
-        TypeError if no combination of axes supports the cell_edges2d() method or all axes dimensions are > 2.
+        TypeError if no combination of axes supports the cell_edges2d_cartesian() method or all axes dimensions are > 2.
     """
     if isinstance(index, int):
         index = [index]
@@ -53,7 +53,7 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
                         res[i] = cell.area
             return res
         except (TypeError, AttributeError) as e:
-            raise type(e)(e.message + "Custom axis should implement cell_edges2d method. "
+            raise type(e)(e.message + "Custom axis should implement cell_edges2d_cartesian method. "
                                       "This method returns 2d list of ordered sequence of point tuples."
                                       " See docstring for more information.")
     # If axes are 1D
@@ -67,7 +67,7 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
                 cells = np.array(mesh.axes[i2].cell_edges2d_cartesian(mesh.axes[i1]), dtype=object)
                 cells =np.transpose(cells)
             except (NotImplementedError, TypeError) as e:
-                raise type(e)("Custom axis should implement cell_edges2d method. "
+                raise type(e)("Custom axis should implement cell_edges2d_cartesian method. "
                               "This method returns 2d list of ordered sequence of point tuples."
                               " See docstring for more information.")
     else:

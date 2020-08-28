@@ -12,7 +12,7 @@ def get_trimesh_grid(mesh, index=(0, 1, 2)):
     """Get array of trimesh objects (3D meshes) corresponding to each grid cell.
 
     Helper function. Trimesh objects are used for complex 3d calculations.
-    Only axes which implements cell_edges3d method are supported (see abstract_axes.py).
+    Only axes which implements cell_edges3d_cartesian method are supported (see abstract_axes.py).
     Trimesh module is used for the calculation.
 
     Args:
@@ -23,7 +23,7 @@ def get_trimesh_grid(mesh, index=(0, 1, 2)):
         list: 1D/2D or 3D list (depending on used tomomak mesh), containing trimesh representation of each cell.
 
     Raises:
-        TypeError if no combination of axes supports the cell_edges3d() method or all axes dimensions are > 3.
+        TypeError if no combination of axes supports the cell_edges3d_cartesian() method or all axes dimensions are > 3.
     """
     if isinstance(index, int):
         index = [index]
@@ -39,11 +39,11 @@ def get_trimesh_grid(mesh, index=(0, 1, 2)):
                     cell = trimesh.Trimesh(vertices=vertices[i], faces=faces[i])
                 trimesh_list[i] = cell
         except (TypeError, AttributeError) as e:
-            raise type(e)(e.message + "Custom axis should implement cell_edges3d method. "
+            raise type(e)(e.message + "Custom axis should implement cell_edges3d_cartesian method. "
                                       " See docstring for more information.")
     # If 1st axis is 2D
     elif mesh.axes[index[0]].dimension == 2 or mesh.axes[index[1]].dimension == 2:
-        (vertices, faces) = mesh.axes_method2d(index, "cell_edges3d")
+        (vertices, faces) = mesh.axes_method2d(index, "cell_edges3d_cartesian")
         vertices = vertices.tolist()
         faces = faces.tolist()
         shape = (mesh.axes[index[0]].size, mesh.axes[index[1]].size)
@@ -57,7 +57,7 @@ def get_trimesh_grid(mesh, index=(0, 1, 2)):
                 trimesh_list[i][j] = cell
     # If axes are 1D
     elif mesh.axes[index[0]].dimension == mesh.axes[index[1]].dimension == mesh.axes[index[2]].dimension == 1:
-        (vertices, faces) = mesh.axes_method3d(index, "cell_edges3d")
+        (vertices, faces) = mesh.axes_method3d(index, "cell_edges3d_cartesian")
         vertices = vertices.tolist()
         faces = faces.tolist()
         shape = (mesh.axes[index[0]].size, mesh.axes[index[1]].size, mesh.axes[index[2]].size)
@@ -381,7 +381,7 @@ def mesh_center(mesh, index):
     Returns:
         list: (x, y, z) coordinates of the mesh center.
     """
-    vertices, _ = mesh.axes_method3d(index, 'cell_edges3d')
+    vertices, _ = mesh.axes_method3d(index, 'cell_edges3d_cartesian')
     min_v = np.array(vertices[0, 0, 0][0])
     max_v = np.array(vertices[0, 0, 0][0])
     for i in vertices:
