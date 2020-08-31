@@ -23,6 +23,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         coord = [a.coordinates for a in axes]
         return np.array(np.meshgrid(*coord, indexing='ij'))
 
+    @abstract_axes.precalculated
     def cell_edges2d_cartesian(self, axis2):
         """See description in abstract axes.
         """

@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import re
+from decorator import decorator
+from functools import wraps
+import importlib
 import matplotlib.pyplot as plt
 from tomomak.plots import plot1d, plot2d, plot3d
 import warnings
@@ -97,6 +100,42 @@ class AbstractAxis(ABC):
             2D ndarray: intersection length/area/volume of element i with element j.
 
         """
+
+
+def precalculated(method):
+    @wraps(method)
+    def _impl(self, *args, **kwargs):
+        def precalc():
+            setattr(self, stored_name, method(self, *args, **kwargs))
+            setattr(self, stored_name + '_args', args)
+            setattr(self, stored_name + '_kwargs', kwargs)
+            return getattr(self, stored_name)
+        name = method.__name__
+        stored_name = '_' + name
+        try:
+            stored_res = getattr(self, stored_name)
+        except AttributeError:
+            return precalc()
+        parameters_match = True
+        try:
+            arg_list = getattr(self, stored_name + '_args')
+            if arg_list != args:
+                parameters_match = False
+        except AttributeError:
+            pass
+        try:
+            kw_list = getattr(self, stored_name + '_kwargs')
+            if kw_list != kwargs:
+                parameters_match = False
+        except AttributeError:
+            pass
+
+        if stored_res is None or not parameters_match:
+            return precalc()
+
+
+        return stored_res
+    return _impl
 
 
 class Abstract1dAxis(AbstractAxis):
@@ -502,3 +541,5 @@ class Abstract3dAxis(AbstractAxis):
         Returns:
 
         """
+
+

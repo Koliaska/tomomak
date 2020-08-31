@@ -23,6 +23,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         elif np.any(self.cell_edges > 2 * np.pi):
             raise ValueError("Grid edges are > 2*pi. Polar coordinates should be > 0 and < 2*pi.")
 
+    @abstract_axes.precalculated
     def cell_edges2d_cartesian(self, axis2):
         # 2D polar coordinate system
         if type(axis2) is cartesian.Axis1d:

@@ -108,13 +108,26 @@ class Mesh:
                 invert_index.append(axis_index)
         return invert_index
 
+    @staticmethod
+    def _move_unordered_axes(ar, index):
+        new_index = np.array(index)
+        new_index_s = np.sort(new_index)
+        delta = np.zeros_like(new_index)
+        for i, elem in enumerate(new_index):
+            loc = np.where(new_index_s == elem)[0]
+            delta[i] = elem - loc
+        new_index -= delta
+        return np.moveaxis(ar, range(len(new_index)), new_index)
+
     def integrate_other(self, data, index):
         invert_index = self._other(index)
-        return self.integrate(data, invert_index)
+        ar = self.integrate(data, invert_index)
+        return self._move_unordered_axes(ar, index)
 
     def sum_other(self, data, index):
         invert_index = self._other(index)
-        return self.integrate(data, invert_index, integrate_type='sum')
+        ar = self.integrate(data, invert_index, integrate_type='sum')
+        return self._move_unordered_axes(ar, index)
 
     def _prepare_data(self, data, index, data_type):
         if data_type == 'solution':

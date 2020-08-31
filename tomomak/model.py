@@ -167,7 +167,7 @@ class Model:
         plot = self._mesh.plot1d(data, index, data_type,  **kwargs)
         return plot
 
-    def plot2d(self, index=0, data_type="solution", **kwargs):
+    def plot2d(self, index=(0, 1), data_type="solution", **kwargs):
         if data_type == "solution":
             if self._solution is None:
                 raise ValueError("Solution is not defined.")
@@ -181,7 +181,7 @@ class Model:
         plot = self._mesh.plot2d(data, index, data_type,  **kwargs)
         return plot
 
-    def plot3d(self, index=0, data_type="solution", **kwargs):
+    def plot3d(self, index=(0, 1, 2), data_type="solution", **kwargs):
         if data_type == "solution":
             if self._solution is None:
                 raise ValueError("Solution is not defined.")
