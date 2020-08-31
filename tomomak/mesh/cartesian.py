@@ -10,6 +10,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     are performed using this coordinate system as mediator.
     If regular, than it is Cartesian coordinate system.
     """
+
+    @abstract_axes.precalculated
     def cartesian_coordinates(self, *axes):
         """See description in abstract axes.
         """
@@ -39,6 +41,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                              (edge1[i + 1], edge2[j + 1]), (edge1[i], edge2[j + 1])]
         return res
 
+    @abstract_axes.precalculated
     def cell_edges3d_cartesian(self, axis2, axis3):
         """See description in abstract axes.
         """

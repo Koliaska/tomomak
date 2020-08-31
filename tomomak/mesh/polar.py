@@ -50,6 +50,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         else:
             raise TypeError("Cell edges with such combination of axes are not supported.")
 
+    @abstract_axes.precalculated
     def cell_edges3d_cartesian(self, axis2, axis3):
         # Cylindrical coordinates
         if type(axis2) is cartesian.Axis1d and type(axis3) is cartesian.Axis1d:
@@ -119,6 +120,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         """r, phi to x, y"""
         return r * np.cos(phi), r * np.sin(phi)
 
+    @abstract_axes.precalculated
     def cartesian_coordinates(self, *axes):
         """See description in abstract axes.
              """

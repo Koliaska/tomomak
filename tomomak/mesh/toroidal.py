@@ -33,6 +33,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     def cell_edges2d_cartesian(self, axis2):
         raise AttributeError("Cell edges with such combination of axes are not supported.")
 
+    @abstract_axes.precalculated
     def cell_edges3d_cartesian(self, axis2, axis3):
         # Toroidal coordinates
         if type(axis2) is polar.Axis1d and type(axis3) is cartesian.Axis1d:
@@ -110,6 +111,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         else:
             raise TypeError("Cell edges with such combination of axes are not supported.")
 
+    @abstract_axes.precalculated
     def cartesian_coordinates(self, *axes):
         """See description in abstract axes.
                      """

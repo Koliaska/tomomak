@@ -173,7 +173,7 @@ class Mesh:
             plot = self._axes[index[1]].plot2d(self._axes[index[0]], new_data, self, data_type, *args, **kwargs)
         return plot
 
-    def plot3d(self, data, index=0, data_type='solution', *args, **kwargs):
+    def plot3d(self, data, index=(0, 1, 2), data_type='solution', *args, **kwargs):
         if isinstance(index, int):
             index = [index]
         # try to draw using 1 axis
@@ -185,17 +185,18 @@ class Mesh:
             except (NotImplementedError, TypeError):
                 index.append(index[0] + 1)
         # try to draw using 2 axes
-        new_data = self._prepare_data(data, index, data_type)
-        try:
-            plot = self._axes[index[0]].plot3d(new_data, self._axes[index[1]], self, data_type, *args, **kwargs)
-            return plot
-        except (NotImplementedError,  TypeError, AttributeError):
+        if len(index) == 2:
+            new_data = self._prepare_data(data, index, data_type)
             try:
-                new_data = new_data.transpose()
-                plot = self._axes[index[1]].plot3d(new_data, self._axes[index[0]], self, data_type, *args, **kwargs)
+                plot = self._axes[index[0]].plot3d(new_data, self._axes[index[1]], self, data_type, *args, **kwargs)
                 return plot
-            except (NotImplementedError, TypeError, AttributeError):
-                index.append(index[1] + 1)
+            except (NotImplementedError,  TypeError, AttributeError):
+                try:
+                    new_data = new_data.transpose()
+                    plot = self._axes[index[1]].plot3d(new_data, self._axes[index[0]], self, data_type, *args, **kwargs)
+                    return plot
+                except (NotImplementedError, TypeError, AttributeError):
+                    index.append(index[1] + 1)
         # try to draw using 3 axes
         if len(self.axes) > 2:
             new_data = self._prepare_data(data, index, data_type)

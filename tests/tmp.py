@@ -66,7 +66,7 @@ import numpy as np
 # let's start by creating a 3D cartesian coordinate system.
 # Since 3D tomography is much slower than 2D, in the example we will use 10x10x10 grid,
 # but you can increase these values.
-axes = [cartesian.Axis1d(name="X", units="cm", size=20, upper_limit=12),
+axes = [cartesian.Axis1d(name="X", units="cm", size=12, upper_limit=12),
         cartesian.Axis1d(name="Y", units="cm", size=11, upper_limit=11),
         cartesian.Axis1d(name="Z", units="cm", size=10, upper_limit=10)]
 mesh = mesh.Mesh(axes)
@@ -74,15 +74,20 @@ mod = model.Model(mesh=mesh)
 mod.detector_geometry = detectors3d.four_pi_detector_array(mesh, focus_point=(0,0, 0),
                                                            radius=45, theta_num=2, phi_num=3)
 
-mod.plot2d(index=(1,2) ,data_type='detector_geometry')
+
 # geometry3d.show_cell(mesh, cell_index=(1, 1, 1))
 # Now let's create a test object. It will be a sphere-like source with 1/R^2 density.
 # Note that several object types are supported, including arbitrary objects, defined by vertices and faces,
 # however calculation of the most objects intersection with each grid cell will take significant time.
 # This is the price to pay for the versatility of the framework.
-real_solution = objects2d.ellipse(mesh, (0, 0), (4, 9), index=(1, 2))
+real_solution = objects2d.ellipse(mesh, (0, 0), (4, 9), index=(0, 1))
+mod.solution = real_solution
+mod.plot2d(index=(0,1))
 real_solution = objects2d.ellipse(mesh, (0, 0), (4, 9), index=(1, 0))
 real_solution = objects2d.ellipse(mesh, (0, 0), (4, 9), index=(2, 1))
+mod.solution = real_solution
+mod.plot2d(index=(2,1))
+mod.plot2d(index=(0,1))
 # Let's plot the data in different ways.
 mod.solution = real_solution
 mod.plot2d(index=(2,1))
