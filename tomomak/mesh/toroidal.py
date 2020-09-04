@@ -36,7 +36,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         return self._R
 
     def cell_edges2d_cartesian(self, axis2):
-        raise AttributeError("Cell edges with such combination of axes are not supported.")
+        raise AttributeError("cell_edges2d_cartesian with such combination of axes is not supported.")
 
     @abstract_axes.precalculated
     def cell_edges3d_cartesian(self, axis2, axis3):
@@ -114,7 +114,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                             faces[i][j][k] = faces_center
             return np.array(vertices, dtype=object), np.array(faces, dtype=object)
         else:
-            raise TypeError("Cell edges with such combination of axes are not supported.")
+            raise TypeError("cell_edges3d_cartesian with such combination of axes is not supported.")
 
     @abstract_axes.precalculated
     def cartesian_coordinates(self, *axes):
@@ -138,23 +138,23 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                             y[i, j, k] = (x2d[j, k] + self._R) * np.sin(tor_axis[i])
                             z[i, j, k] = y2d[j, k]
                 return x, y, z
-        raise TypeError("cartesian_coordinate with such combination of axes are not supported.")
+        raise TypeError("cartesian_coordinate with such combination of axes is not supported.")
 
     @staticmethod
     def _polar_to_cart(x, y):
         r = np.sqrt(x**2 + y**2)
-        phi = np.arctan2(x, y) % (2 * np.pi)
+        phi = (np.arctan2(y, x) + 2 * np.pi) % (2 * np.pi)
         return r, phi
 
     def from_cartesian(self, coordinates, *axes):
         if len(axes) == 2:
             xx, yy, zz = coordinates[0], coordinates[1], coordinates[2]
             if type(axes[0]) is polar.Axis1d and type(axes[1]) is cartesian.Axis1d:
-                R_hor, theta = self._polar_to_cart(xx, yy)
-                r, phi = self._polar_to_cart((self._R - R_hor), zz)
+                r_hor, theta = self._polar_to_cart(xx, yy)
+                r, phi = self._polar_to_cart((r_hor - self._R), zz)
                 return theta, phi, r
         else:
-            raise TypeError("from_cartesian with such combination of axes are not supported.")
+            raise TypeError("from_cartesian with such combination of axes is not supported.")
 
     def plot3d(self, data, axis2, axis3, mesh, data_type='solution', colormap='blue-red', axes=False,
                cartesian_coordinates=False, interp_size=None, *args, **kwargs):

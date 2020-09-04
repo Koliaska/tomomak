@@ -49,7 +49,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                     res[i][j] = points
             return res
         else:
-            raise TypeError("Cell edges with such combination of axes are not supported.")
+            raise TypeError("cell_edges2d_cartesian with such combination of axes is not supported.")
 
     @abstract_axes.precalculated
     def cell_edges3d_cartesian(self, axis2, axis3):
@@ -114,7 +114,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                             faces[i][j][k] = faces_center
             return np.array(vertices, dtype=object), np.array(faces, dtype=object)
         else:
-            raise TypeError("Cell edges with such combination of axes are not supported.")
+            raise TypeError("cell_edges3d_cartesian with such combination of axes is not supported.")
 
     @staticmethod
     def _to_cartesian2d(r, phi):
@@ -155,12 +155,12 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                             y[i, j, k] = y2d[i, j]
                             z[i, j, k] = z_axis[k]
                 return x, y, z
-        raise TypeError("cartesian_coordinate with such combination of axes are not supported.")
+        raise TypeError("cartesian_coordinate with such combination of axes is not supported.")
 
     @staticmethod
     def _polar_to_cart(x, y):
         r = np.sqrt(x**2 + y**2)
-        phi = np.arctan2(x, y) % (2 * np.pi)
+        phi = (np.arctan2(y, x) + 2 * np.pi) % (2 * np.pi)
         return r, phi
 
     def from_cartesian(self, coordinates, *axes):
@@ -172,7 +172,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 r, phi = self._polar_to_cart(xx, yy)
                 return phi, r, z
         else:
-            raise TypeError("from_cartesian with such combination of axes are not supported.")
+            raise TypeError("from_cartesian with such combination of axes is not supported.")
 
     def plot2d(self, axis2, data,  mesh, data_type='solution', style='colormesh', fill_scheme='viridis',
                cartesian_coordinates=False, grid=False, equal_norm=False, title=None, *args, **kwargs):

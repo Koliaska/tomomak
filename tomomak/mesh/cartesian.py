@@ -19,7 +19,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             return self.coordinates
         for a in axes:
             if type(a) is not Axis1d:
-                raise TypeError("Cell edges with such combination of axes are not supported.")
+                raise TypeError("cartesian_coordinates with such combination of axes is not supported.")
         axes = list(axes)
         axes.insert(0, self)
         coord = [a.coordinates for a in axes]
@@ -30,7 +30,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         """See description in abstract axes.
         """
         if type(axis2) is not type(self):
-            raise TypeError("Cell edges with such combination of axes are not supported.")
+            raise TypeError("cell_edges2d_cartesianwith such combination of axes is not supported.")
         shape = (self.size, axis2.size)
         res = np.zeros(shape).tolist()
         edge1 = self.cell_edges
@@ -46,7 +46,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         """See description in abstract axes.
         """
         if type(axis2) is not Axis1d or type(axis3) is not Axis1d:
-            raise TypeError("Cell edges with such combination of axes are not supported.")
+            raise TypeError("cell_edges3d_cartesian with such combination of axes is not supported.")
         shape = (self.size, axis2.size, axis3.size)
         vertices = np.zeros(shape).tolist()
         faces = np.zeros(shape).tolist()
@@ -68,7 +68,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     def from_cartesian(self, coordinates, *axes):
         for a in axes:
             if type(a) is not Axis1d:
-                raise TypeError("from_cartesian with such combination of axes are not supported.")
+                raise TypeError("from_cartesian with such combination of axes is not supported.")
         return coordinates
 
 

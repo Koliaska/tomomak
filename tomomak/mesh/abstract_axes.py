@@ -275,7 +275,7 @@ class Abstract1dAxis(AbstractAxis):
         """See description in abstract axes.
         """
         if type(axis2) is not type(self):
-            raise TypeError("Cell edges with such combination of axes are not supported.")
+            raise TypeError("Cell edges with such combination of axes is not supported.")
 
         intersection = np.zeros([self.size, axis2.size])
 
@@ -447,11 +447,13 @@ class Abstract1dAxis(AbstractAxis):
                 new_data = np.zeros((data.shape[0], interp_size,  interp_size,  interp_size))
                 # interpolate data for each detector
                 print("Start interpolation.")
-                mask = mesh.is_in_grid(self.from_cartesian([x_grid, y_grid, z_grid], axis2, axis3), self, axis2,
-                                       axis3)
+                mask = None
                 for i, d in enumerate(data):
                     x_grid, y_grid, z_grid, new_data[i] \
                         = util.geometry3d.make_regular(d, x_grid_n, y_grid_n, z_grid_n, interp_size)
+                    if mask is None:
+                        mask = mesh.is_in_grid(self.from_cartesian([x_grid, y_grid, z_grid], axis2, axis3), self, axis2,
+                                               axis3)
                     new_data[i] = np.nan_to_num(new_data[i])
                     new_data[i] = np.clip(new_data[i], np.amin(data[i]), np.amax(data[i]))
                     new_data[i] *= mask

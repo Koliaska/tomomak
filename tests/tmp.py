@@ -65,20 +65,8 @@ from mayavi import mlab
 import numpy as np
 from scipy.special import sph_harm
 
-from mayavi import mlab
-axes = [polar.Axis1d(name="phi", units="rad", size=12),cartesian.Axis1d( name="theta", units="cm", size=25),
 
-        cartesian.Axis1d(name="R", units="cm", size=15, upper_limit=5)]
-m = mesh.Mesh(axes)
-mod = model.Model(mesh=m)
-# First af all we want to know what the cell of such a grid looks like. It will be a 2D bended polar cell.
-# Let's look at the random cell.
-
-# Now if you want to create an object, defined in the cartesian coordinates, you can use objects3d module.
-mod.solution = objects3d.point_source(m, (-15,-15, 0), index=(0, 1, 2))
-mod.plot3d(cartesian_coordinates=True, axes=True)
-#
-print(np.arctan2(-10, -5))
+print(np.arctan2(-1, 1)%(2*np.pi))
 print(-1%360)
 print(np.amin([[0,1,2], [3,4,5]], axis=1))
 k = 50000

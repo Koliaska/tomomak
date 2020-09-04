@@ -7,6 +7,7 @@ import shapely.geometry
 import shapely.affinity
 import tomomak.util.array_routines
 import tomomak.util.geometry2d
+from tomomak.mesh import cartesian
 
 
 def polygon(mesh, points=((0, 0), (5, 5), (10, 0)), index=(0, 1), density=1, broadcast=True):
@@ -78,7 +79,6 @@ def rectangle(mesh, center=(0, 0), size=(10, 10), index=(0, 1), density=1, broad
 def ellipse(mesh, center=(0, 0), ax_len=(5, 5), index=(0, 1), density=1, resolution=32, broadcast=True):
     """Create solution array, representing 2d real_solution, defined by specified parameters.
 
-    Only cartesian axes (tomomak.main_structures.mesh.cartesian) are supported.
     Shapely module is used for calculation.
 
     Args:
@@ -128,12 +128,15 @@ def pyramid(mesh, center=(0, 0), size=(10, 10), index=(0, 1), height=1, broadcas
     Raises:
         TypeError if one of the axes is not  cartesian (tomomak.main_structures.mesh.cartesian).
     """
+    for i in index:
+        if mesh.axes[i] is not cartesian.Axis1d:
+            raise TypeError("such combination of axes is not supported.")
     rect = rectangle(mesh, center, size, index, height, broadcast=False)
     mask = np.zeros(rect.shape)
     try:
-        coordinates = mesh.axes[0].cartesian_coordinates(mesh.axes[1])
+        coordinates = mesh.axes[index[0]].cartesian_coordinates(mesh.axes[index[1]])
     except (NotImplementedError, TypeError):
-        coordinates = mesh.axes[1].cartesian_coordinates(mesh.axes[0]).transpose()
+        coordinates = mesh.axes[index[1]].cartesian_coordinates(mesh.axes[index[0]]).transpose()
     x = coordinates[0][:, 0]
     y = coordinates[1][0]
     coord = [x, y]
@@ -176,12 +179,15 @@ def cone(mesh, center=(3, 4), ax_len=(4, 3), index=(0, 1), height=1, cone_type='
         TypeError if one of the axes is not  cartesian (tomomak.main_structures.mesh.cartesian).
         TypeError if cone type is unknown.
     """
+    for i in index:
+        if mesh.axes[i] is not cartesian.Axis1d:
+            raise TypeError("such combination of axes is not supported.")
     ell = ellipse(mesh, center, ax_len, index, height, resolution, broadcast=False)
     mask = np.zeros(ell.shape)
     try:
-        coordinates = mesh.axes[0].cartesian_coordinates(mesh.axes[1])
+        coordinates = mesh.axes[index[0]].cartesian_coordinates(mesh.axes[index[1]])
     except (NotImplementedError, TypeError):
-        coordinates = mesh.axes[1].cartesian_coordinates(mesh.axes[0]).transpose()
+        coordinates = mesh.axes[index[1]].cartesian_coordinates(mesh.axes[index[0]]).transpose()
     x = coordinates[0][:, 0]
     y = coordinates[1][0]
     coord = [x, y]
