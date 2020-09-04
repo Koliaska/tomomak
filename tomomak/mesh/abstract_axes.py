@@ -11,6 +11,7 @@ from tomomak import util
 from tomomak.mesh import cartesian
 
 
+
 class AbstractAxis(ABC):
     """Superclass for every axis.
     One axis always corresponds to one data array dimension, however may corresponds to several real-world dimensions.
@@ -58,6 +59,21 @@ class AbstractAxis(ABC):
 
         Returns:
            ndarray: cartesian coordinates of each cell centers in the form of numpy.meshgrid.
+        """
+
+    @abstractmethod
+    def from_cartesian(self, coordinates, *axes):
+        """Converts input array to self coordinates from cartesian coordinates.
+
+        Used only for correct 3D interpolation in order to exclude points outside of the grid.
+
+        Args:
+            coordinates (list of meshgrids): list of each coordinate in the form of numpy.meshgrid.
+            e.g. for 3D coordinates [xx, yy, zz]
+            *axes: (tomomak axis): additional tomomak axes.
+
+        Returns:
+            ndarray: self coordinates of each cell centers in the form of numpy.meshgrid.
         """
 
     @property
@@ -408,6 +424,8 @@ class Abstract1dAxis(AbstractAxis):
                     util.geometry3d.make_regular(data, x_grid, y_grid, z_grid, interp_size)
                 new_data = np.nan_to_num(new_data)
                 new_data = np.clip(new_data, np.amin(data), np.amax(data))
+                mask = mesh.is_in_grid(self.from_cartesian([x_grid, y_grid, z_grid], axis2, axis3), self, axis2, axis3)
+                new_data *= mask
             else:
                 new_data = data
             # plot
@@ -429,11 +447,14 @@ class Abstract1dAxis(AbstractAxis):
                 new_data = np.zeros((data.shape[0], interp_size,  interp_size,  interp_size))
                 # interpolate data for each detector
                 print("Start interpolation.")
+                mask = mesh.is_in_grid(self.from_cartesian([x_grid, y_grid, z_grid], axis2, axis3), self, axis2,
+                                       axis3)
                 for i, d in enumerate(data):
                     x_grid, y_grid, z_grid, new_data[i] \
                         = util.geometry3d.make_regular(d, x_grid_n, y_grid_n, z_grid_n, interp_size)
                     new_data[i] = np.nan_to_num(new_data[i])
                     new_data[i] = np.clip(new_data[i], np.amin(data[i]), np.amax(data[i]))
+                    new_data[i] *= mask
                     print('\r', end='')
                     print("...", str((i+1) * 100 // data.shape[0]) + "% complete", end='')
                 print('\r \r', end='')

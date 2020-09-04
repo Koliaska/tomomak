@@ -61,8 +61,47 @@ from tomomak.iterators import ml, algebraic
 from tomomak.iterators import statistics
 import tomomak.constraints.basic
 import numpy as np
+from mayavi import mlab
+import numpy as np
+from scipy.special import sph_harm
+
+from mayavi import mlab
+axes = [polar.Axis1d(name="phi", units="rad", size=12),cartesian.Axis1d( name="theta", units="cm", size=25),
+
+        cartesian.Axis1d(name="R", units="cm", size=15, upper_limit=5)]
+m = mesh.Mesh(axes)
+mod = model.Model(mesh=m)
+# First af all we want to know what the cell of such a grid looks like. It will be a 2D bended polar cell.
+# Let's look at the random cell.
+
+# Now if you want to create an object, defined in the cartesian coordinates, you can use objects3d module.
+mod.solution = objects3d.point_source(m, (-15,-15, 0), index=(0, 1, 2))
+mod.plot3d(cartesian_coordinates=True, axes=True)
+#
+print(np.arctan2(-10, -5))
+print(-1%360)
+print(np.amin([[0,1,2], [3,4,5]], axis=1))
+k = 50000
+x = []
+y = []
+z = []
+faces = None
+f = np.array([[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
+for i in range(k):
+    x.extend([i*5, i*5, i*5, i*5  + 10, ])
+    y.extend([i*5, i*5, i*5+10, i*5, ])
+    z.extend([i*5, i*5+10, i*5, i*5, ])
+    if faces  is None:
+        faces = np.array([[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
+    else:
+        faces2 = f + i*4
+        faces = np.append(faces, faces2, axis=0)
 
 
+
+print(x, faces)
+mlab.triangular_mesh(x, y, z, faces, scalars=x)
+mlab.show()
 # let's start by creating a 3D cartesian coordinate system.
 # Since 3D tomography is much slower than 2D, in the example we will use 10x10x10 grid,
 # but you can increase these values.

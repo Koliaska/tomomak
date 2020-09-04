@@ -8,6 +8,7 @@ from tomomak import util
 
 class Axis1d(abstract_axes.Abstract1dAxis):
     """
+    From 0  to 2pi
     polar + cartesian -> 2d polar
     polar + cartesian + cartesian -> 3d cylindrical
     """
@@ -155,6 +156,23 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                             z[i, j, k] = z_axis[k]
                 return x, y, z
         raise TypeError("cartesian_coordinate with such combination of axes are not supported.")
+
+    @staticmethod
+    def _polar_to_cart(x, y):
+        r = np.sqrt(x**2 + y**2)
+        phi = np.arctan2(x, y) % (2 * np.pi)
+        return r, phi
+
+    def from_cartesian(self, coordinates, *axes):
+        if len(axes) == 2:
+            xx, yy, zz = coordinates[0], coordinates[1], coordinates[2]
+            # Cylindrical coordinates
+            if type(axes[0]) is cartesian.Axis1d and type(axes[1]) is cartesian.Axis1d:
+                z = zz
+                r, phi = self._polar_to_cart(xx, yy)
+                return phi, r, z
+        else:
+            raise TypeError("from_cartesian with such combination of axes are not supported.")
 
     def plot2d(self, axis2, data,  mesh, data_type='solution', style='colormesh', fill_scheme='viridis',
                cartesian_coordinates=False, grid=False, equal_norm=False, title=None, *args, **kwargs):

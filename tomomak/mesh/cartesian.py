@@ -65,4 +65,10 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                                       (2, 3, 7, 6), (4, 7, 3, 0), (0, 1, 5, 4), (1, 2, 6, 5)]
         return vertices, faces
 
+    def from_cartesian(self, coordinates, *axes):
+        for a in axes:
+            if type(a) is not Axis1d:
+                raise TypeError("from_cartesian with such combination of axes are not supported.")
+        return coordinates
+
 

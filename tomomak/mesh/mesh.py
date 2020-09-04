@@ -279,8 +279,26 @@ class Mesh:
             except (NotImplementedError, TypeError):
                 raise TypeError("Custom axis should implement {} method.".format(method_name))
 
+    @staticmethod
+    def is_in_grid(coords, *axes):
+        l_min = np.zeros(len(axes))
+        l_max = np.zeros(len(axes))
+        for i, a in enumerate(axes):
+            l = a.cell_edges
+            l_min[i] = np.amin(l)
+            l_max[i] = np.amax(l)
+        new_coords = np.ones_like(coords[0])
+        for i, c in enumerate(coords):
+            mask = np.ones_like(c)
+            mask[c < l_min[i]] = 0
+            mask[c > l_max[i]] = 0
+            new_coords *= mask
+        return new_coords
+
     def draw_mesh(self):
         pass
 
     def density(self, data, coordinate):
         pass
+
+

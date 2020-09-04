@@ -296,11 +296,13 @@ def make_regular(data, x_grid, y_grid, z_grid, interp_size):
     """
     points = np.transpose(np.array([x_grid.flatten(), y_grid.flatten(), z_grid.flatten()]))
     new_data = data.flatten()
-    interp = LinearNDInterpolator(points, new_data)
-    x_new = np.linspace(np.amin(x_grid), np.amax(x_grid), interp_size)
-    y_new = np.linspace(np.amin(y_grid), np.amax(y_grid), interp_size)
-    z_new = np.linspace(np.amin(z_grid), np.amax(z_grid), interp_size)
-    x_grid, y_grid, z_grid = np.meshgrid(x_new, y_new, z_new, indexing='ij')
+    interp = LinearNDInterpolator(points, new_data, fill_value=0)
+    coords = []
+    for c in (x_grid, y_grid, z_grid):
+        c_s = np.sort(c.flatten())
+        c_new = np.linspace(c_s[0] - (c_s[1] - c_s[0]), c_s[-1] + (c_s[-1] - c_s[-2]), interp_size)
+        coords.append(c_new)
+    x_grid, y_grid, z_grid = np.meshgrid(coords[0], coords[1], coords[2], indexing='ij')
     new_points = np.transpose(np.array([x_grid.flatten(), y_grid.flatten(), z_grid.flatten()]))
     new_data = interp(new_points)
     new_data = np.reshape(new_data, x_grid.shape)
@@ -391,3 +393,4 @@ def mesh_center(mesh, index):
                     min_v = np.maximum(max_v, v)
                     max_v = np.minimum(min_v, v)
     return (min_v + max_v) / 2
+
