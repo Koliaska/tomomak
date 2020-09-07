@@ -281,19 +281,32 @@ class Mesh:
 
     @staticmethod
     def is_in_grid(coords, *axes):
+        """Creates mask for the given points on a given axes.
+         Values im mask are = 1 if point is inside of the grid and 0, if outside.
+
+        Args:
+            coords(list of arrays): list of coordinate arrays. Each element in the list is numpy.meshgrid-like arry,
+            representing one coordinate.
+            *axes(tomomak axis): tomomak axes to work with.
+            Number of axes should be equal to number of coordinates (e.g. list length).
+
+        Returns:
+            numpy array: N-dimensional numpy array,
+             representing mask for the position inside/outside of the coordinate system.
+        """
         l_min = np.zeros(len(axes))
         l_max = np.zeros(len(axes))
         for i, a in enumerate(axes):
             l = a.cell_edges
             l_min[i] = np.amin(l)
             l_max[i] = np.amax(l)
-        new_coords = np.ones_like(coords[0])
+        final_mask = np.ones_like(coords[0])
         for i, c in enumerate(coords):
             mask = np.ones_like(c)
             mask[c < l_min[i]] = 0
             mask[c > l_max[i]] = 0
-            new_coords *= mask
-        return new_coords
+            final_mask *= mask
+        return final_mask
 
     def draw_mesh(self):
         pass
