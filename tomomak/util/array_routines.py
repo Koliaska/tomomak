@@ -18,6 +18,8 @@ def multiply_along_axis(a, b, axis):
     return a * b_reshaped
 
 
+
+
 def broadcast_object(ar, index, shape):
     """Broadcast array to a new shape, using given indexes.
 

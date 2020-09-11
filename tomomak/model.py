@@ -149,9 +149,18 @@ class Model:
                 check_shapes(val, name)
             # Check axes units
             for comb in itertools.combinations(self._mesh.axes, 2):
-                if type(comb[0]) == type(comb[1]) and comb[0].units != comb[1].units:
+                if type(comb[0]) == type(comb[1]) and comb[0].units != comb[1].units\
+                        and comb[0].spatial and comb[1].spatial:
                     warnings.warn("Axes {} and {} have different units which may cause incorrect result interpretation."
                                   .format(comb[0].name, comb[1].name))
+            # Check that all non-spatial axes are after spatial axes
+            not_spat = False
+            for i, a in enumerate(self._mesh.axes):
+                if not_spat:
+                    if a.spatial:
+                        raise ValueError("Spatial axes should be before non-spatial axes.")
+                if not a.spatial:
+                    not_spat = True
 
     def plot1d(self, index=0, data_type="solution", **kwargs):
         if data_type == "solution":

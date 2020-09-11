@@ -35,6 +35,7 @@ def four_pi_det(mesh, position, index=(0, 1, 2), response=1, radius_dependence=T
         #     sorted_dist = np.sort(distances, axis=None)
         #     distances[tuple(zero[0])] = sorted_dist[1] / (2 ** 4 / 3)
         volumes /= 4 * np.pi * distances ** 2
+    volumes = geometry3d.convert_slice_from_cartesian(volumes, mesh, index, data_type='detector_geometry')
     if broadcast:
         volumes = array_routines.broadcast_object(volumes, index, mesh.shape)
     return volumes
@@ -78,6 +79,7 @@ def four_pi_detector_array(mesh, focus_point, radius, theta_num, phi_num, index=
             if radius_dependence:
                 distances = geometry3d.cell_distances(mesh, position, index)
                 v /= 4 * np.pi * distances ** 2
+            v = geometry3d.convert_slice_from_cartesian(v, mesh, index, data_type='detector_geometry')
             if broadcast:
                 v = array_routines.broadcast_object(v, index, mesh.shape)
             addition = np.array([v, ])
@@ -134,6 +136,7 @@ def line_detector(mesh, p1, p2, radius, calc_volume, index=(0, 1, 2),
         if distances is None:
             distances = geometry3d.cell_distances(mesh, p1, index)
         volumes /= 4 * np.pi * distances ** 2
+    volumes = geometry3d.convert_slice_from_cartesian(volumes, mesh, index, data_type='detector_geometry')
     if broadcast:
         volumes = array_routines.broadcast_object(volumes, index, mesh.shape)
     return volumes
@@ -171,6 +174,7 @@ def cone_detector(mesh, p1, p2, divergence, index=(0, 1, 2),
     volumes *= response
     if radius_dependence:
         volumes /= 4 * np.pi * distances ** 2
+    volumes = geometry3d.convert_slice_from_cartesian(volumes, mesh, index, data_type='detector_geometry')
     if broadcast:
         volumes = array_routines.broadcast_object(volumes, index, mesh.shape)
     return volumes
@@ -210,6 +214,7 @@ def custom_detector(mesh, vertices, detector_origin=None, index=(0, 1, 2),
             detector_origin = vertices[0]
         distances = geometry3d.cell_distances(mesh, detector_origin, index)
         volumes /= 4 * np.pi * distances ** 2
+    volumes = geometry3d.convert_slice_from_cartesian(volumes, mesh, index, data_type='detector_geometry')
     if broadcast:
         volumes = array_routines.broadcast_object(volumes, index, mesh.shape)
     return volumes

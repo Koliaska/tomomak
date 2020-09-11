@@ -17,7 +17,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
 
     def __init__(self, radius, coordinates=None, edges=None, lower_limit=0,
                  upper_limit=2*np.pi, size=None, name="", units=""):
-        super().__init__(coordinates, edges, lower_limit, upper_limit, size, name, units)
+        super().__init__(coordinates, edges, lower_limit, upper_limit, size, name, units, True)
         self._R = radius
         self._check_self_consistency()
 
@@ -42,6 +42,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     def cell_edges3d_cartesian(self, axis2, axis3):
         # Toroidal coordinates
         if type(axis2) is polar.Axis1d and type(axis3) is cartesian.Axis1d:
+            if not axis3.spatial:
+                raise ValueError("Toroidal axis works only with spatial axes")
             shape = (self.size, axis2.size, axis3.size)
             vertices = np.zeros(shape).tolist()
             faces = np.zeros(shape).tolist()
@@ -129,6 +131,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             z = np.zeros(shape)
             # Toroidal coordinates
             if type(axes[0]) is polar.Axis1d and type(axes[1]) is cartesian.Axis1d:
+                if not axes[1].spatial:
+                    raise ValueError("Toroidal axis works only with spatial axes")
                 x2d, y2d = axes[0].cartesian_coordinates(axes[1])
                 tor_axis = self.coordinates
                 for i, row in enumerate(x):
@@ -150,6 +154,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         if len(axes) == 2:
             xx, yy, zz = coordinates[0], coordinates[1], coordinates[2]
             if type(axes[0]) is polar.Axis1d and type(axes[1]) is cartesian.Axis1d:
+                if not axes[1].spatial:
+                    raise ValueError("Toroidal axis works only with spatial axes")
                 r_hor, theta = self._polar_to_cart(xx, yy)
                 r, phi = self._polar_to_cart((r_hor - self._R), zz)
                 return theta, phi, r
@@ -159,20 +165,17 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     def plot3d(self, data, axis2, axis3, mesh, data_type='solution', colormap='blue-red', axes=False,
                cartesian_coordinates=False, interp_size=None, *args, **kwargs):
         if cartesian_coordinates:
-            old_name = (self.name, axis2.name, axis3.name)
-            old_units = (self.units, axis2.units, axis3.units)
-            self.name, axis2.name, axis3.name = 'X', 'Y', 'Z'
-            if type(axis2) == cartesian.Axis1d:
-                self.units = axis2.units
-                axis3.units = axis2.units
-            elif type(axis3) == cartesian.Axis1d:
-                self.units = axis3.units
-                axis2.units = axis3.units
+            if not (axis2.spatial and axis3.spatial):
+                raise ValueError("Toroidal axis works only with spatial axes for converting to toroidal coordinates.")
+            if type(axis2) is polar.Axis1d and type(axis3) is cartesian.Axis1d and axis3.spatial:
+                ax_names = ('{}, {}'.format('X', axis3.units),
+                            '{}, {}'.format('Y', axis3.units),
+                            '{}, {}'.format('Z', axis3.units))
             else:
-                raise TypeError("Unable to determine axes units while converting to cartesian coordinates")
+                raise TypeError("plot3d with such combination of axes is not supported.")
+        else:
+            ax_names = None
         plot, ax = super().plot3d(data, axis2, axis3, mesh, data_type, colormap, axes,
-                                  cartesian_coordinates, interp_size, *args, **kwargs)
-        if cartesian_coordinates:
-            self.name, axis2.name, axis3.name = old_name
-            self.units, axis2.units, axis3.units = old_units
+                                  cartesian_coordinates, interp_size, ax_names, *args, **kwargs)
+
         return plot, ax

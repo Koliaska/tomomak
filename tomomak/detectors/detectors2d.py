@@ -34,6 +34,8 @@ def two_pi_det(mesh, position, index=(0, 1), response=1, radius_dependence=True,
         r = tomomak.util.geometry2d.cell_distances(mesh, index, position)
         r = 4 * np.pi * np.square(r)
         intersection_geometry /= r
+    intersection_geometry = tomomak.util.geometry2d.convert_slice_from_cartesian(intersection_geometry, mesh, index,
+                                                                                 data_type='detector_geometry')
     if broadcast:
         intersection_geometry = tomomak.util.array_routines.broadcast_object(intersection_geometry, index, mesh.shape)
     return intersection_geometry
@@ -106,6 +108,7 @@ def detector2d(mesh, p1, p2, width, divergence=0, index=(0, 1), response=1, radi
         r = 4 * np.pi * np.square(r)
         res /= r
     res *= response
+    res = tomomak.util.geometry2d.convert_slice_from_cartesian(res, mesh, index, data_type='detector_geometry')
     if broadcast:
         res = tomomak.util.array_routines.broadcast_object(res, index, mesh.shape)
     return res

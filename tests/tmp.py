@@ -63,7 +63,39 @@ import tomomak.constraints.basic
 import numpy as np
 from mayavi import mlab
 import numpy as np
-from scipy.special import sph_harm
+
+# axes = [polar.Axis1d(name="phi", units="rad", size=15),cartesian.Axis1d(name="R", units="cm", size=20, upper_limit=20),
+#
+#         ]
+# m = mesh.Mesh(axes)
+# mod = model.Model(mesh=m)
+# mod.detector_geometry = detectors2d.two_pi_detector_array(m, focus_point=(0, 0), radius=10, det_num=10)
+# mod.plot2d(data_type='detector_geometry',)
+# mod.plot2d(data_type='detector_geometry', cartesian_coordinates=True)
+# mod.plot2d(data_type='detector_geometry',)
+# # Now let's what the circle will look like in this coordinates
+# mod.solution = objects2d.ellipse(m, ax_len=(5.2, 5.2))
+#
+# # Well, looks fine, but how will it look in cartesian coordinates?
+# # You don't need to use your imagination - just use cartesian_coordinates=True argument:
+# mod.plot2d()
+# mod.plot2d(cartesian_coordinates=True, )
+# mod.plot2d()
+
+axes = [polar.Axis1d(name="phi", units="rad", size=6),
+        cartesian.Axis1d(name="R", units="cm", size=7, upper_limit=20),
+        cartesian.Axis1d(name="E", units="cm", size=8, upper_limit=10)]
+m = mesh.Mesh(axes)
+mod = model.Model(mesh=m)
+# First af all we want to know what the cell of such a grid looks like. It will be a 2D bended polar cell.
+# Let's look at the random cell.
+# solution = objects3d.trimesh_create(m, 'capsule', height=5, radius=6)#objects3d.point_source(m, (-15, 15, 0), index=(0, 1, 2))
+# # Now if you want to create an object, defined in the cartesian coordinates, you can use objects3d module.
+mod.detector_geometry = detectors3d.four_pi_detector_array(m, focus_point=(0, 0, 0), radius=45, theta_num=2, phi_num=3)
+mod.plot3d(axes=True, data_type='detector_geometry')
+mod.plot3d(cartesian_coordinates=True, axes=True, data_type='detector_geometry')
+mod.plot2d(index=(0, 1), cartesian_coordinates=True, )
+mod.plot2d(index=(0, 1), )
 
 
 print(np.arctan2(-1, 1)%(2*np.pi))

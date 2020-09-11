@@ -1,5 +1,6 @@
 import collections
 import time
+import tomomak.mesh.cartesian
 
 
 def density_units(units):
@@ -19,23 +20,55 @@ def density_units(units):
     return res
 
 
-def detector_caption(mesh):
+def detector_caption(mesh, data_type, cartesian=False):
     """Return caption for detector intersection plots.
 
     Args:
         mesh (tomomak mesh): mesh for units extraction.
+        data_type (str): type of the data: 'detector_geometry' or 'detector_geometry_n'.
+        cartesian (bool, optional): If True, volumes in cartesian coordinates. Default: False.
 
     Returns:
         str: plot caption
     """
-    units = density_units([a.units for a in mesh.axes]).replace('-', '')
+    if data_type not in ['detector_geometry', 'detector_geometry_n']:
+        raise ValueError('Incorrect data type: correct types are: detector_geometry or detector_geometry_n')
+    cart_units = None
+    if cartesian:
+        for a in mesh.axes:
+            if type(a) is tomomak.mesh.cartesian.Axis1d and a.spatial:
+                cart_units = a.units
+    units = [a.units for a in mesh.axes]
+    for i, _ in enumerate(units):
+        if mesh.axes[i].spatial:
+            if cart_units is not None and cartesian:
+                units[i] = cart_units
+    units = density_units(units).replace('-', '')
     if len(mesh.axes) == 1:
         vol_name = 'Length'
     elif len(mesh.axes) == 2:
-        vol_name = 'Surface'
+        vol_name = 'Area'
     else:
         vol_name = 'Volume'
+    if data_type == 'detector_geometry_n':
+        vol_name = 'Normalized ' + vol_name
     title = r"{}, {}".format(vol_name, units)
+    return title
+
+
+def solution_caption(cartesian, *axes):
+    cart_units = None
+    if cartesian:
+        for a in axes:
+            if type(a) is tomomak.mesh.cartesian.Axis1d and a.spatial:
+                cart_units = a.units
+    units = [a.units for a in axes]
+    for i, u in enumerate(units):
+        if axes[i].spatial:
+            if cart_units is not None and cartesian:
+                units[i] = cart_units
+    units = density_units(units)
+    title = r"Density, {}".format(units)
     return title
 
 

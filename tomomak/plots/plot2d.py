@@ -7,7 +7,7 @@ from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
 
-def patches(data, axis1, axis2, title='', fill_scheme='viridis', norm=None, *args,  **kwargs):
+def patches(data, axis1, axis2, title='', fill_scheme='viridis', norm=None, ax_names=('-', '-'), *args,  **kwargs):
     """Prepare patches plot for 2D data visualization.
 
     Works with arbitrary axes types.
@@ -17,6 +17,9 @@ def patches(data, axis1, axis2, title='', fill_scheme='viridis', norm=None, *arg
         axis2 (axis): corresponding tomomak axis № 2.
         title (str, optional): Plot title. default: ''.
         fill_scheme (pyplot colormap, optional): pyplot colormap to be used in the plot. default: 'viridis'.
+        norm (None/[Number, Number], optional): If not None, all detectors will have same z axis
+            with [ymin, ymax] = norm. default: None.
+        ax_names (list of str, optional): caption for coordinate axes. Default: ('-', '-').
         *args, **kwargs: not used.
 
     Returns:
@@ -54,12 +57,12 @@ def patches(data, axis1, axis2, title='', fill_scheme='viridis', norm=None, *arg
 
     ax.set_xlim((x_min, x_max))
     ax.set_ylim((y_min, y_max))
-    _set_labels(ax, title, axis1, axis2)
+    _set_labels(ax, title, ax_names)
     return pc, ax, fig, cb
 
 
 def colormesh2d(data, axis1, axis2, title='', style='colormesh', fill_scheme='viridis',
-                grid=False, norm=None, *args,  **kwargs):
+                grid=False, norm=None, ax_names=('-', '-'), *args,  **kwargs):
     """Prepare bar plot for 2D data visualization.
 
      matplotlib.pyplot.pcolormesh  is used.
@@ -74,6 +77,7 @@ def colormesh2d(data, axis1, axis2, title='', style='colormesh', fill_scheme='vi
         grid (bool, optional): if True, grid is shown. default: False.
         norm (None/[Number, Number], optional): If not None, all detectors will have same z axis
             with [ymin, ymax] = norm. default: None.
+        ax_names (list of str, optional): caption for coordinate axes. Default: ('-', '-').
         *args, **kwargs: arguments will be passed to matplotlib.pyplot.pcolormesh
 
      Returns:
@@ -105,14 +109,15 @@ def colormesh2d(data, axis1, axis2, title='', style='colormesh', fill_scheme='vi
     else:
         plot = func(x, y, z, cmap=cmap, *args, **kwargs)
     cb = fig.colorbar(plot, ax=ax)
-    _set_labels(ax, title, axis1, axis2)
+    _set_labels(ax, title, ax_names)
     if grid:
         ax.grid()
     return plot, ax, fig, cb
 
 
 def detector_plot2d(data, axis1, axis2, title='', cb_title='', style='colormesh', fill_scheme='viridis',
-                    grid=False, equal_norm=False, transpose=True, plot_type='colormesh', *args, **kwargs):
+                    grid=False, equal_norm=False, transpose=True, plot_type='colormesh', ax_names=('-', '-'),
+                    *args, **kwargs):
     """Prepare bar plot for 2D detector data visualization with interactive elements.
 
     matplotlib.pyplot.pcolormesh  is used. Interactive elements are Next and Prev buttons to change detectors.
@@ -128,6 +133,7 @@ def detector_plot2d(data, axis1, axis2, title='', cb_title='', style='colormesh'
         grid (bool, optional): if True, grid is shown. Default: False.
         equal_norm (bool, optional): If True,  all detectors will have same z axis.
             If False, each detector has individual z axis. Default:False
+        ax_names (list of str, optional): caption for coordinate axes. Default: ('-', '-').
         *args, **kwargs: arguments will be passed to matplotlib.pyplot.pcolormesh
 
     Returns:
@@ -161,9 +167,10 @@ def detector_plot2d(data, axis1, axis2, title='', cb_title='', style='colormesh'
     if equal_norm:
         norm = [min(np.min(data), 0), np.max(data)]
     if plot_type == 'colormesh':
-        plot, ax, fig, cb = colormesh2d(data[0], axis1, axis2, title, style,  fill_scheme, grid, norm, *args, **kwargs)
+        plot, ax, fig, cb = colormesh2d(data[0], axis1, axis2, title, style,  fill_scheme, grid, norm, ax_names,
+                                        *args, **kwargs)
     elif plot_type == 'patches':
-        plot, ax, fig, cb = patches(data[0], axis1, axis2, title, fill_scheme, norm, *args, **kwargs)
+        plot, ax, fig, cb = patches(data[0], axis1, axis2, title, fill_scheme, norm,ax_names, *args, **kwargs)
     else:
         raise ValueError('plot_type {} is unknown. See docstring for more information.'.format(plot_type))
     cb.set_label(cb_title)
@@ -186,9 +193,9 @@ def detector_plot2d(data, axis1, axis2, title='', cb_title='', style='colormesh'
     return plot, ax, (slider, b_next, b_prev)
 
 
-def _set_labels(ax, title, axis1, axis2):
+def _set_labels(ax, title, ax_names):
     ax.set_title(title)
-    xlabel = "{}, {}".format(axis1.name, axis1.units)
-    ylabel = "{}, {}".format(axis2.name, axis2.units)
+    xlabel = ax_names[0]
+    ylabel = ax_names[1]
     ax.set(xlabel=xlabel, ylabel=ylabel)
 

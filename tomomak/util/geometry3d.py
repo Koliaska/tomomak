@@ -6,6 +6,9 @@ import os
 import subprocess
 import sys
 from collections.abc import Iterable
+from .geometry2d import check_spatial
+from . import array_routines
+from tomomak.mesh import cartesian
 
 
 def get_trimesh_grid(mesh, index=(0, 1, 2)):
@@ -27,6 +30,7 @@ def get_trimesh_grid(mesh, index=(0, 1, 2)):
     """
     if isinstance(index, int):
         index = [index]
+    check_spatial(mesh, index)
     if mesh.axes[index[0]].dimension == 3:
         try:
             (vertices, faces) = mesh.axes[index[0]].cell_edges3d_cartesian()
@@ -220,11 +224,12 @@ def cell_volumes(mesh, index=(0, 1, 2)):
     """
     if isinstance(index, int):
         index = [index]
+    check_spatial(mesh, index)
     trimesh_list = get_trimesh_grid(mesh, index)
     volumes = np.zeros_like(trimesh_list)
     for idx, value in np.ndenumerate(trimesh_list):
         volumes[idx] = value.volume
-    return volumes
+    return np.array(volumes, dtype=float)
 
 
 def cell_distances(mesh, p, index=(0, 1, 2)):
@@ -243,6 +248,7 @@ def cell_distances(mesh, p, index=(0, 1, 2)):
         """
     if isinstance(index, int):
         index = [index]
+    check_spatial(mesh, index)
     p = np.array(p)
     if mesh.axes[index[0]].dimension == 3:
         try:
@@ -322,6 +328,7 @@ def show_cell(mesh, index=(0, 1, 2), cell_index=(0, 0, 0)):
     """
     if isinstance(index, int):
         index = [index]
+    check_spatial(mesh, index)
     trimesh_list = get_trimesh_grid(mesh, index)
     for i in cell_index:
         trimesh_list = trimesh_list[i]
@@ -373,7 +380,7 @@ def rotation_matrix_from_vectors(vec1, vec2):
     return rotation_matrix
 
 
-def mesh_center(mesh, index):
+def mesh_center(mesh, index=(0, 1, 2)):
     """Find geometrical center of the given mesh in the cartesian coordinates.
 
     Args:
@@ -383,6 +390,7 @@ def mesh_center(mesh, index):
     Returns:
         list: (x, y, z) coordinates of the mesh center.
     """
+    check_spatial(mesh, index)
     vertices, _ = mesh.axes_method3d(index, 'cell_edges3d_cartesian')
     min_v = np.array(vertices[0, 0, 0][0])
     max_v = np.array(vertices[0, 0, 0][0])
@@ -394,3 +402,138 @@ def mesh_center(mesh, index):
                     max_v = np.minimum(min_v, v)
     return (min_v + max_v) / 2
 
+
+def _convert_slice_cart(data, mesh, index, direct):
+    if isinstance(index, int):
+        index = [index]
+    if len(index) != len(data.shape):
+        raise ValueError('index and data have different sizes')
+    axes = []
+    for i in index:
+        axes.append((mesh.axes[i]))
+    if any([type(a) is not cartesian.Axis1d for a in axes]):
+        if mesh.axes[index[0]].dimension in (3, 2, 1):
+            ax_num = 4 - mesh.axes[index[0]].dimension
+        else:
+            raise ValueError('Incorrect axes dimensions')
+        volumes = np.array(cell_volumes(mesh, index), dtype=float)
+        for i in range(ax_num):
+            dv = 1 / mesh.axes[index[i]].volumes
+            volumes = array_routines.multiply_along_axis(volumes, dv, i)
+        if direct:
+            new_data = data / volumes
+        else:
+            new_data = data * volumes
+    else:
+        return data
+    return new_data
+
+
+def convert_slice_from_cartesian(data, mesh, index, data_type):
+    """Converts 3D slice in cartesian coordinates to mesh coordinates.
+
+    Args:
+        data (numpy array): 3D slice of solution or detector geometry.
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        index (tuple of two ints): axes corresponding to data.
+        data_type(str): 'solution' or 'detector_geometry'.
+
+    Returns:
+        numpy array: converted data.
+    """
+    check_spatial(mesh, index)
+    if data_type == 'solution':
+        return _convert_slice_cart(data, mesh, index, False)
+    elif data_type == 'detector_geometry':
+        return _convert_slice_cart(data, mesh, index, True)
+    else:
+        raise ValueError("Wrong data_type.")
+
+
+def convert_slice_to_cartesian(data, mesh, index, data_type):
+    """Converts 3D slice in  mesh coordinates to cartesian coordinates.
+
+    Args:
+        data (numpy array): 3D slice of solution or detector geometry.
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        index (tuple of two ints): axes corresponding to the data.
+        data_type(str): 'solution' or 'detector_geometry'.
+
+    Returns:
+        numpy array: converted data.
+    """
+    if data_type == 'solution':
+        return _convert_slice_cart(data, mesh, index, True)
+    elif data_type == 'detector_geometry':
+        return _convert_slice_cart(data, mesh, index, False)
+    else:
+        raise ValueError("Wrong data_type.")
+
+
+def _convert_cart(data, mesh, index, direct):
+    if isinstance(index, int):
+        index = [index]
+    if len(data.shape) != len(mesh.axes):
+        raise ValueError('data and mesh have different sizes')
+    axes = []
+    for i in index:
+        axes.append((mesh.axes[i]))
+    if any([type(a) is not cartesian.Axis1d for a in axes]):
+        if mesh.axes[index[0]].dimension in (3, 2, 1):
+            ax_num = 4 - mesh.axes[index[0]].dimension
+        else:
+            raise ValueError('Incorrect axes dimensions')
+        c_areas = cell_volumes(mesh, index)
+        for i in range(ax_num):
+            dv = 1 / mesh.axes[index[i]].volumes
+            c_areas = array_routines.multiply_along_axis(c_areas, dv, i)
+        last_ind = list(range(-ax_num, 0))
+        new_data = np.moveaxis(data, index, last_ind)
+        if direct:
+            new_data = new_data / c_areas
+        else:
+            new_data = new_data * c_areas
+        new_data = np.moveaxis(new_data, last_ind , index)
+    else:
+        return data
+    return new_data
+
+
+def convert_from_cartesian(data, mesh, index, data_type):
+    """Converts data in cartesian coordinates to mesh coordinates.
+
+    Args:
+        data (numpy array): solution or detector geometry or their slice .
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        index (tuple of two ints): axes corresponding to the data.
+        data_type(str): 'solution' or 'detector_geometry'.
+    Returns:
+        numpy array: converted data.
+    """
+    check_spatial(mesh, index)
+    if data_type == 'solution':
+        return _convert_cart(data, mesh, index, False)
+    elif data_type == 'detector_geometry':
+        return _convert_cart(data, mesh, index, True)
+    else:
+        raise ValueError("Wrong data_type.")
+
+
+def convert_to_cartesian(data, mesh, index, data_type):
+    """Converts data in mesh coordinates to cartesian coordinates.
+
+    Args:
+        data (numpy array): solution or detector geometry or their slice .
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        index (tuple of two ints): axes corresponding to the data.
+        data_type(str): 'solution' or 'detector_geometry'.
+
+    Returns:
+        numpy array: converted data.
+    """
+    if data_type == 'solution':
+        return _convert_cart(data, mesh, index, True)
+    elif data_type == 'detector_geometry':
+        return _convert_cart(data, mesh, index, False)
+    else:
+        raise ValueError("Wrong data_type.")

@@ -16,11 +16,13 @@ class AbstractAxis(ABC):
     """Superclass for every axis.
     One axis always corresponds to one data array dimension, however may corresponds to several real-world dimensions.
     If you want to create new coordinate system, inherit Abstract1DAxis, Abstract2dAxis or Abstract3dAxis.
+
     """
 
-    def __init__(self, name="", units=""):
+    def __init__(self, name="", units="", spatial=True):
         self.name = name
         self.units = units
+        self._spatial = spatial
 
     @property
     @abstractmethod
@@ -29,6 +31,16 @@ class AbstractAxis(ABC):
 
         Returns:
             int: number of dimensions
+        """
+    @property
+    @abstractmethod
+    def spatial(self):
+        """Check, if this is a spatial axis.
+
+        Spatial axes may be used for the spatial geometry calculations.
+
+        Returns:
+            bool: True if spatial, False, if not.
         """
 
     @property
@@ -145,11 +157,8 @@ def precalculated(method):
                 parameters_match = False
         except AttributeError:
             pass
-
         if stored_res is None or not parameters_match:
             return precalc()
-
-
         return stored_res
     return _impl
 
@@ -161,8 +170,9 @@ class Abstract1dAxis(AbstractAxis):
     Axes need to be stacked, e.g. six 1D cartesian axes describe 6D space in a real world.
     """
 
-    def __init__(self, coordinates=None, edges=None, lower_limit=0, upper_limit=None, size=None, name="", units=""):
-        super().__init__(name, units)
+    def __init__(self, coordinates=None, edges=None, lower_limit=0, upper_limit=None, size=None, name="", units="",
+                 spatial=True):
+        super().__init__(name, units, spatial)
         if coordinates is not None:
             if size is not None or upper_limit is not None:
                 warnings.warn("Since coordinates are given explicitly, size and upper_limit arguments are ignored.")
@@ -241,6 +251,12 @@ class Abstract1dAxis(AbstractAxis):
         return self._volumes
 
     @property
+    def spatial(self):
+        """See description in abstract axes.
+        """
+        return self._spatial
+
+    @property
     def coordinates(self):
         """See description in abstract axes.
         """
@@ -304,7 +320,8 @@ class Abstract1dAxis(AbstractAxis):
         Args:
             data (1D ndarray): data to plot.
             mesh (tomomak mesh): mesh for units extraction.
-            data_type (str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
+            data_type (str, optional): type of the data: 'solution', 'detector_geometry' or 'detector_geometry_n'.
+                Default: solution.
             filled (bool_optional, optional): if true, bars are filled. Color depends on the bar height. Default: True.
             fill_scheme (str, optional): matplotlib fill scheme. Valid only if filled is True. Default: 'viridis'.
             edge_color (str, optional): color of the bar edges. See matplotlib colors for the avaiable options.
@@ -323,9 +340,9 @@ class Abstract1dAxis(AbstractAxis):
                 y_label = r"Density, {}{}".format(self.units, '$^{-1}$')
             plot, ax = plot1d.bar1d(data, self, 'Density', y_label, filled, fill_scheme,
                                     edge_color, grid, *args, **kwargs)
-        elif data_type == 'detector_geometry':
+        elif data_type == 'detector_geometry' or data_type == 'detector_geometry_n':
             title = "Detector 1/{}".format(data.shape[0])
-            y_label = util.text.detector_caption(mesh)
+            y_label = util.text.detector_caption(mesh, data_type)
             plot, ax, _ = plot1d.detector_bar1d(data, self, title, y_label, filled,
                                                 fill_scheme, edge_color, grid, equal_norm, *args, **kwargs)
         else:
@@ -334,7 +351,7 @@ class Abstract1dAxis(AbstractAxis):
         return plot, ax
 
     def plot2d(self, axis2, data,  mesh, data_type='solution', style='colormesh',
-               fill_scheme='viridis', grid=False, equal_norm=False, title=None, *args, **kwargs):
+               fill_scheme='viridis', grid=False, equal_norm=False, title=None, ax_names=None, *args, **kwargs):
         """Create 2D plot of the solution or detector geometry.
 
         matplotlib pcolormesh is used. Detector data is plotted on the interactive graph.
@@ -343,13 +360,15 @@ class Abstract1dAxis(AbstractAxis):
             axis2 (tomomak axis): second axis.
             data (2D ndarray): data to plot.
             mesh (tomomak mesh): mesh to extract additional info.
-            data_type (str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
+            data_type (str, optional): type of the data: 'solution', 'detector_geometry' or 'detector_geometry_n'.
+                Default: solution.
             style (str, optional): Plot style. Available options: 'colormesh', 'contour'. Default: 'colormesh'.
             fill_scheme (str, optional): matplotlib fill scheme. Default: 'viridis'.
             grid (bool, optional): If true, grid is displayed. Default:False.
             equal_norm (bool, optional): If true, all detectors will have same norm.
                 Valid only if data_type = detector_geometry. Default: False.
             title (str, optional): solution figure caption. Default: automatic.
+            ax_names (list of str, optional): caption for coordinate axes. Default: automatic.
             *args,**kwargs: additional arguments to pass to matplotlib pcolormesh.
 
         Returns:
@@ -359,23 +378,25 @@ class Abstract1dAxis(AbstractAxis):
         #     raise NotImplementedError("2D plots with such combination of axes are not supported.")
         if 'cartesian_coordinates' in kwargs:
             raise TypeError('cartesian_coordinates is an invalid keyword argument for plot2d of cartesian axes.')
+        if ax_names is None:
+            ax_names = ("{}, {}".format(self.name, self.units), "{}, {}".format(axis2.name, axis2.units))
         if data_type == 'solution':
             if title is None:
-                units = util.text.density_units([self.units, axis2.units])
-                title = r"Density, {}".format(units)
-            plot, ax, fig, cb = plot2d.colormesh2d(data, self, axis2, title, style, fill_scheme, grid, *args, **kwargs)
-        elif data_type == 'detector_geometry':
+                title = util.text.solution_caption(False, self, axis2)
+            plot, ax, fig, cb = plot2d.colormesh2d(data, self, axis2, title, style, fill_scheme, grid, None, ax_names,
+                                                   *args, **kwargs)
+        elif data_type == 'detector_geometry' or data_type == 'detector_geometry_n':
             title = 'Detector 1/{}'.format(data.shape[0])
-            cb_title = util.text.detector_caption(mesh)
+            cb_title = util.text.detector_caption(mesh, data_type)
             plot, ax, _ = plot2d.detector_plot2d(data, self, axis2, title, cb_title, style, fill_scheme, grid,
-                                                 equal_norm, True, 'colormesh', *args, **kwargs)
+                                                 equal_norm, True, 'colormesh', ax_names, *args, **kwargs)
         else:
             raise ValueError('data type {} is unknown'.format(data_type))
         plt.show()
         return plot, ax
 
     def plot3d(self, data, axis2, axis3, mesh, data_type='solution', colormap='blue-red', axes=False,
-               cartesian_coordinates=False, interp_size=None, *args, **kwargs):
+               cartesian_coordinates=False, interp_size=None, ax_names=None, *args, **kwargs):
         """Create 3D plot of the solution or detector geometry.
 
         Args:
@@ -383,12 +404,14 @@ class Abstract1dAxis(AbstractAxis):
             axis2 (tomomak axis): second axis.
             axis3 (tomomak axis): third axis.
             mesh (tomomak mesh): mesh to extract additional info.
-            data_type (str, optional): type of the data: 'solution' or 'detector_geometry'. Default: solution.
+            data_type (str, optional): type of the data: 'solution', 'detector_geometry' or 'detector_geometry_n'.
+                Default: solution.
             colormap (str, optional): Colormap. Default: 'viridis'.
             axes (bool, optional): If true, axes are shown. Default: False.
             cartesian_coordinates (bool, optional): If true, data is converted to cartesian coordinates. Default: False.
             interp_size (int, optional): If at least one of the axes is irregular,
                 the new grid wil have  interp_size * interp_size * interp_size dimensions.
+            ax_names (list of str, optional): caption for coordinate axes. Default: automatic naming.
             *args: arguments to pass to plot3d.contour3d, detector_contour3d.
             **kwargs: keyword arguments to pass to plot3d.contour3d, detector_contour3d.
 
@@ -405,14 +428,17 @@ class Abstract1dAxis(AbstractAxis):
             coord = [self.coordinates, axis2.coordinates, axis3.coordinates]
             x_grid, y_grid, z_grid = np.array(np.meshgrid(*coord, indexing='ij'))
         if axes:
-            axes = ('{}, {}'.format(self.name, self.units),
-                    '{}, {}'.format(axis2.name, axis2.units),
-                    '{}, {}'.format(axis3.name, axis3.units))
+            if ax_names is None:
+                axes = ('{}, {}'.format(self.name, self.units),
+                        '{}, {}'.format(axis2.name, axis2.units),
+                        '{}, {}'.format(axis3.name, axis3.units))
+            else:
+                axes = ax_names
         if data_type == 'solution':
             # title
-            units = util.text.density_units([self.units, axis2.units, axis3.units])
-            title = re.sub('[${}]', '', r"   Density, {}".format(units))
-            # irregular axes
+            title = util.text.solution_caption(cartesian_coordinates, self, axis2, axis3).replace('$', '')\
+                .replace('{', '').replace('}', '')
+            # irregular or non-cartesian axes
             if not all((self.regular, axis2.regular, axis3.regular)) or \
                     (cartesian_coordinates and not all(type(x) == cartesian.Axis1d for x in (self, axis2, axis3))):
                 if interp_size is None:
@@ -432,10 +458,10 @@ class Abstract1dAxis(AbstractAxis):
             plot3d.contour3d(new_data, x_grid, y_grid, z_grid,
                              title=title, colormap=colormap, axes=axes, *args, **kwargs)
 
-        elif data_type == 'detector_geometry':
+        elif data_type == 'detector_geometry' or data_type == 'detector_geometry_n':
             # title
-            title = '   ' + re.sub('[${}]', '', util.text.detector_caption(mesh))
-            # irregular ax4s
+            title = '   ' + re.sub('[${}]', '', util.text.detector_caption(mesh, data_type, cartesian_coordinates))
+            # irregular axes
             if not all((self.regular, axis2.regular, axis3.regular)) or \
                     (cartesian_coordinates and not all(type(x) == cartesian.Axis1d for x in (self, axis2, axis3))):
                 if interp_size is None:

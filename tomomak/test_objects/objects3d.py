@@ -59,6 +59,9 @@ def _create_figure(mesh, obj3d, index, density, broadcast):
     trimesh_list = geometry3d.get_trimesh_grid(mesh, index)
     intersection = geometry3d.grid_intersection3d(trimesh_list, obj3d)
     intersection *= density
+    dv = tomomak.util.geometry3d.cell_volumes(mesh, index)
+    intersection /= dv
+    intersection = tomomak.util.geometry3d.convert_slice_from_cartesian(intersection, mesh, index, data_type='solution')
     if broadcast:
         intersection = tomomak.util.array_routines.broadcast_object(intersection, index, mesh.shape)
     return intersection
@@ -90,6 +93,9 @@ def point_source(mesh, point, index=(0, 1, 2), density=1, broadcast=True):
         distances[tuple(zero[0])] = sorted_dist[1] / (2 ** 4/3)  # distance to the radius,
         # limiting 1/2 volume of the sphere with R = 1/2 distance
     distances = 1 / (distances ** 2) * density
+    dv = tomomak.util.geometry3d.cell_volumes(mesh, index)
+    distances /= dv
+    distances = tomomak.util.geometry3d.convert_slice_from_cartesian(distances, mesh, index, data_type='solution')
     if broadcast:
         distances = tomomak.util.array_routines.broadcast_object(distances, index, mesh.shape)
     return distances

@@ -14,8 +14,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     """
     RESOLUTION2D = 10
 
-    def __init__(self, coordinates=None, edges=None, lower_limit=0, upper_limit=2*np.pi, size=None, name="", units=""):
-        super().__init__(coordinates, edges, lower_limit, upper_limit, size, name, units)
+    def __init__(self, coordinates=None, edges=None, lower_limit=0, upper_limit=2*np.pi, size=None, name="", units="",):
+        super().__init__(coordinates, edges, lower_limit, upper_limit, size, name, units, True)
         self._check_self_consistency()
 
     def _check_self_consistency(self):
@@ -177,31 +177,27 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     def plot2d(self, axis2, data,  mesh, data_type='solution', style='colormesh', fill_scheme='viridis',
                cartesian_coordinates=False, grid=False, equal_norm=False, title=None, *args, **kwargs):
         if cartesian_coordinates:
-            if type(axis2) is not cartesian.Axis1d:
+            if type(axis2) is not cartesian.Axis1d or not axis2.spatial:
                 raise TypeError("2D plots in cartesian coordinates with such combination of axes are not supported.")
-            old_name = (self.name, axis2.name)
-            old_units = (self.units, axis2.units)
-            self.name, axis2.name = 'X', 'Y'
-            self.units = axis2.units
+            ax_names = ("{}, {}".format('X', axis2.units), "{}, {}".format('Y', axis2.units))
             if style == 'colormesh':
                 if data_type == 'solution':
                     if title is None:
-                        units = util.text.density_units([self.units, axis2.units])
-                        title = r"Density, {}".format(units)
-                    plot, ax, _, _ = plot2d.patches(data, self, axis2, title, fill_scheme, *args, **kwargs)
+                        title = util.text.solution_caption(True, self, axis2)
+                    plot, ax, _, _ = plot2d.patches(data, self, axis2, title, fill_scheme, None,
+                                                    ax_names, *args, **kwargs)
                 elif data_type == 'detector_geometry':
                     title = 'Detector 1/{}'.format(data.shape[0])
-                    cb_title = util.text.detector_caption(mesh)
+                    cb_title = util.text.detector_caption(mesh, data_type, cartesian=True)
                     plot, ax, _ = plot2d.detector_plot2d(data, self, axis2, title, cb_title, style, fill_scheme,
-                                                         grid, equal_norm, False, 'patches', *args, **kwargs)
+                                                         grid, equal_norm, False, 'patches', ax_names, *args, **kwargs)
                 else:
                     raise ValueError('data type {} is unknown'.format(data_type))
                 plt.show()
             else:
                 plot, ax = super().plot2d(axis2, data, mesh, data_type, style,
                                           fill_scheme, grid, equal_norm, title, *args, **kwargs)
-            self.name, axis2.name = old_name
-            self.units, axis2.units = old_units
+
         else:
             plot, ax = super().plot2d(axis2, data,  mesh, data_type, style,
                                       fill_scheme, grid, equal_norm, title, *args, **kwargs)
@@ -210,20 +206,27 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     def plot3d(self, data, axis2, axis3, mesh, data_type='solution', colormap='blue-red', axes=False,
                cartesian_coordinates=False, interp_size=None, *args, **kwargs):
         if cartesian_coordinates:
-            old_name = (self.name, axis2.name, axis3.name)
-            old_units = (self.units, axis2.units, axis3.units)
-            self.name, axis2.name, axis3.name = 'X', 'Y', 'Z'
-            if type(axis2) == cartesian.Axis1d:
-                self.units = axis2.units
-                axis3.units = axis2.units
-            elif type(axis3) == cartesian.Axis1d:
-                self.units = axis3.units
-                axis2.units = axis3.units
+            # Construct correct names for axes
+            if type(axis2) is cartesian.Axis1d and type(axis3) is cartesian.Axis1d:
+                if type(axis2) == cartesian.Axis1d and axis2.spatial:
+                    units = axis2.units
+                elif type(axis3) == cartesian.Axis1d and axis3.spatial:
+                    units = axis3.units
+                else:
+                    raise TypeError("Unable to determine axes units while converting to cartesian coordinates")
+                ax_names = ['{}, {}'.format('X', units)]
+                names = ['Y', 'Z']
+                for a in [axis2, axis3]:
+                    if a.spatial:
+                        ax_names.append('{}, {}'.format(names.pop(0), units))
+                    else:
+                        ax_names.append('{}, {}'.format(a.name, a.units))
             else:
-                raise TypeError("Unable to determine axes units while converting to cartesian coordinates")
+                raise TypeError("plot3d with such combination of axes is not supported.")
+
+        else:
+            ax_names = None
         plot, ax = super().plot3d(data, axis2, axis3, mesh, data_type, colormap, axes,
-                                  cartesian_coordinates, interp_size, *args, **kwargs)
-        if cartesian_coordinates:
-            self.name, axis2.name, axis3.name = old_name
-            self.units, axis2.units, axis3.units = old_units
+                                  cartesian_coordinates, interp_size, ax_names, *args, **kwargs)
+
         return plot, ax

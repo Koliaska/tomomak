@@ -2,6 +2,8 @@
 """
 import numpy as np
 import shapely.geometry
+from . import array_routines
+from tomomak.mesh import cartesian
 
 
 def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
@@ -19,11 +21,11 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
     Shapely module is used for the calculation.
 
     Args:
-        mesh(tomomak.main_structures.Mesh): mesh to work with.
-        points(An ordered sequence of point tuples, optional): Polygon points (x, y).
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        points (An ordered sequence of point tuples, optional): Polygon points (x, y).
             default: ((0 ,0), (5, 5), (10, 0))
-        index(tuple of one or two ints, optional): axes to build object at. Default:  (0,1)
-        calc_area(bool): If True, area of intersection with each cell is calculated, if False,
+        index (tuple of one or two ints, optional): axes to build object at. Default:  (0,1)
+        calc_area (bool): If True, area of intersection with each cell is calculated, if False,
             only fact of intersecting with mesh cell is taken into account. Default: True.
 
     Returns:
@@ -34,6 +36,7 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
     """
     if isinstance(index, int):
         index = [index]
+    check_spatial(mesh, index)
     pol = shapely.geometry.Polygon(points)
     # If axis is 2D
     if mesh.axes[index[0]].dimension == 2:
@@ -91,13 +94,13 @@ def cell_areas(mesh, index):
     """Get area of each cell on 2D mesh.
 
     Args:
-        mesh(tomomak.main_structures.Mesh): mesh to work with.
-        index(tuple of two ints, optional): axes to build object at. Default:  (0,1)
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        index (tuple of two ints, optional): axes to build object at. Default:  (0,1)
 
     Returns:
         ndarray: 2D or 1D ndarray with cell areas.
     """
-
+    check_spatial(mesh, index)
     # If axis is 2D
     if mesh.axes[index[0]].dimension == 2:
         i1 = index[0]
@@ -138,6 +141,7 @@ def cell_distances(mesh, index, p):
     Raises
         TypeError if axis dimension is > 2.
         """
+    check_spatial(mesh, index)
     p1 = shapely.geometry.Point(p)
     # If axis is 2D
     if mesh.axes[index[0]].dimension == 2:
@@ -166,3 +170,171 @@ def cell_distances(mesh, index, p):
     else:
         raise TypeError("Only 1D and 2D axes may be used for 2D distance calculation.")
     return r
+
+
+def check_spatial(mesh, index):
+    """Check, that all axes are spatial.
+
+    Args:
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        index (tuple of ints): axes to check at.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError if one or more axes are not spatial.
+    """
+    for i in index:
+        if not mesh.axes[i].spatial:
+            raise ValueError('Only spatial axes may be used with geometry modules.')
+
+
+def _convert_slice_cart(data, mesh, index, direct):
+    if isinstance(index, int):
+        index = [index]
+    if len(index) != len(data.shape):
+        raise ValueError('index and data have different sizes')
+    axes = []
+    for i in index:
+        axes.append((mesh.axes[i]))
+    if any([type(a) is not cartesian.Axis1d for a in axes]):
+        # If axis is 2D
+        if mesh.axes[index[0]].dimension == 2:
+            areas = cell_areas(mesh, index)
+            dv = 1 / mesh.axes[index[0]].volumes
+            areas *= dv
+        # If axes are 1D
+        elif mesh.axes[0].dimension == 1:
+            areas = cell_areas(mesh, index)
+            for i in range(2):
+                dv = 1 / mesh.axes[index[i]].volumes
+                areas = array_routines.multiply_along_axis(areas, dv, i)
+        else:
+            raise ValueError('Incorrect axes dimensions')
+        if direct:
+            new_data = data / areas
+        else:
+            new_data = data * areas
+    else:
+        return data
+    return new_data
+
+
+def convert_slice_from_cartesian(data, mesh, index, data_type):
+    """Converts 2D slice in cartesian coordinates to mesh coordinates.
+
+    Args:
+        data (numpy array): 2D slice of solution or detector geometry.
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        index (tuple of two ints): axes corresponding to data.
+        data_type(str): 'solution' or 'detector_geometry'.
+
+    Returns:
+        numpy array: converted data.
+    """
+    check_spatial(mesh, index)
+    if data_type == 'solution':
+        return _convert_slice_cart(data, mesh, index, False)
+    elif data_type == 'detector_geometry':
+        return _convert_slice_cart(data, mesh, index, True)
+    else:
+        raise ValueError("Wrong data_type.")
+
+
+def convert_slice_to_cartesian(data, mesh, index, data_type):
+    """Converts 2D slice in  mesh coordinates to cartesian coordinates.
+
+    Args:
+        data (numpy array): 2D slice of solution or detector geometry.
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        index (tuple of two ints): axes corresponding to the data.
+        data_type(str): 'solution' or 'detector_geometry'.
+
+    Returns:
+        numpy array: converted data.
+    """
+    if data_type == 'solution':
+        return _convert_slice_cart(data, mesh, index, True)
+    elif data_type == 'detector_geometry':
+        return _convert_slice_cart(data, mesh, index, False)
+    else:
+        raise ValueError("Wrong data_type.")
+
+
+def _convert_cart(data, mesh, index, direct):
+    if isinstance(index, int):
+        index = [index]
+    if len(data.shape) != len(mesh.axes):
+        raise ValueError('data and mesh have different sizes')
+    axes = []
+    for i in index:
+        axes.append((mesh.axes[i]))
+    if any([type(a) is not cartesian.Axis1d for a in axes]):
+        # If axis is 2D
+        if mesh.axes[index[0]].dimension == 2:
+            c_areas = cell_areas(mesh, index)
+            dv = 1 / mesh.axes[index[0]].volumes
+            c_areas = c_areas * dv
+            new_data = np.moveaxis(data, index, (-1,))
+            new_data = new_data * c_areas
+            new_data = np.moveaxis(new_data, (-1,), index)
+        # If axes are 1D
+        elif mesh.axes[0].dimension == 1:
+            c_areas = cell_areas(mesh, index)
+            for i in range(2):
+                dv = 1 / mesh.axes[index[i]].volumes
+                c_areas = array_routines.multiply_along_axis(c_areas, dv, i)
+            new_data = np.moveaxis(data, index, (-2, -1))
+            if direct:
+                new_data = new_data / c_areas
+            else:
+                new_data = new_data * c_areas
+            new_data = np.moveaxis(new_data, (-2, -1), index)
+        else:
+            raise ValueError('Incorrect axes dimensions')
+    else:
+        return data
+    return new_data
+
+
+def convert_from_cartesian(data, mesh, index, data_type):
+    """Converts data in cartesian coordinates to mesh coordinates.
+
+    Args:
+        data (numpy array): solution or detector geometry or their slice .
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        index (tuple of two ints): axes corresponding to the data.
+        data_type(str): 'solution' or 'detector_geometry'.
+    Returns:
+        numpy array: converted data.
+    """
+    check_spatial(mesh, index)
+    if data_type == 'solution':
+        return _convert_cart(data, mesh, index, False)
+    elif data_type == 'detector_geometry':
+        return _convert_cart(data, mesh, index, True)
+    else:
+        raise ValueError("Wrong data_type.")
+
+
+def convert_to_cartesian(data, mesh, index, data_type):
+    """Converts data in mesh coordinates to cartesian coordinates.
+
+    Args:
+        data (numpy array): solution or detector geometry or their slice .
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        index (tuple of two ints): axes corresponding to the data.
+        data_type(str): 'solution' or 'detector_geometry'.
+
+    Returns:
+        numpy array: converted data.
+    """
+    if data_type == 'solution':
+        return _convert_cart(data, mesh, index, True)
+    elif data_type == 'detector_geometry':
+        return _convert_cart(data, mesh, index, False)
+    else:
+        raise ValueError("Wrong data_type.")
+
+

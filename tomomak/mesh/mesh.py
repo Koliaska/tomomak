@@ -2,6 +2,7 @@ import numpy as np
 from tomomak.util import array_routines
 import itertools
 from collections.abc import Iterable
+from tomomak.util import geometry2d, geometry3d
 
 
 class Mesh:
@@ -90,7 +91,8 @@ class Mesh:
         if isinstance(index, int):
             index = [index]
         axis_shift = 0
-        for i in index:
+        sorted_index = np.sort(index)
+        for i in sorted_index:
             axis = i + axis_shift
             if integrate_type == 'integrate':
                 dv = self.axes[i].volumes
@@ -153,16 +155,31 @@ class Mesh:
     def plot2d(self, data, index=(0, 1), data_type='solution', *args, **kwargs):
         if isinstance(index, int):
             index = [index]
+        cart = False
+        if 'cartesian_coordinates' in kwargs:
+            cart =True
         # try to draw using 1 axis
         if len(index) == 1:
             try:
                 new_data = self._prepare_data(data, index[0], data_type)
+                if cart:
+                    if data_type == 'solution':
+                        new_data = geometry2d.convert_slice_to_cartesian(new_data, self, index, data_type)
+                    else:
+                        for i, s in enumerate(new_data):
+                            new_data[i] = geometry2d.convert_slice_to_cartesian(new_data[i], self, index, data_type)
                 plot = self._axes[index[0]].plot2d(new_data, self, data_type,  *args, **kwargs)
                 return plot
             except (NotImplementedError, TypeError, AttributeError):
                 index.append(index[0] + 1)
         # try to draw using 2 axes
         new_data = self._prepare_data(data, index, data_type)
+        if cart:
+            if data_type == 'solution':
+                new_data = geometry2d.convert_slice_to_cartesian(new_data, self, index, data_type)
+            else:
+                for i, s in enumerate(new_data):
+                    new_data[i] = geometry2d.convert_slice_to_cartesian(new_data[i], self, index, data_type)
         try:
             plot = self._axes[index[0]].plot2d(self._axes[index[1]], new_data, self, data_type, *args, **kwargs)
         except (NotImplementedError, TypeError, AttributeError):
@@ -176,10 +193,19 @@ class Mesh:
     def plot3d(self, data, index=(0, 1, 2), data_type='solution', *args, **kwargs):
         if isinstance(index, int):
             index = [index]
+        cart = False
+        if 'cartesian_coordinates' in kwargs:
+            cart =True
         # try to draw using 1 axis
         if len(index) == 1:
             try:
                 new_data = self._prepare_data(data, index[0], data_type)
+                if cart:
+                    if data_type == 'solution':
+                        new_data = geometry3d.convert_slice_to_cartesian(new_data, self, index, data_type)
+                    else:
+                        for i, s in enumerate(new_data):
+                            new_data[i] = geometry3d.convert_slice_to_cartesian(new_data[i], self, index, data_type)
                 plot = self._axes[index[0]].plot3d(new_data, self, *args, **kwargs)
                 return plot
             except (NotImplementedError, TypeError):
@@ -187,6 +213,12 @@ class Mesh:
         # try to draw using 2 axes
         if len(index) == 2:
             new_data = self._prepare_data(data, index, data_type)
+            if cart:
+                if data_type == 'solution':
+                    new_data = geometry3d.convert_slice_to_cartesian(new_data, self, index, data_type)
+                else:
+                    for i, s in enumerate(new_data):
+                        new_data[i] = geometry3d.convert_slice_to_cartesian(new_data[i], self, index, data_type)
             try:
                 plot = self._axes[index[0]].plot3d(new_data, self._axes[index[1]], self, data_type, *args, **kwargs)
                 return plot
@@ -200,6 +232,12 @@ class Mesh:
         # try to draw using 3 axes
         if len(self.axes) > 2:
             new_data = self._prepare_data(data, index, data_type)
+            if cart:
+                if data_type == 'solution':
+                    new_data = geometry3d.convert_slice_to_cartesian(new_data, self, index, data_type)
+                else:
+                    for i, s in enumerate(new_data):
+                        new_data[i] = geometry3d.convert_slice_to_cartesian(new_data[i], self, index, data_type)
             ind_lst = list(itertools.permutations((0, 1, 2), 3))
             for p in ind_lst:
                 try:

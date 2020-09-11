@@ -44,6 +44,7 @@ def polygon(mesh, points=((0, 0), (5, 5), (10, 0)), index=(0, 1), density=1, bro
     ds = tomomak.util.geometry2d.cell_areas(mesh, index)
     res /= ds
     res *= density
+    res = tomomak.util.geometry2d.convert_slice_from_cartesian(res, mesh, index, data_type='solution')
     if broadcast:
         res = tomomak.util.array_routines.broadcast_object(res, index, mesh.shape)
     return res
