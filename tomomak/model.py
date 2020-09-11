@@ -181,7 +181,7 @@ class Model:
             if self._solution is None:
                 raise ValueError("Solution is not defined.")
             data = self._solution
-        elif data_type == "detector_geometry":
+        elif data_type == "detector_geometry" or data_type == "detector_geometry_n":
             if self._detector_geometry is None:
                 raise ValueError("detector_geometry is not defined.")
             data = self._detector_geometry
@@ -195,7 +195,7 @@ class Model:
             if self._solution is None:
                 raise ValueError("Solution is not defined.")
             data = self._solution
-        elif data_type == "detector_geometry":
+        elif data_type == "detector_geometry" or data_type == "detector_geometry_n":
             if self._detector_geometry is None:
                 raise ValueError("detector_geometry is not defined.")
             data = self._detector_geometry

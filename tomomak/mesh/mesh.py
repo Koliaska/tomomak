@@ -68,6 +68,35 @@ class Mesh:
         self._dimension -= self._axes[index].dimension
         del self._axes[index]
 
+    def cell_volumes(self, index):
+        """ Get volume of each cell in self coordinates.
+
+        Returns:
+            ndarray: volumes.
+        """
+        if index is None:
+            index = list(range(len(self.axes)))
+        shape = []
+        for i in index:
+            shape.append(self.axes[i].size)
+        volumes = np.ones(shape)
+        for i, ind in enumerate(index):
+            v = self.axes[ind].volumes
+            volumes = array_routines.multiply_along_axis(volumes, v, i)
+        return volumes
+
+    def _normalize_detectors(self, data, index):
+        """ Helper routine for detector_geometry_n case"""
+        vol = self.cell_volumes(index)
+        for i, s in enumerate(data):
+            data[i] = data[i] / vol
+        full_index = list(range(len(self.axes)))
+        other_axes = [item for item in full_index if item not in index]
+        for i in other_axes:
+            v = self.axes[i].total_volume
+            data /= v
+        return data
+
     def integrate(self, data, index, integrate_type='integrate'):
         """ Calculates sum of data * dv or sum of data over given axes,
         where dv is length/surface/volume of a cell.
@@ -134,7 +163,7 @@ class Mesh:
     def _prepare_data(self, data, index, data_type):
         if data_type == 'solution':
             new_data = self.integrate_other(data, index)
-        elif data_type == 'detector_geometry':
+        elif data_type == 'detector_geometry' or data_type == 'detector_geometry_n':
             shape = [data.shape[0]]
             for i in index:
                 shape.append(data.shape[i + 1])
@@ -157,15 +186,17 @@ class Mesh:
             index = [index]
         cart = False
         if 'cartesian_coordinates' in kwargs:
-            cart =True
+            cart = True
         # try to draw using 1 axis
         if len(index) == 1:
             try:
                 new_data = self._prepare_data(data, index[0], data_type)
+                if data_type == 'detector_geometry_n':
+                    new_data = self._normalize_detectors(new_data, index)
                 if cart:
                     if data_type == 'solution':
                         new_data = geometry2d.convert_slice_to_cartesian(new_data, self, index, data_type)
-                    else:
+                    elif data_type == 'detector_geometry':
                         for i, s in enumerate(new_data):
                             new_data[i] = geometry2d.convert_slice_to_cartesian(new_data[i], self, index, data_type)
                 plot = self._axes[index[0]].plot2d(new_data, self, data_type,  *args, **kwargs)
@@ -174,10 +205,12 @@ class Mesh:
                 index.append(index[0] + 1)
         # try to draw using 2 axes
         new_data = self._prepare_data(data, index, data_type)
+        if data_type == 'detector_geometry_n':
+            new_data = self._normalize_detectors(new_data, index)
         if cart:
             if data_type == 'solution':
                 new_data = geometry2d.convert_slice_to_cartesian(new_data, self, index, data_type)
-            else:
+            elif data_type == 'detector_geometry':
                 for i, s in enumerate(new_data):
                     new_data[i] = geometry2d.convert_slice_to_cartesian(new_data[i], self, index, data_type)
         try:
@@ -200,10 +233,12 @@ class Mesh:
         if len(index) == 1:
             try:
                 new_data = self._prepare_data(data, index[0], data_type)
+                if data_type == 'detector_geometry_n':
+                    new_data = self._normalize_detectors(new_data, index)
                 if cart:
                     if data_type == 'solution':
                         new_data = geometry3d.convert_slice_to_cartesian(new_data, self, index, data_type)
-                    else:
+                    elif data_type == 'detector_geometry':
                         for i, s in enumerate(new_data):
                             new_data[i] = geometry3d.convert_slice_to_cartesian(new_data[i], self, index, data_type)
                 plot = self._axes[index[0]].plot3d(new_data, self, *args, **kwargs)
@@ -213,10 +248,12 @@ class Mesh:
         # try to draw using 2 axes
         if len(index) == 2:
             new_data = self._prepare_data(data, index, data_type)
+            if data_type == 'detector_geometry_n':
+                new_data = self._normalize_detectors(new_data, index)
             if cart:
                 if data_type == 'solution':
                     new_data = geometry3d.convert_slice_to_cartesian(new_data, self, index, data_type)
-                else:
+                elif data_type == 'detector_geometry':
                     for i, s in enumerate(new_data):
                         new_data[i] = geometry3d.convert_slice_to_cartesian(new_data[i], self, index, data_type)
             try:
@@ -232,10 +269,12 @@ class Mesh:
         # try to draw using 3 axes
         if len(self.axes) > 2:
             new_data = self._prepare_data(data, index, data_type)
+            if data_type == 'detector_geometry_n':
+                new_data = self._normalize_detectors(new_data, index)
             if cart:
                 if data_type == 'solution':
                     new_data = geometry3d.convert_slice_to_cartesian(new_data, self, index, data_type)
-                else:
+                elif data_type == 'detector_geometry':
                     for i, s in enumerate(new_data):
                         new_data[i] = geometry3d.convert_slice_to_cartesian(new_data[i], self, index, data_type)
             ind_lst = list(itertools.permutations((0, 1, 2), 3))

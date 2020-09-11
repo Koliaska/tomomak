@@ -186,7 +186,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                         title = util.text.solution_caption(True, self, axis2)
                     plot, ax, _, _ = plot2d.patches(data, self, axis2, title, fill_scheme, None,
                                                     ax_names, *args, **kwargs)
-                elif data_type == 'detector_geometry':
+                elif data_type == 'detector_geometry' or data_type == 'detector_geometry_n':
                     title = 'Detector 1/{}'.format(data.shape[0])
                     cb_title = util.text.detector_caption(mesh, data_type, cartesian=True)
                     plot, ax, _ = plot2d.detector_plot2d(data, self, axis2, title, cb_title, style, fill_scheme,

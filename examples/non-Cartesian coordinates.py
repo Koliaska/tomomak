@@ -39,11 +39,13 @@ mod.plot2d(cartesian_coordinates=True)
 # but you can work with them on any non-cartesian mesh.
 mod.detector_geometry = detectors2d.two_pi_detector_array(m, focus_point=(0, 0), radius=50, det_num=40)
 mod.plot2d(data_type='detector_geometry', cartesian_coordinates=True)
-mod.detector_geometry = detectors2d.parallel_detector(m, (-20, 0), (20, 0), width=1, number=10, shift=1)
+mod.detector_geometry = detectors2d.parallel_detector(m, (-20, 0), (20, 0), width=1, number=10, shift=1,
+                                                      radius_dependence=False)
 mod.plot2d(data_type='detector_geometry', cartesian_coordinates=True)
 # Note that detector_geometry plot shows intersection area of each cell with the detector line of sight,
 # so when the cell area is small, assigned cell value will be also small.
-
+# If you want to see normalised area, that is more intuitive,  use data_type='detector_geometry_n'
+mod.plot2d(data_type='detector_geometry_n', cartesian_coordinates=True)
 # Now let's switch to 3D.
 # We will consider toroidal geometry, which is 2D polar geometry, rolled into o torus of a defined radius.
 # In order to create mesh we should add 3rd toroidal axis.

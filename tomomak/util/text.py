@@ -38,12 +38,15 @@ def detector_caption(mesh, data_type, cartesian=False):
         for a in mesh.axes:
             if type(a) is tomomak.mesh.cartesian.Axis1d and a.spatial:
                 cart_units = a.units
-    units = [a.units for a in mesh.axes]
-    for i, _ in enumerate(units):
-        if mesh.axes[i].spatial:
-            if cart_units is not None and cartesian:
-                units[i] = cart_units
-    units = density_units(units).replace('-', '')
+    if data_type == 'detector_geometry':
+        units = [a.units for a in mesh.axes]
+        for i, _ in enumerate(units):
+            if mesh.axes[i].spatial:
+                if cart_units is not None and cartesian:
+                    units[i] = cart_units
+        units = ', ' + density_units(units).replace('-', '')
+    else:
+        units = ''
     if len(mesh.axes) == 1:
         vol_name = 'Length'
     elif len(mesh.axes) == 2:
@@ -52,7 +55,7 @@ def detector_caption(mesh, data_type, cartesian=False):
         vol_name = 'Volume'
     if data_type == 'detector_geometry_n':
         vol_name = 'Normalized ' + vol_name
-    title = r"{}, {}".format(vol_name, units)
+    title = r"{}{}".format(vol_name, units)
     return title
 
 

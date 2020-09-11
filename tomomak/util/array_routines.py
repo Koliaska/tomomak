@@ -18,8 +18,6 @@ def multiply_along_axis(a, b, axis):
     return a * b_reshaped
 
 
-
-
 def broadcast_object(ar, index, shape):
     """Broadcast array to a new shape, using given indexes.
 
@@ -59,6 +57,21 @@ def broadcast_object(ar, index, shape):
         ar = np.moveaxis(ar, range(-ind_len, -ind_len + len(index)), index)
         return ar
 
+
+def normalize_broadcasted(data, index, mesh, data_type):
+    full_index = list(range(len(mesh.axes)))
+    other_axes = [item for item in full_index if item not in index]
+    for i in other_axes:
+        dv = mesh.axes[i].volumes
+        vol = mesh.axes[i].total_volume
+        if data_type == 'solution':
+            data = data / vol
+        elif data_type == 'detector_geometry':
+            data = multiply_along_axis(data, dv, i)
+
+        else:
+            raise ValueError("Wrong data type")
+    return data
 
 
 

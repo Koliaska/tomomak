@@ -47,6 +47,7 @@ def polygon(mesh, points=((0, 0), (5, 5), (10, 0)), index=(0, 1), density=1, bro
     res = tomomak.util.geometry2d.convert_slice_from_cartesian(res, mesh, index, data_type='solution')
     if broadcast:
         res = tomomak.util.array_routines.broadcast_object(res, index, mesh.shape)
+        res = tomomak.util.array_routines.normalize_broadcasted(res, index, mesh, 'solution')
     return res
 
 
@@ -150,6 +151,7 @@ def pyramid(mesh, center=(0, 0), size=(10, 10), index=(0, 1), height=1, broadcas
     res = rect * mask
     if broadcast:
         res = tomomak.util.array_routines.broadcast_object(res, index, mesh.shape)
+        res = tomomak.util.array_routines.normalize_broadcasted(res, index, mesh, 'solution')
     return res
 
 
@@ -215,4 +217,5 @@ def cone(mesh, center=(3, 4), ax_len=(4, 3), index=(0, 1), height=1, cone_type='
     res = ell * mask
     if broadcast:
         res = tomomak.util.array_routines.broadcast_object(res, index, mesh.shape)
+        res = tomomak.util.array_routines.normalize_broadcasted(res, index, mesh, 'solution')
     return res

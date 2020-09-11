@@ -62,6 +62,15 @@ class AbstractAxis(ABC):
             ndarray of floats: cell volumes.
         """
 
+    @property
+    @abstractmethod
+    def total_volume(self):
+        """Get total length/area/volume of axis.
+
+            Returns:
+                float: total volume.
+        """
+
     @abstractmethod
     def cartesian_coordinates(self, *axes):
         """Get cartesian coordinates of each cell.
@@ -251,6 +260,14 @@ class Abstract1dAxis(AbstractAxis):
         return self._volumes
 
     @property
+    def total_volume(self):
+        """See description in abstract axes.
+        """
+        v = self.cell_edges
+        v = np.abs(v[-1] - v[0])
+        return v
+
+    @property
     def spatial(self):
         """See description in abstract axes.
         """
@@ -328,7 +345,7 @@ class Abstract1dAxis(AbstractAxis):
                 Default: 'black'.
             grid (bool, optional): If true, grid is displayed. Default:False.
             equal_norm (bool, optional): If true, all detectors will have same norm.
-                Valid only if data_type = detector_geometry. Default: False.
+                Valid only if data_type = detector_geometry or detector_geometry_n. Default: False.
             y_label (str, optional): y_label caption. Default: automatic.
             *args,**kwargs: additional arguments to pass to matplotlib bar plot.
 
@@ -366,7 +383,7 @@ class Abstract1dAxis(AbstractAxis):
             fill_scheme (str, optional): matplotlib fill scheme. Default: 'viridis'.
             grid (bool, optional): If true, grid is displayed. Default:False.
             equal_norm (bool, optional): If true, all detectors will have same norm.
-                Valid only if data_type = detector_geometry. Default: False.
+                Valid only if data_type = detector_geometry or detector_geometry_n. Default: False.
             title (str, optional): solution figure caption. Default: automatic.
             ax_names (list of str, optional): caption for coordinate axes. Default: automatic.
             *args,**kwargs: additional arguments to pass to matplotlib pcolormesh.

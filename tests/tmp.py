@@ -82,21 +82,24 @@ import numpy as np
 # mod.plot2d(cartesian_coordinates=True, )
 # mod.plot2d()
 
-axes = [polar.Axis1d(name="phi", units="rad", size=6),
-        cartesian.Axis1d(name="R", units="cm", size=7, upper_limit=20),
-        cartesian.Axis1d(name="E", units="cm", size=8, upper_limit=10)]
+axes = [polar.Axis1d(name="phi", units="rad", size=16),
+        cartesian.Axis1d(name="R", units="cm", size=15, upper_limit=11),
+        cartesian.Axis1d(name="R", units="cm", size=17, upper_limit=15),
+        cartesian.Axis1d(name="R", units="cm", size=12, upper_limit=16)
+        ]
 m = mesh.Mesh(axes)
 mod = model.Model(mesh=m)
-# First af all we want to know what the cell of such a grid looks like. It will be a 2D bended polar cell.
-# Let's look at the random cell.
-# solution = objects3d.trimesh_create(m, 'capsule', height=5, radius=6)#objects3d.point_source(m, (-15, 15, 0), index=(0, 1, 2))
-# # Now if you want to create an object, defined in the cartesian coordinates, you can use objects3d module.
-mod.detector_geometry = detectors3d.four_pi_detector_array(m, focus_point=(0, 0, 0), radius=45, theta_num=2, phi_num=3)
-mod.plot3d(axes=True, data_type='detector_geometry')
-mod.plot3d(cartesian_coordinates=True, axes=True, data_type='detector_geometry')
-mod.plot2d(index=(0, 1), cartesian_coordinates=True, )
-mod.plot2d(index=(0, 1), )
 
+# Now let's see what the circle will look like in this coordinate system
+
+
+mod.detector_geometry = detectors2d.parallel_detector(m, (-20, 0), (20, 0), width=2, number=3, shift=1, radius_dependence=False)
+mod.plot2d(data_type='detector_geometry_n')
+mod.plot3d(data_type='detector_geometry_n')
+mod.plot2d(data_type='detector_geometry_n', cartesian_coordinates=True)
+mod.plot2d(data_type='detector_geometry', cartesian_coordinates=True)
+mod.plot3d(data_type='detector_geometry_n', cartesian_coordinates=True)
+mod.plot3d(data_type='detector_geometry', cartesian_coordinates=True)
 
 print(np.arctan2(-1, 1)%(2*np.pi))
 print(-1%360)
