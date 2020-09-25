@@ -47,23 +47,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         """
         if type(axis2) is not Axis1d or type(axis3) is not Axis1d:
             raise TypeError("cell_edges3d_cartesian with such combination of axes is not supported.")
-        shape = (self.size, axis2.size, axis3.size)
-        vertices = np.zeros(shape).tolist()
-        faces = np.zeros(shape).tolist()
-        edge1 = self.cell_edges
-        edge2 = axis2.cell_edges
-        edge3 = axis3.cell_edges
-        for i, row in enumerate(vertices):
-            for j, col in enumerate(row):
-                for k, _ in enumerate(col):
-                    vertices[i][j][k] = [
-                        (edge1[i], edge2[j], edge3[k]), (edge1[i + 1], edge2[j], edge3[k]),
-                        (edge1[i + 1], edge2[j + 1], edge3[k]), (edge1[i], edge2[j + 1], edge3[k]),
-                        (edge1[i], edge2[j], edge3[k + 1]), (edge1[i + 1], edge2[j], edge3[k + 1]),
-                        (edge1[i + 1], edge2[j + 1], edge3[k + 1]), (edge1[i], edge2[j + 1], edge3[k + 1])]
-                    faces[i][j][k] = [(0, 3, 2, 1), (4, 5, 6, 7),
-                                      (2, 3, 7, 6), (4, 7, 3, 0), (0, 1, 5, 4), (1, 2, 6, 5)]
-        return vertices, faces
+        return self.cell_edges3d(axis2, axis3)
 
     def from_cartesian(self, coordinates, *axes):
         for a in axes:

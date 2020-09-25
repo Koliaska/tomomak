@@ -412,8 +412,9 @@ class Abstract1dAxis(AbstractAxis):
         plt.show()
         return plot, ax
 
+
     def plot3d(self, data, axis2, axis3, mesh, data_type='solution', colormap='blue-red', axes=False,
-               cartesian_coordinates=False, interp_size=None, ax_names=None, *args, **kwargs):
+               cartesian_coordinates=False, interp_size=None, ax_names=None, style=0, *args, **kwargs):
         """Create 3D plot of the solution or detector geometry.
 
         Args:
@@ -438,12 +439,12 @@ class Abstract1dAxis(AbstractAxis):
         # if type(axis2) is not Axis1d or type(axis3) is not Axis1d:
         #     raise NotImplementedError("3D plots with such combination of axes are not supported.")
         # x_grid, y_grid, z_grid = self.cartesian_coordinates(axis2, axis3)
-        if cartesian_coordinates:
-            x_grid, y_grid, z_grid = self.cartesian_coordinates(axis2, axis3)
-
-        else:
-            coord = [self.coordinates, axis2.coordinates, axis3.coordinates]
-            x_grid, y_grid, z_grid = np.array(np.meshgrid(*coord, indexing='ij'))
+        # Title
+        if data_type == 'solution':
+            title = util.text.solution_caption(cartesian_coordinates, self, axis2, axis3).replace('$', '') \
+            .replace('{', '').replace('}', '')
+        elif data_type == 'detector_geometry' or data_type == 'detector_geometry_n':
+            title = '   ' + re.sub('[${}]', '', util.text.detector_caption(mesh, data_type, cartesian_coordinates))
         if axes:
             if ax_names is None:
                 axes = ('{}, {}'.format(self.name, self.units),
@@ -451,10 +452,67 @@ class Abstract1dAxis(AbstractAxis):
                         '{}, {}'.format(axis3.name, axis3.units))
             else:
                 axes = ax_names
+        # Voxel style
+        if style == 0:
+            if cartesian_coordinates:
+                vertices, faces = self.cell_edges3d_cartesian(axis2, axis3)
+            else:
+                vertices, faces = self.cell_edges3d(axis2, axis3)
+            vertices = np.array(vertices)
+            if data_type == 'solution':
+                x = []
+                y = []
+                z = []
+                new_data = []
+                new_faces = []
+                shift = 0
+                for i, a1 in enumerate(vertices):
+                    for j, a2 in enumerate(a1):
+                        for k, a3 in enumerate(a2):
+                            vert_faces = np.array(faces[i][j][k]) + shift
+                            for f in vert_faces:
+                                new_faces.append(f)
+                            for vert in a3:
+                                x.append(vert[0])
+                                y.append(vert[1])
+                                z.append(vert[2])
+                                new_data.append(data[i][j][k])
+                                shift += 1
+                plot3d.voxel_plot(new_data, x, y, z, new_faces, title=title, axes=axes, colormap=colormap)
+            elif data_type == 'detector_geometry' or data_type == 'detector_geometry_n':
+                new_data = []
+                for det in data:
+                    x = []
+                    y = []
+                    z = []
+                    det_data = []
+                    new_faces = []
+                    shift = 0
+                    for i, a1 in enumerate(vertices):
+                        for j, a2 in enumerate(a1):
+                            for k, a3 in enumerate(a2):
+                                vert_faces = np.array(faces[i][j][k]) + shift
+                                for f in vert_faces:
+                                    new_faces.append(f)
+                                for vert in a3:
+                                    x.append(vert[0])
+                                    y.append(vert[1])
+                                    z.append(vert[2])
+                                    det_data.append(det[i][j][k])
+                                    shift += 1
+                    new_data.append(det_data)
+                plot3d.detector_voxel_plot(new_data, x, y, z, new_faces, title=title, axes=axes, colormap=colormap)
+            else:
+                raise ValueError('data type {} is unknown'.format(data_type))
+            return 0, 0
+        if cartesian_coordinates:
+            x_grid, y_grid, z_grid = self.cartesian_coordinates(axis2, axis3)
+
+        else:
+            coord = [self.coordinates, axis2.coordinates, axis3.coordinates]
+            x_grid, y_grid, z_grid = np.array(np.meshgrid(*coord, indexing='ij'))
+
         if data_type == 'solution':
-            # title
-            title = util.text.solution_caption(cartesian_coordinates, self, axis2, axis3).replace('$', '')\
-                .replace('{', '').replace('}', '')
             # irregular or non-cartesian axes
             if not all((self.regular, axis2.regular, axis3.regular)) or \
                     (cartesian_coordinates and not all(type(x) == cartesian.Axis1d for x in (self, axis2, axis3))):
@@ -473,11 +531,9 @@ class Abstract1dAxis(AbstractAxis):
                 new_data = data
             # plot
             plot3d.contour3d(new_data, x_grid, y_grid, z_grid,
-                             title=title, colormap=colormap, axes=axes, *args, **kwargs)
+                             title=title, colormap=colormap, axes=axes, style=style, *args, **kwargs)
 
         elif data_type == 'detector_geometry' or data_type == 'detector_geometry_n':
-            # title
-            title = '   ' + re.sub('[${}]', '', util.text.detector_caption(mesh, data_type, cartesian_coordinates))
             # irregular axes
             if not all((self.regular, axis2.regular, axis3.regular)) or \
                     (cartesian_coordinates and not all(type(x) == cartesian.Axis1d for x in (self, axis2, axis3))):
@@ -507,7 +563,7 @@ class Abstract1dAxis(AbstractAxis):
             else:
                 new_data = data
             plot3d.detector_contour3d(new_data, x_grid, y_grid, z_grid,
-                                      title=title, colormap=colormap, axes=axes, *args, **kwargs)
+                                      title=title, colormap=colormap, axes=axes, style=style, *args, **kwargs)
         else:
             raise ValueError('data type {} is unknown'.format(data_type))
 
@@ -537,12 +593,48 @@ class Abstract1dAxis(AbstractAxis):
             (vertices, faces)
             vertices: 3D list of lists of points (x, y, z) in cartesian coordinates: vertices the cell.
             Size of the list is self.size x axis1.size x axis3.size
+            faces: 3D list of lists of cell faces. Each face is a list of  3 vertices, denoted in cw direction.
+            Some methods may work with faces=None
+             - in this case faces are created automatically for the convex hull of the vertices.
+            Size of the list is self.size x axis1.size x axis3.size
+
+        """
+
+    def cell_edges3d(self, axis2, axis3):
+        """Get edges of a cell on a mesh consisting of this and two other 1D axis in self coordinates.
+
+        Args:
+            axis2 (tomomak axis): another 1D axes of the same or other type.
+            axis3 (tomomak axis): another 1D axes of the same or other type.
+
+        Returns:
+            (vertices, faces)
+            vertices: 3D list of lists of points (x, y, z) in cartesian coordinates: vertices the cell.
+            Size of the list is self.size x axis1.size x axis3.size
             faces: 3D list of lists of cell faces. Each face is a list of vertices, denoted in cw direction.
             Some methods may work with faces=None
              - in this case faces are created automatically for the convex hull of the vertices.
             Size of the list is self.size x axis1.size x axis3.size
 
         """
+        shape = (self.size, axis2.size, axis3.size)
+        vertices = np.zeros(shape).tolist()
+        faces = np.zeros(shape).tolist()
+        edge1 = self.cell_edges
+        edge2 = axis2.cell_edges
+        edge3 = axis3.cell_edges
+        for i, row in enumerate(vertices):
+            for j, col in enumerate(row):
+                for k, _ in enumerate(col):
+                    vertices[i][j][k] = [
+                        (edge1[i], edge2[j], edge3[k]), (edge1[i + 1], edge2[j], edge3[k]),
+                        (edge1[i + 1], edge2[j + 1], edge3[k]), (edge1[i], edge2[j + 1], edge3[k]),
+                        (edge1[i], edge2[j], edge3[k + 1]), (edge1[i + 1], edge2[j], edge3[k + 1]),
+                        (edge1[i + 1], edge2[j + 1], edge3[k + 1]), (edge1[i], edge2[j + 1], edge3[k + 1])]
+                    faces[i][j][k] = [(0, 3, 2), (0, 2, 1), (4, 5, 6), (4, 6, 7),
+                                      (2, 3, 7), (2, 7, 6), (4, 7, 3), (4, 3, 0),
+                                      (0, 1, 5), (0, 5, 4), (1, 2, 6), (1, 6, 5)]
+        return vertices, faces
 
 
 class Abstract2dAxis(AbstractAxis):

@@ -2,16 +2,146 @@ import matplotlib.colors
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
+import time
 try:
     from mayavi import mlab
-    from traits.api import HasTraits, Range, Instance, on_trait_change
-    from traitsui.api import View, Item, HGroup
+    from traits.api import HasTraits, Range, Instance, on_trait_change, Float
+    from traitsui.api import View, Item, HGroup, Group
     from tvtk.pyface.scene_editor import SceneEditor
     from mayavi.tools.mlab_scene_model import MlabSceneModel
     from mayavi.core.ui.mayavi_scene import MayaviScene
     from tvtk.util.ctf import ColorTransferFunction
 except ImportError:
     mlab = None
+
+def _build_voxel_plot(scene, x, y, z, faces, data, title='', axes=False, colormap='blue-red'):
+    scene.background = (1, 1, 1)
+
+
+    obj = scene.mlab.triangular_mesh(x, y, z, faces, scalars=data, colormap=colormap)
+    cb = scene.mlab.colorbar(title=title, orientation='vertical')
+    cb.title_text_property.color = (0, 0, 0)
+    cb.label_text_property.line_offset = 5
+    cb.label_text_property.color = (0, 0, 0)
+    cb.scalar_bar.unconstrained_font_size = True
+    cb.title_text_property.font_size = 12
+    # axes
+    if axes:
+        ax = scene.mlab.axes(xlabel=axes[0], ylabel=axes[1], zlabel=axes[2], nb_labels=5, color=(0, 0, 0))
+        ax.title_text_property.color = (0, 0, 0)
+        ax.label_text_property.color = (0, 0, 0)
+    return obj
+
+
+def voxel_plot(data, x, y, z, faces, title='',  axes=False, colormap='blue-red'):
+    if mlab is None:
+        raise ImportError("Unable to import Mayavi for 3D visualization.")
+
+    class Visualization(HasTraits):
+        d_min = float(np.amin(data))
+        d_max = float(np.amax(data))
+        min_val = Range(d_min, d_max, d_min)
+        max_val = Range(d_min, d_max, d_max)
+        scene = Instance(MlabSceneModel, ())
+
+        def __init__(self):
+            self.plot = None
+            HasTraits.__init__(self)
+
+        @on_trait_change('scene.activated')
+        def setup(self):
+            self.plot =  _build_voxel_plot(self.scene, x, y, z, faces, data, title, axes, colormap)
+
+        def _update_plot(self):
+            new_faces = []
+            min_val = self.min_val
+            max_val = self.max_val
+            # dealing with traits bug
+            if min_val < self.d_min:
+                min_val = self.d_min
+            if max_val > self.d_max:
+                max_val = self.d_max
+            # add only needed faces
+            for i, f in enumerate(faces):
+                if min_val <= data[f[0]] <= max_val:
+                    new_faces.append(f)
+            if min_val < max_val:
+                if new_faces:
+                    self.plot.mlab_source.trait_set(triangles=new_faces)
+
+        @on_trait_change('min_val')
+        def update_min(self):
+            self._update_plot()
+
+        @on_trait_change('max_val')
+        def update_max(self):
+            self._update_plot()
+
+        # the layout of the dialog created
+        view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene), height=700, width=800, show_label=False),
+                    Group('_', 'min_val', 'max_val'), resizable=True, title="Density")
+    visualization = Visualization()
+    visualization.configure_traits()
+
+
+def detector_voxel_plot(data, x, y, z, faces, title='',  axes=False, colormap='blue-red'):
+    if mlab is None:
+        raise ImportError("Unable to import Mayavi for 3D visualization.")
+
+    class Visualization(HasTraits):
+        d_min = float(np.amin(data))
+        d_max = float(np.amax(data))
+        min_val = Range(d_min, d_max, d_min)
+        max_val = Range(d_min, d_max, d_max)
+        Detector = Range(1, len(data), 1)
+        scene = Instance(MlabSceneModel, ())
+
+        def __init__(self):
+            self.plot = None
+            self.index = 0
+            HasTraits.__init__(self)
+
+        @on_trait_change('scene.activated')
+        def setup(self):
+            self.plot = _build_voxel_plot(self.scene, x, y, z, faces, data[0], title, axes, colormap)
+
+        def _update_plot(self):
+            new_faces = []
+            min_val = self.min_val
+            max_val = self.max_val
+            # dealing with traits bug
+            if min_val < self.d_min:
+                min_val = self.d_min
+            if max_val > self.d_max:
+                max_val = self.d_max
+            # add only needed faces
+            for i, f in enumerate(faces):
+                if min_val <= data[self.index][f[0]] <= max_val:
+                    new_faces.append(f)
+            if min_val < max_val:
+                if new_faces:
+                    self.plot.mlab_source.trait_set(triangles=new_faces)
+
+        @on_trait_change('min_val')
+        def update_min(self):
+            self._update_plot()
+
+        @on_trait_change('max_val')
+        def update_max(self):
+            self._update_plot()
+
+        @on_trait_change('Detector')
+        def update_plot(self):
+            self.index = self.Detector - 1
+            self.plot.mlab_source.trait_set(scalars=data[self.index])
+            self._update_plot()
+
+        # the layout of the dialog created
+        view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene), height=700, width=800, show_label=False),
+                    Group('_', 'min_val', 'max_val', 'Detector'), resizable=True, title="Detectors")
+
+    visualization = Visualization()
+    visualization.configure_traits()
 
 
 def _build_contour3d(data, x, y, z, scene, title='', colormap='blue-red', limits=None, style=3, axes=False):
@@ -98,7 +228,7 @@ def _build_contour3d(data, x, y, z, scene, title='', colormap='blue-red', limits
     return obj
 
 
-def contour3d(data, x, y, z,  title='', colormap='blue-red', limits=None, style=3, axes=False):
+def contour3d(data, x, y, z,  title='', colormap='blue-red', limits=None, style=3, axes=False, faces=None):
     """Basic 3d visualization for Solution.
 
     The x, y and z arrays are then supposed to have been generated by numpy.mgrid,
@@ -173,6 +303,7 @@ def detector_contour3d(data, x, y, z,  title='', colormap='blue-red', limits=Non
     # So special rendering case is introduced.
     if style == 3:
         style = 33
+
     class Visualization(HasTraits):
         Detector = Range(1, data.shape[0], 1)
         scene = Instance(MlabSceneModel, ())

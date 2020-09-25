@@ -55,30 +55,44 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             face = list()
             layer_len = res2d * 2 + 2
             # first front and back faces
-            face.append((2, 1, 0, res2d * 2 + 1))
+            face.append((2, 1, 0))
+            face.append((2, 0, res2d * 2 + 1))
             face.append((layer_len * self.RESOLUTION3D, layer_len * self.RESOLUTION3D + 1,
+                         layer_len * self.RESOLUTION3D + 2))
+            face.append((layer_len * self.RESOLUTION3D,
                          layer_len * self.RESOLUTION3D + 2, layer_len * (self.RESOLUTION3D + 1) - 1))
             for i in range(res2d - 1):
                 # front
-                face.append((i + 3, i + 2, res2d * 2 - i + 1, res2d * 2 - i))
+                face.append((i + 3, i + 2, res2d * 2 - i + 1))
+                face.append((i + 3, res2d * 2 - i + 1, res2d * 2 - i))
                 # back
                 face.append((layer_len * self.RESOLUTION3D + 2 + i, layer_len * self.RESOLUTION3D + 3 + i,
+                             layer_len * (self.RESOLUTION3D + 1) - i - 2))
+                face.append((layer_len * self.RESOLUTION3D + 2 + i,
                              layer_len * (self.RESOLUTION3D + 1) - i - 2, layer_len * (self.RESOLUTION3D + 1) - i - 1))
             for l in range(self.RESOLUTION3D):
                 # left and right faces
                 layer = l * layer_len
                 next_layer = (l + 1) * layer_len
-                face.append((layer, layer + 1, next_layer + 1, next_layer))
+                face.append((layer, layer + 1, next_layer + 1))
+                face.append((layer, next_layer + 1, next_layer))
                 face.append((layer + res2d + 1, layer + res2d + 2,
+                             next_layer + res2d + 2))
+                face.append((layer + res2d + 1,
                              next_layer + res2d + 2, next_layer + res2d + 1))
                 # first top and bot face
-                face.append((layer + 1, layer + 2, next_layer + 2, next_layer + 1))
-                face.append((layer, next_layer, (l + 2) * layer_len - 1, next_layer - 1))
+                face.append((layer + 1, layer + 2, next_layer + 2))
+                face.append((layer + 1, next_layer + 2, next_layer + 1))
+                face.append((layer, next_layer, (l + 2) * layer_len - 1))
+                face.append((layer, (l + 2) * layer_len - 1, next_layer - 1))
                 for i in range(res2d - 1):
                     # top
-                    face.append((layer + i + 2, layer + i + 3, layer + res2d * 2 + i + 5, layer + res2d * 2 + i + 4))
+                    face.append((layer + i + 2, layer + i + 3, layer + res2d * 2 + i + 5))
+                    face.append((layer + i + 2, layer + res2d * 2 + i + 5, layer + res2d * 2 + i + 4))
                     # bottom
                     face.append((layer + res2d * 2 - i,layer + res2d * 2 - i + 1,
+                                 layer + res2d * 4 - i + 3))
+                    face.append((layer + res2d * 2 - i,
                                  layer + res2d * 4 - i + 3, layer + res2d * 4 - i + 2))
             # 2) - center of the mesh
             faces_center = list()
@@ -86,13 +100,13 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             for l in range(self.RESOLUTION3D):
                 layer = l * layer_len
                 next_layer = (l + 1) * layer_len
-                # left and right faces as triangles
+                # left and right faces
                 faces_center.append((layer, layer + 1, next_layer))
                 faces_center.append((layer + 1,  next_layer + 1, next_layer))
                 faces_center.append((next_layer - 1, layer, next_layer))
                 faces_center.append((next_layer - 1, next_layer, (l + 2) * layer_len - 1))
                 for i in range(res2d):
-                    # top as triangles
+                    # top
                     faces_center.append((layer + i + 1, next_layer + i + 2, next_layer + i + 1))
                     faces_center.append((layer + i + 1, layer + i + 2, next_layer + i + 2))
             for i in range(res2d):

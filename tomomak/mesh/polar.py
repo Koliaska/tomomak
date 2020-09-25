@@ -64,30 +64,38 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             # 1) standart
             face = list()
             # left and right faces
-            face.append((0, 1, self.RESOLUTION2D * 2 + 3, self.RESOLUTION2D * 2 + 2))
-            face.append((self.RESOLUTION2D + 1, self.RESOLUTION2D + 2,
-                         self.RESOLUTION2D * 3 + 4, self.RESOLUTION2D * 3 + 3))
+            face.append((0, 1, self.RESOLUTION2D * 2 + 3))
+            face.append((0, self.RESOLUTION2D * 2 + 3, self.RESOLUTION2D * 2 + 2))
+            face.append((self.RESOLUTION2D + 1, self.RESOLUTION2D + 2, self.RESOLUTION2D * 3 + 4))
+            face.append((self.RESOLUTION2D + 1, self.RESOLUTION2D * 3 + 4, self.RESOLUTION2D * 3 + 3))
             # first front and back faces
-            face.append((2, 1, 0, self.RESOLUTION2D * 2 + 1))
-            face.append((self.RESOLUTION2D * 2 + 2, self.RESOLUTION2D * 2 + 3,
-                         self.RESOLUTION2D * 2 + 4, self.RESOLUTION2D * 4 + 3))
+            face.append((2, 1, 0))
+            face.append((2, 0, self.RESOLUTION2D * 2 + 1))
+            face.append((self.RESOLUTION2D * 2 + 2, self.RESOLUTION2D * 2 + 3, self.RESOLUTION2D * 2 + 4))
+            face.append((self.RESOLUTION2D * 2 + 2, self.RESOLUTION2D * 2 + 4, self.RESOLUTION2D * 4 + 3))
             # first top and bot face
-            face.append((1, 2, self.RESOLUTION2D * 2 + 4, self.RESOLUTION2D * 2 + 3))
-            face.append((0, self.RESOLUTION2D * 2 + 2, self.RESOLUTION2D * 4 + 3, self.RESOLUTION2D * 2 + 1))
+            face.append((1, 2, self.RESOLUTION2D * 2 + 4))
+            face.append((1, self.RESOLUTION2D * 2 + 4, self.RESOLUTION2D * 2 + 3))
+            face.append((0, self.RESOLUTION2D * 2 + 2, self.RESOLUTION2D * 4 + 3))
+            face.append((0, self.RESOLUTION2D * 4 + 3, self.RESOLUTION2D * 2 + 1))
             for i in range(self.RESOLUTION2D - 1):
                 # front
-                face.append((i + 3, i + 2, self.RESOLUTION2D * 2 - i + 1, self.RESOLUTION2D * 2 - i))
+                face.append((i + 3, i + 2, self.RESOLUTION2D * 2 - i + 1))
+                face.append((i + 3, self.RESOLUTION2D * 2 - i + 1, self.RESOLUTION2D * 2 - i))
                 # back
                 face.append((self.RESOLUTION2D * 2 + 4 + i, self.RESOLUTION2D * 2 + 5 + i,
+                             self.RESOLUTION2D * 4 + 2 - i))
+                face.append((self.RESOLUTION2D * 2 + 4 + i,
                              self.RESOLUTION2D * 4 + 2 - i, self.RESOLUTION2D * 4 - i + 3))
                 # top
-                face.append((i + 2, i + 3, self.RESOLUTION2D * 2 + i + 5, self.RESOLUTION2D * 2 + i + 4))
+                face.append((i + 2, i + 3, self.RESOLUTION2D * 2 + i + 5))
+                face.append((i + 2, self.RESOLUTION2D * 2 + i + 5, self.RESOLUTION2D * 2 + i + 4))
                 # bottom
-                face.append((self.RESOLUTION2D * 2 - i, self.RESOLUTION2D * 2 - i + 1,
-                             self.RESOLUTION2D * 4 - i + 3, self.RESOLUTION2D * 4 - i + 2))
+                face.append((self.RESOLUTION2D * 2 - i, self.RESOLUTION2D * 2 - i + 1, self.RESOLUTION2D * 4 - i + 3))
+                face.append((self.RESOLUTION2D * 2 - i, self.RESOLUTION2D * 4 - i + 3, self.RESOLUTION2D * 4 - i + 2))
             # 2) - center of the mesh
             faces_center = list()
-            # left and right faces as triangles
+            # left and right faces
             faces_center.append((0, 1, self.RESOLUTION2D + 2))
             faces_center.append((self.RESOLUTION2D + 2, 1, self.RESOLUTION2D + 3))
             faces_center.append((self.RESOLUTION2D + 1, 0, self.RESOLUTION2D + 2))
@@ -97,7 +105,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 faces_center.append((i + 2, i + 1, 0))
                 # back
                 faces_center.append((self.RESOLUTION2D + 3 + i, self.RESOLUTION2D + 4 + i, self.RESOLUTION2D + 2))
-                # top as triangles
+                # top
                 faces_center.append((i + 1, self.RESOLUTION2D + i + 4, self.RESOLUTION2D + i + 3))
                 faces_center.append((i + 2, self.RESOLUTION2D + i + 4, i + 1))
             for i, row in enumerate(vertices):

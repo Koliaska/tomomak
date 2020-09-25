@@ -64,47 +64,50 @@ import numpy as np
 from mayavi import mlab
 import numpy as np
 
-# axes = [polar.Axis1d(name="phi", units="rad", size=15),cartesian.Axis1d(name="R", units="cm", size=20, upper_limit=20),
-#
-#         ]
-# m = mesh.Mesh(axes)
-# mod = model.Model(mesh=m)
-# mod.detector_geometry = detectors2d.two_pi_detector_array(m, focus_point=(0, 0), radius=10, det_num=10)
-# mod.plot2d(data_type='detector_geometry',)
-# mod.plot2d(data_type='detector_geometry', cartesian_coordinates=True)
-# mod.plot2d(data_type='detector_geometry',)
-# # Now let's what the circle will look like in this coordinates
-# mod.solution = objects2d.ellipse(m, ax_len=(5.2, 5.2))
-#
-# # Well, looks fine, but how will it look in cartesian coordinates?
-# # You don't need to use your imagination - just use cartesian_coordinates=True argument:
-# mod.plot2d()
-# mod.plot2d(cartesian_coordinates=True, )
-# mod.plot2d()
 
-axes = [polar.Axis1d(name="phi", units="rad", size=16),
-        cartesian.Axis1d(name="R", units="cm", size=15, upper_limit=11),
-        cartesian.Axis1d(name="R", units="cm", size=17, upper_limit=15),
-        cartesian.Axis1d(name="R", units="cm", size=12, upper_limit=16)
-        ]
+axes = [toroidal.Axis1d(radius=20, name="theta", units="rad", size=15, upper_limit=np.pi),
+        polar.Axis1d(name="phi", units="rad", size=12),
+        cartesian.Axis1d(name="R", units="cm", size=15, upper_limit=10)]
+m = mesh.Mesh(axes)
+mod = model.Model(mesh=m)
+real_solution = objects2d.ellipse(m, ax_len=(5.2, 5.2), index=(1,2))
+mod.solution = real_solution
+mod.plot3d(cartesian_coordinates=True, axes=True, style=0)
+
+axes = [polar.Axis1d(name="phi", units="rad", size=15),
+        cartesian.Axis1d(name="R", units="cm", size=20, upper_limit=10),
+        cartesian.Axis1d(name="Z", units="cm", size=21, upper_limit=40)]
 m = mesh.Mesh(axes)
 mod = model.Model(mesh=m)
 
 # Now let's see what the circle will look like in this coordinate system
+real_solution = objects2d.ellipse(m, ax_len=(5.2, 5.2))
+noise = np.random.normal(0, 0.05, real_solution.shape)
+mod.solution = real_solution# + noise/10
+
+mod.plot3d(style=0, cartesian_coordinates=True)
 
 
-mod.detector_geometry = detectors2d.parallel_detector(m, (-20, 0), (20, 0), width=2, number=3, shift=1, radius_dependence=False)
-mod.plot2d(data_type='detector_geometry_n')
-mod.plot3d(data_type='detector_geometry_n')
-mod.plot2d(data_type='detector_geometry_n', cartesian_coordinates=True)
-mod.plot2d(data_type='detector_geometry', cartesian_coordinates=True)
-mod.plot3d(data_type='detector_geometry_n', cartesian_coordinates=True)
-mod.plot3d(data_type='detector_geometry', cartesian_coordinates=True)
+axes = [cartesian.Axis1d(name="X", units="cm", size=21, upper_limit=10),
+        cartesian.Axis1d(name="Y", units="cm", size=22, upper_limit=10),
+        cartesian.Axis1d(name="Z", units="cm", size=23, upper_limit=10)]
+mesh = Mesh(axes)
+mod = Model(mesh=mesh)
 
-print(np.arctan2(-1, 1)%(2*np.pi))
-print(-1%360)
-print(np.amin([[0,1,2], [3,4,5]], axis=1))
-k = 50000
+# The next step - is to create a synthetic object.
+# Let's create 2D circle. Since our mesh is 3D it will be automatically broadcasted to 3rd dimension,
+# so we get a cylinder.
+real_solution = objects2d.ellipse(mesh, (5, 5), (3, 3))
+# Now let's add some noise to this object in order to simulate realistic distribution.
+noise = np.random.normal(0, 0.05, real_solution.shape)
+mod.solution = real_solution + noise/2
+# Now it's time to do plotting
+mod.detector_geometry = np.array([mod.solution, mod.solution + noise/5, mod.solution + noise / 2])
+mod.plot3d(style=1)
+mod.plot3d(data_type='detector_geometry', equal_norm=True, style=0, axes=True)
+
+
+k = 50
 x = []
 y = []
 z = []

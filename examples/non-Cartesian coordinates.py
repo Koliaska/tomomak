@@ -46,6 +46,7 @@ mod.plot2d(data_type='detector_geometry', cartesian_coordinates=True)
 # so when the cell area is small, assigned cell value will be also small.
 # If you want to see normalised area, that is more intuitive,  use data_type='detector_geometry_n'
 mod.plot2d(data_type='detector_geometry_n', cartesian_coordinates=True)
+
 # Now let's switch to 3D.
 # We will consider toroidal geometry, which is 2D polar geometry, rolled into o torus of a defined radius.
 # In order to create mesh we should add 3rd toroidal axis.
