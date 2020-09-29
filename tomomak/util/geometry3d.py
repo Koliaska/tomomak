@@ -7,6 +7,7 @@ import subprocess
 import sys
 from collections.abc import Iterable
 from .geometry2d import check_spatial
+from . import geometry2d
 from . import array_routines
 from tomomak.mesh import cartesian
 
@@ -537,3 +538,65 @@ def convert_to_cartesian(data, mesh, index, data_type):
         return _convert_cart(data, mesh, index, False)
     else:
         raise ValueError("Wrong data_type.")
+
+
+def broadcast_2d_to_3d(data, mesh, index2d, index3, data_type):
+    """Broadcasts 2d array to 3d array, taking into account mesh geometry.
+
+    Function changes density (for solution) or volume (for detector geometry) in such a way,
+    that proportionality along the firs axes is conserved in the cartesian coordinates.
+    Plot solution or detector_geometry_n with cartesian_coordinates=True to check the result.
+    Args:
+        data (2d or 1d ndarray): data along the first axes.
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        index2d (tuple): list of of the axes/axis, corresponding to the data array on the mesh.
+        index3 (int): index of the broadcasted axis.
+        data_type (str): 'solution' or 'detector_geometry'.
+
+    Returns:
+        ndarray: broadcasted data
+
+    Examples:
+        from tomomak.mesh import cartesian, polar, toroidal
+        from tomomak.mesh import mesh
+        from tomomak import model
+        import numpy as np
+        from tomomak.util import geometry3d
+        from tomomak.test_objects import objects2d
+        from tomomak.detectors import detectors2d
+
+        axes = [toroidal.Axis1d(radius=20, name="theta", units="rad", size=15, upper_limit=np.pi),
+                polar.Axis1d(name="phi", units="rad", size=12),
+                cartesian.Axis1d(name="R", units="cm", size=11, upper_limit=10)]
+        m = mesh.Mesh(axes)
+        mod = model.Model(mesh=m)
+        res = objects2d.ellipse(m, ax_len=(5.2, 5.2), index=(1, 2), broadcast=False)
+        real_solution = geometry3d.broadcast_2d_to_3d(res, m, (1, 2), 0, 'solution')
+        mod.solution = real_solution
+        det = detectors2d.detector2d(m, (-50, -50), (50, 50), 40, index=(1, 2), radius_dependence=False, broadcast=False)
+        det_geom = geometry3d.broadcast_2d_to_3d(det, m, (1,2), 0, 'detector_geometry')
+        mod.detector_geometry = [det_geom]
+        mod.plot3d(cartesian_coordinates=True, data_type='detector_geometry_n', limits=(0, 2))
+        mod.plot3d(cartesian_coordinates=True)
+    """
+    if len(data.shape) == len(index2d) + 1:
+        raise ValueError("Data is already broadcasted.")
+    if index3 in index2d:
+        raise ValueError('Index 3 cannot be equal to index 2 or index 1.')
+    index3d = list(index2d)
+    index3d.append(index3)
+    index3d.sort()
+    volumes = cell_volumes(mesh, index3d)
+    areas = geometry2d.cell_areas(mesh, index2d)
+    shape = (mesh.axes[0].size, mesh.axes[1].size, mesh.axes[2].size)
+    if data_type == 'solution':
+        new_data = data / areas
+        new_data = array_routines.broadcast_object(new_data, index2d, shape)
+        new_data = new_data * volumes
+        new_data = array_routines.multiply_along_axis(new_data, 1 / mesh.axes[index3].volumes, index3)
+    elif data_type == 'detector_geometry':
+        new_data = array_routines.broadcast_object(data, index2d, shape)
+        new_data = array_routines.multiply_along_axis(new_data, mesh.axes[index3].volumes, index3)
+    else:
+        raise ValueError('Unknown data type.')
+    return new_data

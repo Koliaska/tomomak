@@ -13,7 +13,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     toroidal + polar + cartesian -> 3d toroidal system
     """
 
-    RESOLUTION3D = 10
+    RESOLUTION3D = 5
 
     def __init__(self, radius, coordinates=None, edges=None, lower_limit=0,
                  upper_limit=2*np.pi, size=None, name="", units=""):

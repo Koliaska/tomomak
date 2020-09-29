@@ -67,11 +67,45 @@ import numpy as np
 
 axes = [toroidal.Axis1d(radius=20, name="theta", units="rad", size=15, upper_limit=np.pi),
         polar.Axis1d(name="phi", units="rad", size=12),
-        cartesian.Axis1d(name="R", units="cm", size=15, upper_limit=10)]
+        cartesian.Axis1d(name="R", units="cm", size=11, upper_limit=10)]
 m = mesh.Mesh(axes)
 mod = model.Model(mesh=m)
-real_solution = objects2d.ellipse(m, ax_len=(5.2, 5.2), index=(1,2))
+res = objects2d.ellipse(m, ax_len=(5.2, 5.2), index=(1, 2), broadcast=False)
+real_solution = geometry3d.broadcast_2d_to_3d(res, m, (1, 2), 0, 'solution')
 mod.solution = real_solution
+det = detectors2d.detector2d(m, (-50, -50), (50, 50), 40, index=(1, 2), radius_dependence=False, broadcast=False)
+det_geom = geometry3d.broadcast_2d_to_3d(det, m, (1,2), 0, 'detector_geometry')
+mod.detector_geometry = [det_geom]
+mod.plot3d(cartesian_coordinates=True, data_type='detector_geometry_n', limits=(0, 2))
+mod.plot3d(cartesian_coordinates=True)
+res = np.full(15, 5)#np.arange(15) + 1
+real_solution = geometry2d.broadcast_1d_to_2d(res, m, 1, 0, 'solution')
+# real_solution = tomomak.util.array_routines.broadcast_object(res, (0,), m.shape)
+
+# real_solution  = tomomak.util.array_routines.normalize_broadcasted(real_solution, (0,),  m, 'solution')
+# real_solution = objects2d.ellipse(m, ax_len=(5.2, 5.2), index=(0,1)) #/ geometry3d.cell_volumes(m)
+# noise = np.random.normal(0, 0.05, real_solution.shape)
+mod.solution = real_solution #+ noise
+det_geom = geometry2d.broadcast_1d_to_2d(res, m, 1, 0, 'detector_geometry')
+mod.detector_geometry = [det_geom]
+mod.plot2d(cartesian_coordinates=True, data_type='detector_geometry_n')
+mod.plot2d(cartesian_coordinates=True, axes=True)
+mod.plot1d(index=0)
+mod.plot1d(index=1)
+mod.plot2d(cartesian_coordinates=True, axes=True)
+
+axes[0].RESOLUTION3D = 3
+
+axes = [toroidal.Axis1d(radius=15, name="theta", units="rad", size=15, upper_limit=np.pi),
+        polar.Axis1d(name="phi", units="rad", size=12),
+        cartesian.Axis1d(name="R", units="cm", size=15, upper_limit=10)]
+axes[0].RESOLUTION3D = 3
+axes[1].RESOLUTION2D = 3
+m = mesh.Mesh(axes)
+mod = model.Model(mesh=m)
+real_solution = objects2d.ellipse(m, ax_len=(5.2, 5.2), index=(1,2)) #/ geometry3d.cell_volumes(m)
+noise = np.random.normal(0, 0.05, real_solution.shape)
+mod.solution = real_solution #+ noise
 mod.plot3d(cartesian_coordinates=True, axes=True, style=0)
 
 axes = [polar.Axis1d(name="phi", units="rad", size=15),

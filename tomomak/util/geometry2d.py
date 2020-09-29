@@ -325,10 +325,10 @@ def convert_to_cartesian(data, mesh, index, data_type):
         data (numpy array): solution or detector geometry or their slice .
         mesh (tomomak.main_structures.Mesh): mesh to work with.
         index (tuple of two ints): axes corresponding to the data.
-        data_type(str): 'solution' or 'detector_geometry'.
+        data_type (str): 'solution' or 'detector_geometry'.
 
     Returns:
-        numpy array: converted data.
+        ndarray: converted data.
     """
     if data_type == 'solution':
         return _convert_cart(data, mesh, index, True)
@@ -336,5 +336,66 @@ def convert_to_cartesian(data, mesh, index, data_type):
         return _convert_cart(data, mesh, index, False)
     else:
         raise ValueError("Wrong data_type.")
+
+
+def broadcast_1d_to_2d(data, mesh, index1, index2, data_type):
+    """Broadcasts 1d array to 2d array, taking into account mesh geometry.
+
+    Function changes density (for solution) or volume (for detector geometry) in such a way,
+     that proportionality along the first axis is conserved in the cartesian coordinates.
+    Plot solution or detector_geometry_n with cartesian_coordinates=True to check the result.
+
+    Args:
+        data (1d ndarray): data along the first axis.
+        mesh (tomomak.main_structures.Mesh): mesh to work with.
+        index1 (int): index of the axis, corresponding to the data array on the mesh.
+        index2 (int): index of the broadcasted axis.
+        data_type (str): 'solution' or 'detector_geometry'.
+
+    Returns:
+        2d ndarray: broadcasted data
+
+    Examples:
+        from tomomak.mesh import cartesian, polar, toroidal
+        from tomomak.mesh import mesh
+        from tomomak import model
+        import numpy as np
+        from tomomak.util import geometry2d
+
+        axes = [polar.Axis1d(name="phi", units="rad", size=12),
+                cartesian.Axis1d(name="R", units="cm", size=15, upper_limit=10)]
+        m = mesh.Mesh(axes)
+        mod = model.Model(mesh=m)
+        res = np.full(15, 5)
+        real_solution = geometry2d.broadcast_1d_to_2d(res, m, 1, 0, 'solution')
+        mod.solution = real_solution
+        mod.plot2d(cartesian_coordinates=True, axes=True)
+        det_geom = geometry2d.broadcast_1d_to_2d(res, m, 1, 0, 'detector_geometry')
+        mod.detector_geometry = [det_geom]
+        mod.plot2d(cartesian_coordinates=True, data_type='detector_geometry_n')
+    """
+    areas = cell_areas(mesh, (index1, index2))
+    if index1 < index2:
+        ind = 0
+        mult_ind = 1
+        shape = (mesh.axes[index1].size, mesh.axes[index2].size)
+    elif index1 > index2:
+        ind = 1
+        mult_ind = 0
+        shape = (mesh.axes[index2].size, mesh.axes[index1].size)
+        areas = areas.transpose()
+    else:
+        raise ValueError('Index 1 cannot be equal to index 2')
+    new_data = array_routines.broadcast_object(data, ind, shape)
+    if data_type == 'solution':
+        new_data = new_data * areas
+        new_data = array_routines.multiply_along_axis(new_data, 1 / mesh.axes[index2].volumes, mult_ind)
+        new_data = array_routines.multiply_along_axis(new_data, 1 / mesh.axes[index1].volumes, ind)
+    elif data_type == 'detector_geometry':
+        new_data = array_routines.multiply_along_axis(new_data,  mesh.axes[index2].volumes, mult_ind)
+        new_data = array_routines.multiply_along_axis(new_data,  mesh.axes[index1].volumes, ind)
+    else:
+        raise ValueError('Unknown data type.')
+    return new_data
 
 

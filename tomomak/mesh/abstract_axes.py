@@ -478,7 +478,8 @@ class Abstract1dAxis(AbstractAxis):
                                 z.append(vert[2])
                                 new_data.append(data[i][j][k])
                                 shift += 1
-                plot3d.voxel_plot(new_data, x, y, z, new_faces, title=title, axes=axes, colormap=colormap)
+                plot3d.voxel_plot(new_data, x, y, z, new_faces, title=title, axes=axes, colormap=colormap,
+                                  *args, **kwargs)
             elif data_type == 'detector_geometry' or data_type == 'detector_geometry_n':
                 new_data = []
                 for det in data:
@@ -501,7 +502,8 @@ class Abstract1dAxis(AbstractAxis):
                                     det_data.append(det[i][j][k])
                                     shift += 1
                     new_data.append(det_data)
-                plot3d.detector_voxel_plot(new_data, x, y, z, new_faces, title=title, axes=axes, colormap=colormap)
+                plot3d.detector_voxel_plot(new_data, x, y, z, new_faces, title=title, axes=axes, colormap=colormap,
+                                           *args, **kwargs)
             else:
                 raise ValueError('data type {} is unknown'.format(data_type))
             return 0, 0

@@ -14,11 +14,14 @@ try:
 except ImportError:
     mlab = None
 
-def _build_voxel_plot(scene, x, y, z, faces, data, title='', axes=False, colormap='blue-red'):
+
+def _build_voxel_plot(scene, x, y, z, faces, data, title='', axes=False, colormap='blue-red', limits=None):
     scene.background = (1, 1, 1)
-
-
-    obj = scene.mlab.triangular_mesh(x, y, z, faces, scalars=data, colormap=colormap)
+    if limits is None:
+        obj = scene.mlab.triangular_mesh(x, y, z, faces, scalars=data, colormap=colormap)
+    else:
+        obj = scene.mlab.triangular_mesh(x, y, z, faces, scalars=data, colormap=colormap,
+                                         vmin=limits[0], vmax=limits[1])
     cb = scene.mlab.colorbar(title=title, orientation='vertical')
     cb.title_text_property.color = (0, 0, 0)
     cb.label_text_property.line_offset = 5
@@ -33,7 +36,7 @@ def _build_voxel_plot(scene, x, y, z, faces, data, title='', axes=False, colorma
     return obj
 
 
-def voxel_plot(data, x, y, z, faces, title='',  axes=False, colormap='blue-red'):
+def voxel_plot(data, x, y, z, faces, title='',  axes=False, colormap='blue-red', limits=None):
     if mlab is None:
         raise ImportError("Unable to import Mayavi for 3D visualization.")
 
@@ -50,7 +53,7 @@ def voxel_plot(data, x, y, z, faces, title='',  axes=False, colormap='blue-red')
 
         @on_trait_change('scene.activated')
         def setup(self):
-            self.plot =  _build_voxel_plot(self.scene, x, y, z, faces, data, title, axes, colormap)
+            self.plot =  _build_voxel_plot(self.scene, x, y, z, faces, data, title, axes, colormap, limits)
 
         def _update_plot(self):
             new_faces = []
@@ -84,7 +87,7 @@ def voxel_plot(data, x, y, z, faces, title='',  axes=False, colormap='blue-red')
     visualization.configure_traits()
 
 
-def detector_voxel_plot(data, x, y, z, faces, title='',  axes=False, colormap='blue-red'):
+def detector_voxel_plot(data, x, y, z, faces, title='',  axes=False, colormap='blue-red', limits=None):
     if mlab is None:
         raise ImportError("Unable to import Mayavi for 3D visualization.")
 
@@ -103,7 +106,7 @@ def detector_voxel_plot(data, x, y, z, faces, title='',  axes=False, colormap='b
 
         @on_trait_change('scene.activated')
         def setup(self):
-            self.plot = _build_voxel_plot(self.scene, x, y, z, faces, data[0], title, axes, colormap)
+            self.plot = _build_voxel_plot(self.scene, x, y, z, faces, data[0], title, axes, colormap, limits)
 
         def _update_plot(self):
             new_faces = []
