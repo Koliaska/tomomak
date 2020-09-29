@@ -131,7 +131,7 @@ def pyramid(mesh, center=(0, 0), size=(10, 10), index=(0, 1), height=1, broadcas
         TypeError if one of the axes is not  cartesian (tomomak.main_structures.mesh.cartesian).
     """
     for i in index:
-        if mesh.axes[i] is not cartesian.Axis1d:
+        if type(mesh.axes[i]) is not cartesian.Axis1d:
             raise TypeError("such combination of axes is not supported.")
     rect = rectangle(mesh, center, size, index, height, broadcast=False)
     mask = np.zeros(rect.shape)
@@ -183,7 +183,7 @@ def cone(mesh, center=(3, 4), ax_len=(4, 3), index=(0, 1), height=1, cone_type='
         TypeError if cone type is unknown.
     """
     for i in index:
-        if mesh.axes[i] is not cartesian.Axis1d:
+        if type(mesh.axes[i]) is not cartesian.Axis1d:
             raise TypeError("such combination of axes is not supported.")
     ell = ellipse(mesh, center, ax_len, index, height, resolution, broadcast=False)
     mask = np.zeros(ell.shape)

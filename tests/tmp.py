@@ -63,8 +63,11 @@ import tomomak.constraints.basic
 import numpy as np
 from mayavi import mlab
 import numpy as np
+import inspect
 
-
+axes = [cartesian.Axis1d(upper_limit=8, size=3), cartesian.Axis1d(upper_limit=10, size=5)]
+m = Mesh(axes)
+c = objects2d.cone(m)
 axes = [toroidal.Axis1d(radius=20, name="theta", units="rad", size=15, upper_limit=np.pi),
         polar.Axis1d(name="phi", units="rad", size=12),
         cartesian.Axis1d(name="R", units="cm", size=11, upper_limit=10)]
