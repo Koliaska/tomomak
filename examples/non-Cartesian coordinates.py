@@ -71,6 +71,15 @@ mod.plot3d(cartesian_coordinates=True, axes=True)
 # Well. it looks a bit round, but taht's what we expect from the polar coordinate system.
 # You can see, that there is gradient glow around the main shape - that's how 3D render works.
 # It assumes that physical distribution doesn't have sharp edges.
+# You can also notice, that inner parts has higher concentration. This happens, because automatic broadcasting
+# assumes that density is the same in the broadcasted dimension coordinates (toroidal angle in our case),
+# however it is not the same in the cartesian coordinates.
+# This problem occurs only if you work in non-cartesian coordinates. There is a way to broadcast
+# keeping equal density in Cartesian coordinates:
+res = objects2d.ellipse(m, ax_len=(5.2, 5.2), index=(1, 2), broadcast=False)
+real_solution = geometry3d.broadcast_2d_to_3d(res, m, (1, 2), 0, 'solution')
+mod.solution = real_solution
+mod.plot3d(cartesian_coordinates=True, axes=True)
 
 # Detectors work similar to objects.
 # Note, that 3D interpolation for render will take significant time.

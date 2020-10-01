@@ -1,6 +1,7 @@
 import numpy as np
 import tomomak as tm
-from tomomak.mesh import cartesian
+from tomomak.mesh import cartesian, polar, toroidal
+from tomomak.test_objects import objects2d
 
 # This example shows how to utilize 3D plotting.
 # Generally plotting a 3D distribution may be pretty challenging.
@@ -46,4 +47,20 @@ mod.plot3d(style=0)
 # In this example we will use same norm for all detectors.
 mod.detector_geometry = np.array([mod.solution, mod.solution + noise, mod.solution + noise * 2])
 mod.plot3d(data_type='detector_geometry', equal_norm=True, style=3)
+
+# Another thing you should know - is how to speed up voxel plot rendering when working in non-cartesian coordinates.
+# Non-cartesian axes has members RESOLUTION3D or RESOLUTION2D which may be changed
+# (but only one time, before the first calculations ate performed):
+axes = [toroidal.Axis1d(radius=15, name="theta", units="rad", size=15, upper_limit=np.pi),
+        polar.Axis1d(name="phi", units="rad", size=12),
+        cartesian.Axis1d(name="R", units="cm", size=15, upper_limit=10)]
+axes[0].RESOLUTION3D = 3
+axes[1].RESOLUTION2D = 3
+mesh = tm.Mesh(axes)
+mod = tm.Model(mesh=mesh)
+real_solution = objects2d.ellipse(mesh, ax_len=(5.2, 5.2), index=(1, 2))
+noise = np.random.normal(0, 0.05, real_solution.shape)
+mod.solution = real_solution + noise
+mod.plot3d(cartesian_coordinates=True, axes=True, style=0)
+
 # And that's how you deal with basic 3D plotting.

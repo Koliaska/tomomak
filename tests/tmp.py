@@ -108,7 +108,7 @@ m = mesh.Mesh(axes)
 mod = model.Model(mesh=m)
 real_solution = objects2d.ellipse(m, ax_len=(5.2, 5.2), index=(1,2)) #/ geometry3d.cell_volumes(m)
 noise = np.random.normal(0, 0.05, real_solution.shape)
-mod.solution = real_solution #+ noise
+mod.solution = real_solution + noise
 mod.plot3d(cartesian_coordinates=True, axes=True, style=0)
 
 axes = [polar.Axis1d(name="phi", units="rad", size=15),
