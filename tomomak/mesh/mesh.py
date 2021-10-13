@@ -314,18 +314,16 @@ class Mesh:
                 res = func(new_axes[1], new_axes[2], *args, **kwargs)
                 if isinstance(res, Iterable):
                     res = list(res)
-                    for i in range(3):
-                        for j, item in enumerate(res):
-                            res[j] = np.moveaxis(item, p[i], i)
+                    for j, item in enumerate(res):
+                        res[j] = np.moveaxis(item, [0, 1, 2], p)
                 else:
-                    for i in range(3):
-                        res = np.moveaxis(res, p[i], i)
+                    res = np.moveaxis(res, [0, 1, 2], p)
                 return res
             except (NotImplementedError, TypeError):
                 pass
         raise NotImplementedError("Custom axis should implement {} method.".format(method_name))
 
-    def mesh_method2d(self, index, method_name, *args, **kwargs):
+    def axes_method2d(self, index, method_name, *args, **kwargs):
         """Iterates over two axes combinations, until there is a combination for which this method is implemented.
 
         Args:

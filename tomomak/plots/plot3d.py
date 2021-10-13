@@ -17,6 +17,11 @@ except ImportError:
 
 def _build_voxel_plot(scene, x, y, z, faces, data, title='', axes=False, colormap='blue-red', limits=None):
     scene.background = (1, 1, 1)
+    x = np.array(x)
+    y = np.array(y)
+    z = np.array(z)
+    data = np.array(data)
+    faces = np.array(faces)
     if limits is None:
         obj = scene.mlab.triangular_mesh(x, y, z, faces, scalars=data, colormap=colormap)
     else:
@@ -269,7 +274,7 @@ def contour3d(data, x, y, z,  title='', colormap='blue-red', limits=None, style=
 
         # the layout of the dialog created
         view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene),
-                         height=700, width=800, show_label=False), resizable=True, title="Detectors")
+                         height=700, width=800, show_label=False), resizable=True, title="Density")
 
     visualization = Visualization()
     visualization.configure_traits()

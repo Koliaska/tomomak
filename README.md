@@ -26,15 +26,16 @@ or if you use Anaconda:
 conda install <package name>
 ```
 Required packages:
-
+* SciPy
+* NumPy
+* Matplotlib
+* decorator
 * Shapely (for 2D geometry).
 * CuPy (for GPU acceleration).
 * Mayavi (for 3D visualization).
 * Trimesh (for 3D geometry)
 * Rtree (for ray casting in 3D geometry)
 
-If you don't use Anaconda:
-* SciPy
 ### Installing
 
 Copy repository to your computer.

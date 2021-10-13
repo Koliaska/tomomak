@@ -22,8 +22,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         self._check_self_consistency()
 
     def _check_self_consistency(self):
-        if self._R <= 0:
-            raise ValueError("Radius should be > 0.")
+        if self._R < 0:
+            raise ValueError("Radius should be >= 0.")
         if np.any(self.cell_edges < 0):
             raise ValueError("Grid edges are < 0. Toroidal axis coordinates should be > 0 and < 2*pi.")
         elif np.any(self.cell_edges > 2 * np.pi):
@@ -40,8 +40,10 @@ class Axis1d(abstract_axes.Abstract1dAxis):
 
     @abstract_axes.precalculated
     def cell_edges3d_cartesian(self, axis2, axis3):
-        # Toroidal coordinates
-        if type(axis2) is polar.Axis1d and type(axis3) is cartesian.Axis1d:
+        # Toroidal-cylindrical coordinates
+        # or Toroidal-RZ coordinates
+        if type(axis2) is polar.Axis1d and type(axis3) is cartesian.Axis1d\
+        or type(axis2) is cartesian.Axis1d and type(axis3) is cartesian.Axis1d:
             if not axis3.spatial:
                 raise ValueError("Toroidal axis works only with spatial axes")
             shape = (self.size, axis2.size, axis3.size)
@@ -49,7 +51,10 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             faces = np.zeros(shape).tolist()
             edge_tor = self.cell_edges
             edges2d = axis2.cell_edges2d_cartesian(axis3)
-            res2d = axis2.RESOLUTION2D
+            if type(axis2) is polar.Axis1d:
+                res2d = axis2.RESOLUTION2D
+            else:
+                res2d = 1
             # Precalculate faces for 2 cases - 1) standard, 2) - center of the mesh
             # 1) standard
             face = list()
@@ -128,7 +133,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                             faces[i][j][k] = face
                         else:
                             faces[i][j][k] = faces_center
-            return np.array(vertices, dtype=object), np.array(faces, dtype=object)
+            return np.array(vertices, dtype=object), np.array(faces)
         else:
             raise TypeError("cell_edges3d_cartesian with such combination of axes is not supported.")
 
@@ -143,7 +148,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             x = np.zeros(shape)
             y = np.zeros(shape)
             z = np.zeros(shape)
-            # Toroidal coordinates
+            # Toroidal-cylindrical coordinates
             if type(axes[0]) is polar.Axis1d and type(axes[1]) is cartesian.Axis1d:
                 if not axes[1].spatial:
                     raise ValueError("Toroidal axis works only with spatial axes")
@@ -156,6 +161,20 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                             y[i, j, k] = (x2d[j, k] + self._R) * np.sin(tor_axis[i])
                             z[i, j, k] = y2d[j, k]
                 return x, y, z
+            # Toroidal-RZ coordinates
+            if type(axes[0]) is cartesian.Axis1d and type(axes[1]) is cartesian.Axis1d:
+                if not axes[1].spatial:
+                    raise ValueError("Toroidal axis works only with spatial axes")
+                x2d = axes[0].coordinates
+                y2d = axes[1].coordinates
+                tor_axis = self.coordinates
+                for i, row in enumerate(x):
+                    for j, col in enumerate(row):
+                        for k, _ in enumerate(col):
+                            x[i, j, k] = (x2d[j] + self._R) * np.cos(tor_axis[i])
+                            y[i, j, k] = (x2d[j] + self._R) * np.sin(tor_axis[i])
+                            z[i, j, k] = y2d[k]
+                return x, y, z
         raise TypeError("cartesian_coordinate with such combination of axes is not supported.")
 
     @staticmethod
@@ -164,15 +183,22 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         phi = (np.arctan2(y, x) + 2 * np.pi) % (2 * np.pi)
         return r, phi
 
+    @abstract_axes.precalculated
     def from_cartesian(self, coordinates, *axes):
         if len(axes) == 2:
+            if not axes[0].spatial and not axes[1].spatial:
+                raise ValueError("Toroidal axis works only with spatial axes")
             xx, yy, zz = coordinates[0], coordinates[1], coordinates[2]
+            # Toroidal-cylindrical coordinates
             if type(axes[0]) is polar.Axis1d and type(axes[1]) is cartesian.Axis1d:
-                if not axes[1].spatial:
-                    raise ValueError("Toroidal axis works only with spatial axes")
                 r_hor, theta = self._polar_to_cart(xx, yy)
                 r, phi = self._polar_to_cart((r_hor - self._R), zz)
                 return theta, phi, r
+            # Toroidal-RZ coordinates
+            if type(axes[0]) is cartesian.Axis1d and type(axes[1]) is cartesian.Axis1d:
+                r_hor, theta = self._polar_to_cart(xx, yy)
+                r = r_hor - self._R
+                return theta, r, zz
         else:
             raise TypeError("from_cartesian with such combination of axes is not supported.")
 
@@ -181,7 +207,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         if cartesian_coordinates:
             if not (axis2.spatial and axis3.spatial):
                 raise ValueError("Toroidal axis works only with spatial axes for converting to toroidal coordinates.")
-            if type(axis2) is polar.Axis1d and type(axis3) is cartesian.Axis1d and axis3.spatial:
+            if (type(axis2) is polar.Axis1d or type(axis2) is cartesian.Axis1d)\
+                    and type(axis3) is cartesian.Axis1d:
                 ax_names = ('{}, {}'.format('X', axis3.units),
                             '{}, {}'.format('Y', axis3.units),
                             '{}, {}'.format('Z', axis3.units))

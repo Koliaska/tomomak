@@ -27,6 +27,10 @@ from tomomak.iterators import statistics
 import tomomak.constraints.basic
 import time
 
+#Anaconda3-5.3.1-Windows-x86_64.exe
+#conda upgrade -n base -c defaults --override-channels conda
+
+
 # conda remove vtk conda remove mayavi and installing with pip install vtk and pip install mayavi. Thanks for your help!
 
 
@@ -61,28 +65,30 @@ from tomomak.iterators import ml, algebraic
 from tomomak.iterators import statistics
 import tomomak.constraints.basic
 import numpy as np
-from mayavi import mlab
-import numpy as np
-import inspect
+#from mayavi import mlab
 
-axes = [cartesian.Axis1d(upper_limit=8, size=3), cartesian.Axis1d(upper_limit=10, size=5)]
-m = Mesh(axes)
-c = objects2d.cone(m)
-axes = [toroidal.Axis1d(radius=20, name="theta", units="rad", size=15, upper_limit=np.pi),
-        polar.Axis1d(name="phi", units="rad", size=12),
-        cartesian.Axis1d(name="R", units="cm", size=11, upper_limit=10)]
+import inspect
+# import pyvista as pv
+
+# b = pv.Box()
+# print(b.volume)
+# print(b.faces)
+# print(b.bounds)
+
+axes = [cartesian.Axis1d(name="R", units="cm", size=13),
+        cartesian.Axis1d(name="Z", units="cm", lower_limit=-10, size=12, upper_limit=10),
+        toroidal.Axis1d(radius=0, name="theta", units="rad", size=14, upper_limit=np.pi)
+        ]
 m = mesh.Mesh(axes)
 mod = model.Model(mesh=m)
-res = objects2d.ellipse(m, ax_len=(5.2, 5.2), index=(1, 2), broadcast=False)
-real_solution = geometry3d.broadcast_2d_to_3d(res, m, (1, 2), 0, 'solution')
+
+res = objects2d.ellipse(m, center=(5,0), ax_len=(5.2, 5.2), index=(0, 1), broadcast=False)
+real_solution = geometry3d.broadcast_2d_to_3d(res, m, (0, 1), 2, 'solution')
 mod.solution = real_solution
-det = detectors2d.detector2d(m, (-50, -50), (50, 50), 40, index=(1, 2), radius_dependence=False, broadcast=False)
-det_geom = geometry3d.broadcast_2d_to_3d(det, m, (1,2), 0, 'detector_geometry')
-mod.detector_geometry = [det_geom]
-mod.plot3d(cartesian_coordinates=True, data_type='detector_geometry_n', limits=(0, 2))
-mod.plot3d(cartesian_coordinates=True)
-res = np.full(15, 5)#np.arange(15) + 1
-real_solution = geometry2d.broadcast_1d_to_2d(res, m, 1, 0, 'solution')
+mod.plot2d( )
+# mod.plot3d(cartesian_coordinates=True, axes=True, style = 1)
+# mod.plot3d(cartesian_coordinates=True, axes=True, style = 2)
+# mod.plot3d(cartesian_coordinates=True, axes=True, style = 3)
 # real_solution = tomomak.util.array_routines.broadcast_object(res, (0,), m.shape)
 
 # real_solution  = tomomak.util.array_routines.normalize_broadcasted(real_solution, (0,),  m, 'solution')
@@ -144,27 +150,27 @@ mod.plot3d(style=1)
 mod.plot3d(data_type='detector_geometry', equal_norm=True, style=0, axes=True)
 
 
-k = 50
-x = []
-y = []
-z = []
-faces = None
-f = np.array([[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
-for i in range(k):
-    x.extend([i*5, i*5, i*5, i*5  + 10, ])
-    y.extend([i*5, i*5, i*5+10, i*5, ])
-    z.extend([i*5, i*5+10, i*5, i*5, ])
-    if faces  is None:
-        faces = np.array([[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
-    else:
-        faces2 = f + i*4
-        faces = np.append(faces, faces2, axis=0)
-
-
-
-print(x, faces)
-mlab.triangular_mesh(x, y, z, faces, scalars=x)
-mlab.show()
+# k = 50
+# x = []
+# y = []
+# z = []
+# faces = None
+# f = np.array([[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
+# for i in range(k):
+#     x.extend([i*5, i*5, i*5, i*5  + 10, ])
+#     y.extend([i*5, i*5, i*5+10, i*5, ])
+#     z.extend([i*5, i*5+10, i*5, i*5, ])
+#     if faces  is None:
+#         faces = np.array([[0, 1, 2], [3, 1, 0], [0, 2, 3], [2, 1, 3]])
+#     else:
+#         faces2 = f + i*4
+#         faces = np.append(faces, faces2, axis=0)
+#
+#
+#
+# print(x, faces)
+# mlab.triangular_mesh(x, y, z, faces, scalars=x)
+# mlab.show()
 # let's start by creating a 3D cartesian coordinate system.
 # Since 3D tomography is much slower than 2D, in the example we will use 10x10x10 grid,
 # but you can increase these values.

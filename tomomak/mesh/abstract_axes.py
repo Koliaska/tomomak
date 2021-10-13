@@ -156,8 +156,13 @@ def precalculated(method):
         parameters_match = True
         try:
             arg_list = getattr(self, stored_name + '_args')
-            if arg_list != args:
-                parameters_match = False
+            for a1, a2 in zip(arg_list, args):
+                if type(a1) is list:
+                    if not np.all(np.array(a1) == np.array(a2)):
+                        parameters_match = False
+                else:
+                    if not np.all(a1 == a2):
+                        parameters_match = False
         except AttributeError:
             pass
         try:
@@ -170,6 +175,15 @@ def precalculated(method):
             return precalc()
         return stored_res
     return _impl
+
+
+def mult_out(func):
+    """ Decorator, indicating that function returns multiple output.
+    Needed in methods such as axes_method3d or axes_method2d in order to correctly iterate over axes.
+    """
+    def multiple_output(*args, **kwargs):
+        return func(*args, **kwargs)
+    return multiple_output
 
 
 class Abstract1dAxis(AbstractAxis):
