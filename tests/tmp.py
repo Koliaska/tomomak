@@ -65,6 +65,7 @@ from tomomak.iterators import ml, algebraic
 from tomomak.iterators import statistics
 import tomomak.constraints.basic
 import numpy as np
+import tomomak.util.eqdsk as eqdsk
 #from mayavi import mlab
 
 import inspect
@@ -75,6 +76,10 @@ import inspect
 # print(b.faces)
 # print(b.bounds)
 
+
+g = eqdsk.read_eqdsk('gglobus32994.g', b_ccw=-1)
+eqdsk.psi_to_rho(g)
+print(g)
 axes = [cartesian.Axis1d(name="R", units="cm", size=13),
         cartesian.Axis1d(name="Z", units="cm", lower_limit=-10, size=12, upper_limit=10),
         toroidal.Axis1d(radius=0, name="theta", units="rad", size=14, upper_limit=np.pi)
