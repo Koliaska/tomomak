@@ -1,15 +1,12 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import re
-from decorator import decorator
 from functools import wraps
-import importlib
 import matplotlib.pyplot as plt
 from tomomak.plots import plot1d, plot2d, plot3d
 import warnings
 from tomomak import util
 from tomomak.mesh import cartesian
-
 
 
 class AbstractAxis(ABC):
@@ -32,6 +29,7 @@ class AbstractAxis(ABC):
         Returns:
             int: number of dimensions
         """
+
     @property
     @abstractmethod
     def spatial(self):
@@ -87,6 +85,7 @@ class AbstractAxis(ABC):
         """Converts input array to self coordinates from cartesian coordinates.
 
         Used only for correct 3D interpolation in order to exclude points outside of the grid.
+            (so only conversion in 3D case is needed at the moment)
 
         Args:
             coordinates (list of meshgrids): list of each coordinate in the form of numpy.meshgrid.
@@ -147,6 +146,7 @@ def precalculated(method):
             setattr(self, stored_name + '_args', args)
             setattr(self, stored_name + '_kwargs', kwargs)
             return getattr(self, stored_name)
+
         name = method.__name__
         stored_name = '_' + name
         try:
@@ -174,6 +174,7 @@ def precalculated(method):
         if stored_res is None or not parameters_match:
             return precalc()
         return stored_res
+
     return _impl
 
 
@@ -181,8 +182,10 @@ def mult_out(func):
     """ Decorator, indicating that function returns multiple output.
     Needed in methods such as axes_method3d or axes_method2d in order to correctly iterate over axes.
     """
+
     def multiple_output(*args, **kwargs):
         return func(*args, **kwargs)
+
     return multiple_output
 
 
@@ -331,13 +334,14 @@ class Abstract1dAxis(AbstractAxis):
             if res < 0:
                 res = 0
             return res
+
         j_start = 0
         for i, row in enumerate(intersection):
             for j in range(j_start, len(row)):
                 dist = inters_len(self.cell_edges[i], self.cell_edges[i + 1],
                                   axis2.cell_edges[j], axis2.cell_edges[j + 1])
                 if not dist and j != j_start:
-                    j_start = j-1
+                    j_start = j - 1
                     break
                 intersection[i, j] = dist
         return intersection
@@ -381,7 +385,7 @@ class Abstract1dAxis(AbstractAxis):
         plt.show()
         return plot, ax
 
-    def plot2d(self, axis2, data,  mesh, data_type='solution', style='colormesh',
+    def plot2d(self, axis2, data, mesh, data_type='solution', style='colormesh',
                fill_scheme='viridis', grid=False, equal_norm=False, title=None, ax_names=None, *args, **kwargs):
         """Create 2D plot of the solution or detector geometry.
 
@@ -426,7 +430,6 @@ class Abstract1dAxis(AbstractAxis):
         plt.show()
         return plot, ax
 
-
     def plot3d(self, data, axis2, axis3, mesh, data_type='solution', colormap='blue-red', axes=False,
                cartesian_coordinates=False, interp_size=None, ax_names=None, style=0, *args, **kwargs):
         """Create 3D plot of the solution or detector geometry.
@@ -444,6 +447,7 @@ class Abstract1dAxis(AbstractAxis):
             interp_size (int, optional): If at least one of the axes is irregular,
                 the new grid wil have  interp_size * interp_size * interp_size dimensions.
             ax_names (list of str, optional): caption for coordinate axes. Default: automatic naming.
+            style (int): plot style. See plotting 3D example.
             *args: arguments to pass to plot3d.contour3d, detector_contour3d.
             **kwargs: keyword arguments to pass to plot3d.contour3d, detector_contour3d.
 
@@ -456,7 +460,7 @@ class Abstract1dAxis(AbstractAxis):
         # Title
         if data_type == 'solution':
             title = util.text.solution_caption(cartesian_coordinates, self, axis2, axis3).replace('$', '') \
-            .replace('{', '').replace('}', '')
+                .replace('{', '').replace('}', '')
         elif data_type == 'detector_geometry' or data_type == 'detector_geometry_n':
             title = '   ' + re.sub('[${}]', '', util.text.detector_caption(mesh, data_type, cartesian_coordinates))
         if axes:
@@ -536,9 +540,9 @@ class Abstract1dAxis(AbstractAxis):
                     interp_size = 50
                     warnings.warn("Since axes are not regular, linear interpolation with {} points used. "
                                   "You can change interpolation size with interp_size attribute."
-                                  .format(interp_size**3))
+                                  .format(interp_size ** 3))
                 x_grid, y_grid, z_grid, new_data = \
-                    util.geometry3d.make_regular(data, x_grid, y_grid, z_grid, interp_size)
+                    util.geometry3d_basic.make_regular(data, x_grid, y_grid, z_grid, interp_size)
                 new_data = np.nan_to_num(new_data)
                 new_data = np.clip(new_data, np.amin(data), np.amax(data))
                 mask = mesh.is_in_grid(self.from_cartesian([x_grid, y_grid, z_grid], axis2, axis3), self, axis2, axis3)
@@ -559,13 +563,13 @@ class Abstract1dAxis(AbstractAxis):
                                   "You can change interpolation size with interp_size attribute."
                                   .format(interp_size ** 3))
                 x_grid_n, y_grid_n, z_grid_n = x_grid, y_grid, z_grid
-                new_data = np.zeros((data.shape[0], interp_size,  interp_size,  interp_size))
+                new_data = np.zeros((data.shape[0], interp_size, interp_size, interp_size))
                 # interpolate data for each detector
                 print("Start interpolation.")
                 mask = None
                 for i, d in enumerate(data):
                     x_grid, y_grid, z_grid, new_data[i] \
-                        = util.geometry3d.make_regular(d, x_grid_n, y_grid_n, z_grid_n, interp_size)
+                        = util.geometry3d_basic.make_regular(d, x_grid_n, y_grid_n, z_grid_n, interp_size)
                     if mask is None:
                         mask = mesh.is_in_grid(self.from_cartesian([x_grid, y_grid, z_grid], axis2, axis3), self, axis2,
                                                axis3)
@@ -573,7 +577,7 @@ class Abstract1dAxis(AbstractAxis):
                     new_data[i] = np.clip(new_data[i], np.amin(data[i]), np.amax(data[i]))
                     new_data[i] *= mask
                     print('\r', end='')
-                    print("...", str((i+1) * 100 // data.shape[0]) + "% complete", end='')
+                    print("...", str((i + 1) * 100 // data.shape[0]) + "% complete", end='')
                 print('\r \r', end='')
 
             else:
@@ -715,5 +719,3 @@ class Abstract3dAxis(AbstractAxis):
         Returns:
 
         """
-
-

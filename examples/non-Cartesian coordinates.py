@@ -1,6 +1,7 @@
+import tomomak.util.geometry3d_trimesh
 from tomomak import model
 from tomomak.test_objects import objects2d, objects3d
-from tomomak.util import geometry3d
+from tomomak.util import geometry3d_basic
 from tomomak.mesh import mesh
 from tomomak.mesh import cartesian, polar, toroidal
 from tomomak.detectors import detectors2d, detectors3d
@@ -58,9 +59,9 @@ m = mesh.Mesh(axes)
 mod = model.Model(mesh=m)
 # First of all we want to know what the cell of such a grid looks like. It will be a 2D bended polar cell.
 # Let's look at the random cell.
-geometry3d.show_cell(m, cell_index=(3, 3, 3))
+tomomak.util.geometry3d_trimesh.show_cell(m, cell_index=(3, 3, 3))
 # And this is what the center cell, closest to R = 0 looks like.
-geometry3d.show_cell(m, cell_index=(0, 0, 0))
+tomomak.util.geometry3d_trimesh.show_cell(m, cell_index=(0, 0, 0))
 # Now if you want to create an object, defined in the cartesian coordinates, you can use objects3d module.
 mod.solution = objects3d.point_source(m, (0, 0, 0), index=(0, 1, 2))
 mod.plot3d(cartesian_coordinates=True, axes=True)
@@ -77,7 +78,7 @@ mod.plot3d(cartesian_coordinates=True, axes=True)
 # This problem occurs only if you work in non-cartesian coordinates. There is a way to broadcast
 # keeping equal density in Cartesian coordinates:
 res = objects2d.ellipse(m, ax_len=(5.2, 5.2), index=(1, 2), broadcast=False)
-real_solution = geometry3d.broadcast_2d_to_3d(res, m, (1, 2), 0, 'solution')
+real_solution = tomomak.util.geometry3d_trimesh.broadcast_2d_to_3d(res, m, (1, 2), 0, 'solution')
 mod.solution = real_solution
 mod.plot3d(cartesian_coordinates=True, axes=True)
 

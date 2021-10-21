@@ -34,6 +34,7 @@ Required packages:
 * CuPy (for GPU acceleration).
 * Mayavi (for 3D visualization).
 * Trimesh (for 3D geometry)
+* pyglet (for Trimesh visualization)
 * Rtree (for ray casting in 3D geometry)
 
 ### Installing

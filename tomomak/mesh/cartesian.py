@@ -30,7 +30,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         """See description in abstract axes.
         """
         if type(axis2) is not type(self):
-            raise TypeError("cell_edges2d_cartesianwith such combination of axes is not supported.")
+            raise TypeError("cell_edges2d_cartesian with such combination of axes is not supported.")
         shape = (self.size, axis2.size)
         res = np.zeros(shape).tolist()
         edge1 = self.cell_edges
@@ -54,5 +54,3 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             if type(a) is not Axis1d:
                 raise TypeError("from_cartesian with such combination of axes is not supported.")
         return coordinates
-
-

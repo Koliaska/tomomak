@@ -1,7 +1,7 @@
 from . import cartesian
 import numpy as np
 from . import abstract_axes
-from . import polar
+from . import polar, level
 import matplotlib.pyplot as plt
 from tomomak.plots import plot2d
 from tomomak import util
@@ -16,7 +16,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     RESOLUTION3D = 5
 
     def __init__(self, radius, coordinates=None, edges=None, lower_limit=0,
-                 upper_limit=2*np.pi, size=None, name="", units=""):
+                 upper_limit=2 * np.pi, size=None, name="", units=""):
         super().__init__(coordinates, edges, lower_limit, upper_limit, size, name, units, True)
         self._R = radius
         self._check_self_consistency()
@@ -42,8 +42,9 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     def cell_edges3d_cartesian(self, axis2, axis3):
         # Toroidal-cylindrical coordinates
         # or Toroidal-RZ coordinates
-        if type(axis2) is polar.Axis1d and type(axis3) is cartesian.Axis1d\
-        or type(axis2) is cartesian.Axis1d and type(axis3) is cartesian.Axis1d:
+        if type(axis2) is polar.Axis1d and type(axis3) is cartesian.Axis1d \
+                or type(axis2) is cartesian.Axis1d and type(axis3) is cartesian.Axis1d \
+                or type(axis2) is level.Axis1d and type(axis3) is polar.Axis1d:
             if not axis3.spatial:
                 raise ValueError("Toroidal axis works only with spatial axes")
             shape = (self.size, axis2.size, axis3.size)
@@ -75,10 +76,10 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                              layer_len * (self.RESOLUTION3D + 1) - i - 2))
                 face.append((layer_len * self.RESOLUTION3D + 2 + i,
                              layer_len * (self.RESOLUTION3D + 1) - i - 2, layer_len * (self.RESOLUTION3D + 1) - i - 1))
-            for l in range(self.RESOLUTION3D):
+            for res_l in range(self.RESOLUTION3D):
                 # left and right faces
-                layer = l * layer_len
-                next_layer = (l + 1) * layer_len
+                layer = res_l * layer_len
+                next_layer = (res_l + 1) * layer_len
                 face.append((layer, layer + 1, next_layer + 1))
                 face.append((layer, next_layer + 1, next_layer))
                 face.append((layer + res2d + 1, layer + res2d + 2,
@@ -88,28 +89,28 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 # first top and bot face
                 face.append((layer + 1, layer + 2, next_layer + 2))
                 face.append((layer + 1, next_layer + 2, next_layer + 1))
-                face.append((layer, next_layer, (l + 2) * layer_len - 1))
-                face.append((layer, (l + 2) * layer_len - 1, next_layer - 1))
+                face.append((layer, next_layer, (res_l + 2) * layer_len - 1))
+                face.append((layer, (res_l + 2) * layer_len - 1, next_layer - 1))
                 for i in range(res2d - 1):
                     # top
                     face.append((layer + i + 2, layer + i + 3, layer + res2d * 2 + i + 5))
                     face.append((layer + i + 2, layer + res2d * 2 + i + 5, layer + res2d * 2 + i + 4))
                     # bottom
-                    face.append((layer + res2d * 2 - i,layer + res2d * 2 - i + 1,
+                    face.append((layer + res2d * 2 - i, layer + res2d * 2 - i + 1,
                                  layer + res2d * 4 - i + 3))
                     face.append((layer + res2d * 2 - i,
                                  layer + res2d * 4 - i + 3, layer + res2d * 4 - i + 2))
             # 2) - center of the mesh
             faces_center = list()
             layer_len = res2d + 2
-            for l in range(self.RESOLUTION3D):
-                layer = l * layer_len
-                next_layer = (l + 1) * layer_len
+            for res_l in range(self.RESOLUTION3D):
+                layer = res_l * layer_len
+                next_layer = (res_l + 1) * layer_len
                 # left and right faces
                 faces_center.append((layer, layer + 1, next_layer))
-                faces_center.append((layer + 1,  next_layer + 1, next_layer))
+                faces_center.append((layer + 1, next_layer + 1, next_layer))
                 faces_center.append((next_layer - 1, layer, next_layer))
-                faces_center.append((next_layer - 1, next_layer, (l + 2) * layer_len - 1))
+                faces_center.append((next_layer - 1, next_layer, (res_l + 2) * layer_len - 1))
                 for i in range(res2d):
                     # top
                     faces_center.append((layer + i + 1, next_layer + i + 2, next_layer + i + 1))
@@ -125,10 +126,11 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 for j, col in enumerate(row):
                     for k, _ in enumerate(col):
                         vertices[i][j][k] = []
-                        for l in range(self.RESOLUTION3D + 1):
+                        for res_l in range(self.RESOLUTION3D + 1):
                             for e in edges2d[j][k]:
-                                vertices[i][j][k].append(((e[0] + self._R) * np.cos(edge_tor[i] + l * tor_step), e[1],
-                                                          (e[0] + self._R) * np.sin(edge_tor[i] + l * tor_step)))
+                                vertices[i][j][k].append(((e[0] + self._R) * np.cos(edge_tor[i] + res_l * tor_step),
+                                                          e[1],
+                                                          (e[0] + self._R) * np.sin(edge_tor[i] + res_l * tor_step)))
                         if len(edges2d[j][k]) == res2d * 2 + 2:
                             faces[i][j][k] = face
                         else:
@@ -148,8 +150,10 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             x = np.zeros(shape)
             y = np.zeros(shape)
             z = np.zeros(shape)
-            # Toroidal-cylindrical coordinates
-            if type(axes[0]) is polar.Axis1d and type(axes[1]) is cartesian.Axis1d:
+            # Toroidal-cylindrical coordinates, Level-polar coordinates, Toroidal-RZ coordinates
+            if (type(axes[0]) is polar.Axis1d and type(axes[1]) is cartesian.Axis1d) or \
+                    (type(axes[0]) is level.Axis1d and type(axes[1]) is polar.Axis1d) or \
+                    (type(axes[0]) is cartesian.Axis1d and type(axes[1]) is cartesian.Axis1d):
                 if not axes[1].spatial:
                     raise ValueError("Toroidal axis works only with spatial axes")
                 x2d, y2d = axes[0].cartesian_coordinates(axes[1])
@@ -161,25 +165,25 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                             y[i, j, k] = (x2d[j, k] + self._R) * np.sin(tor_axis[i])
                             z[i, j, k] = y2d[j, k]
                 return x, y, z
-            # Toroidal-RZ coordinates
-            if type(axes[0]) is cartesian.Axis1d and type(axes[1]) is cartesian.Axis1d:
-                if not axes[1].spatial:
-                    raise ValueError("Toroidal axis works only with spatial axes")
-                x2d = axes[0].coordinates
-                y2d = axes[1].coordinates
-                tor_axis = self.coordinates
-                for i, row in enumerate(x):
-                    for j, col in enumerate(row):
-                        for k, _ in enumerate(col):
-                            x[i, j, k] = (x2d[j] + self._R) * np.cos(tor_axis[i])
-                            y[i, j, k] = (x2d[j] + self._R) * np.sin(tor_axis[i])
-                            z[i, j, k] = y2d[k]
-                return x, y, z
+            # # Toroidal-RZ coordinates
+            # if type(axes[0]) is cartesian.Axis1d and type(axes[1]) is cartesian.Axis1d:
+            #     if not axes[1].spatial:
+            #         raise ValueError("Toroidal axis works only with spatial axes")
+            #     x2d = axes[0].coordinates
+            #     y2d = axes[1].coordinates
+            #     tor_axis = self.coordinates
+            #     for i, row in enumerate(x):
+            #         for j, col in enumerate(row):
+            #             for k, _ in enumerate(col):
+            #                 x[i, j, k] = (x2d[j] + self._R) * np.cos(tor_axis[i])
+            #                 y[i, j, k] = (x2d[j] + self._R) * np.sin(tor_axis[i])
+            #                 z[i, j, k] = y2d[k]
+            #     return x, y, z
         raise TypeError("cartesian_coordinate with such combination of axes is not supported.")
 
     @staticmethod
     def _polar_to_cart(x, y):
-        r = np.sqrt(x**2 + y**2)
+        r = np.sqrt(x ** 2 + y ** 2)
         phi = (np.arctan2(y, x) + 2 * np.pi) % (2 * np.pi)
         return r, phi
 
@@ -199,6 +203,11 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 r_hor, theta = self._polar_to_cart(xx, yy)
                 r = r_hor - self._R
                 return theta, r, zz
+            # Level-polar coordinates
+            if type(axes[0]) is level.Axis1d and type(axes[1]) is polar.Axis1d:
+                r_hor, theta = self._polar_to_cart(xx, yy)
+                rho, phi = axes[0].from_cartesian((r_hor, zz), axes[1])
+                return theta, rho, phi
         else:
             raise TypeError("from_cartesian with such combination of axes is not supported.")
 
@@ -207,8 +216,9 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         if cartesian_coordinates:
             if not (axis2.spatial and axis3.spatial):
                 raise ValueError("Toroidal axis works only with spatial axes for converting to toroidal coordinates.")
-            if (type(axis2) is polar.Axis1d or type(axis2) is cartesian.Axis1d)\
-                    and type(axis3) is cartesian.Axis1d:
+            if ((type(axis2) is polar.Axis1d or type(axis2) is cartesian.Axis1d)
+                    and type(axis3) is cartesian.Axis1d)\
+                    or (type(axis2) is level.Axis1d and type(axis3) is polar.Axis1d):
                 ax_names = ('{}, {}'.format('X', axis3.units),
                             '{}, {}'.format('Y', axis3.units),
                             '{}, {}'.format('Z', axis3.units))

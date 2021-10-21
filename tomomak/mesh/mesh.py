@@ -1,8 +1,10 @@
 import numpy as np
+
+import tomomak.util.geometry3d_trimesh
 from tomomak.util import array_routines
 import itertools
 from collections.abc import Iterable
-from tomomak.util import geometry2d, geometry3d
+from tomomak.util import geometry2d, geometry3d_basic
 
 
 class Mesh:
@@ -237,10 +239,10 @@ class Mesh:
                     new_data = self._normalize_detectors(new_data, index)
                 if cart:
                     if data_type == 'solution':
-                        new_data = geometry3d.convert_slice_to_cartesian(new_data, self, index, data_type)
+                        new_data = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data, self, index, data_type)
                     elif data_type == 'detector_geometry':
                         for i, s in enumerate(new_data):
-                            new_data[i] = geometry3d.convert_slice_to_cartesian(new_data[i], self, index, data_type)
+                            new_data[i] = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data[i], self, index, data_type)
                 plot = self._axes[index[0]].plot3d(new_data, self, *args, **kwargs)
                 return plot
             except (NotImplementedError, TypeError):
@@ -252,10 +254,10 @@ class Mesh:
                 new_data = self._normalize_detectors(new_data, index)
             if cart:
                 if data_type == 'solution':
-                    new_data = geometry3d.convert_slice_to_cartesian(new_data, self, index, data_type)
+                    new_data = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data, self, index, data_type)
                 elif data_type == 'detector_geometry':
                     for i, s in enumerate(new_data):
-                        new_data[i] = geometry3d.convert_slice_to_cartesian(new_data[i], self, index, data_type)
+                        new_data[i] = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data[i], self, index, data_type)
             try:
                 plot = self._axes[index[0]].plot3d(new_data, self._axes[index[1]], self, data_type, *args, **kwargs)
                 return plot
@@ -273,10 +275,10 @@ class Mesh:
                 new_data = self._normalize_detectors(new_data, index)
             if cart:
                 if data_type == 'solution':
-                    new_data = geometry3d.convert_slice_to_cartesian(new_data, self, index, data_type)
+                    new_data = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data, self, index, data_type)
                 elif data_type == 'detector_geometry':
                     for i, s in enumerate(new_data):
-                        new_data[i] = geometry3d.convert_slice_to_cartesian(new_data[i], self, index, data_type)
+                        new_data[i] = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data[i], self, index, data_type)
             ind_lst = list(itertools.permutations((0, 1, 2), 3))
             for p in ind_lst:
                 try:

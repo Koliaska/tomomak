@@ -4,8 +4,10 @@ Synthetic object are usually used to test different tomomak components.
 """
 import numpy as np
 import tomomak.util.array_routines
-import tomomak.util.geometry3d as geometry3d
+import tomomak.util.geometry3d_basic as geometry3d
 import importlib
+
+import tomomak.util.geometry3d_trimesh
 
 
 def figure(mesh, vertices, faces=None, index=(0, 1, 2), density=1, broadcast=True):
@@ -24,7 +26,7 @@ def figure(mesh, vertices, faces=None, index=(0, 1, 2), density=1, broadcast=Tru
     Returns:
         ndarray:  numpy array, representing figure on the given mesh.
     """
-    obj3d = geometry3d.get_trimesh_obj(vertices, faces)
+    obj3d = tomomak.util.geometry3d_trimesh.get_obj(vertices, faces)
     return _create_figure(mesh, obj3d, index, density, broadcast)
 
 
@@ -56,12 +58,12 @@ def trimesh_create(mesh, func_name, index=(0, 1, 2), density=1, broadcast=True, 
 
 
 def _create_figure(mesh, obj3d, index, density, broadcast):
-    trimesh_list = geometry3d.get_trimesh_grid(mesh, index)
-    intersection = geometry3d.grid_intersection3d(trimesh_list, obj3d)
+    trimesh_list = tomomak.util.geometry3d_trimesh.get_grid(mesh, index)
+    intersection = tomomak.util.geometry3d_trimesh.grid_intersection3d(trimesh_list, obj3d)
     intersection *= density
-    dv = tomomak.util.geometry3d.cell_volumes(mesh, index)
+    dv = tomomak.util.geometry3d_trimesh.cell_volumes(mesh, index)
     intersection /= dv
-    intersection = tomomak.util.geometry3d.convert_slice_from_cartesian(intersection, mesh, index, data_type='solution')
+    intersection = tomomak.util.geometry3d_trimesh.convert_slice_from_cartesian(intersection, mesh, index, data_type='solution')
     if broadcast:
         intersection = tomomak.util.array_routines.broadcast_object(intersection, index, mesh.shape)
     return intersection
@@ -93,9 +95,9 @@ def point_source(mesh, point, index=(0, 1, 2), density=1, broadcast=True):
         distances[tuple(zero[0])] = sorted_dist[1] / (2 ** 4/3)  # distance to the radius,
         # limiting 1/2 volume of the sphere with R = 1/2 distance
     distances = 1 / (distances ** 2) * density
-    dv = tomomak.util.geometry3d.cell_volumes(mesh, index)
+    dv = tomomak.util.geometry3d_trimesh.cell_volumes(mesh, index)
     distances /= dv
-    distances = tomomak.util.geometry3d.convert_slice_from_cartesian(distances, mesh, index, data_type='solution')
+    distances = tomomak.util.geometry3d_trimesh.convert_slice_from_cartesian(distances, mesh, index, data_type='solution')
     if broadcast:
         distances = tomomak.util.array_routines.broadcast_object(distances, index, mesh.shape)
     return distances

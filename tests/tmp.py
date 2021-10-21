@@ -1,3 +1,4 @@
+import tomomak.util.geometry3d_trimesh
 from tomomak.model import *
 from tomomak.solver import *
 from tomomak.test_objects.objects2d import *
@@ -46,7 +47,7 @@ from tomomak.transform import pipeline
 from tomomak.detectors import detectors2d, signal
 from tomomak.iterators import ml, algebraic
 from tomomak.iterators import statistics
-from tomomak.util import geometry3d
+from tomomak.util import geometry3d_basic
 import os
 import tomomak.constraints.basic
 import trimesh
@@ -57,7 +58,7 @@ from tomomak import model
 from tomomak.solver import *
 from tomomak.test_objects import objects2d
 from tomomak.mesh import mesh
-from tomomak.mesh import cartesian, polar, toroidal
+from tomomak.mesh import cartesian, polar, toroidal, level
 from tomomak.transform import rescale
 from tomomak.transform import pipeline
 from tomomak.detectors import detectors2d, signal
@@ -66,31 +67,67 @@ from tomomak.iterators import statistics
 import tomomak.constraints.basic
 import numpy as np
 import tomomak.util.eqdsk as eqdsk
+from tomomak import util
 #from mayavi import mlab
 
 import inspect
-# import pyvista as pv
+import pyvista as pv
 
 # b = pv.Box()
 # print(b.volume)
 # print(b.faces)
 # print(b.bounds)
+vertices = np.array([[0, 0, 0],
+                     [1, 0, 0],
+                     [1, 1, 0],
+                     [0, 1, 0],
+                     [0.5, 0.5, -1]])
+
+# mesh faces
+faces = np.hstack([[4, 0, 1, 2, 3],  # square
+                   [3, 0, 1, 4],     # triangle
+                   [3, 1, 2, 4]])    # triangle
+
+surf = pv.PolyData(vertices, faces)
+
+# plot each face with a different color
+surf.plot(scalars=np.arange(3), cpos=[-1, 1, 0.5])
+axes = [toroidal.Axis1d(radius = 10, name="theta", units="rad", size=7),
+        polar.Axis1d(name="phi", units="rad", size=12),
+        cartesian.Axis1d(name="R", units="cm", size=8, upper_limit=9)]
+
+mesh = mesh.Mesh(axes)
+
+
+util.geometry3d_pyvista.show_cell(mesh, cell_index=(3, 3, 3))
+
+tomomak.util.geometry3d_trimesh.show_cell(mesh, cell_index=(3, 3, 3))
+
 
 
 g = eqdsk.read_eqdsk('gglobus32994.g', b_ccw=-1)
 eqdsk.psi_to_rho(g)
-print(g)
-axes = [cartesian.Axis1d(name="R", units="cm", size=13),
-        cartesian.Axis1d(name="Z", units="cm", lower_limit=-10, size=12, upper_limit=10),
-        toroidal.Axis1d(radius=0, name="theta", units="rad", size=14, upper_limit=np.pi)
-        ]
+#
+axes = [level.Axis1d(level_map=g['rho'], x=g['r'], y=g['z'], x_axis=g['raxis'], y_axis=g['zaxis'], bry_level=0.999,
+                     name="rho", units="a.u.", size=12),
+        polar.Axis1d(name="theta", units="rad", size=20)]
+# axes = [polar.Axis1d(name="phi", units="rad", size=12),
+#         cartesian.Axis1d(name="R", units="cm", size=15, upper_limit=10)]
 m = mesh.Mesh(axes)
 mod = model.Model(mesh=m)
-
-res = objects2d.ellipse(m, center=(5,0), ax_len=(5.2, 5.2), index=(0, 1), broadcast=False)
-real_solution = geometry3d.broadcast_2d_to_3d(res, m, (0, 1), 2, 'solution')
+real_solution = res = objects2d.ellipse(m, center=(0.36,0.0), ax_len=(0.2, 0.2), density=0)
 mod.solution = real_solution
-mod.plot2d( )
+mod.plot2d(style ='colormesh', cartesian_coordinates=True)
+res = axes[0].cell_edges2d_cartesian(axes[1])
+res = np.array(res[1][1])
+# plt.plot(res[:,0], res[:, 1], 'g^')
+# plt.show()
+
+
+res = objects2d.ellipse(m, center=(0.36,0.0), ax_len=(0.2, 0.2), index=(0, 1), broadcast=False)
+real_solution = tomomak.util.geometry3d_trimesh.broadcast_2d_to_3d(res, m, (0, 1), 2, 'solution')
+mod.solution = real_solution
+mod.plot2d()
 # mod.plot3d(cartesian_coordinates=True, axes=True, style = 1)
 # mod.plot3d(cartesian_coordinates=True, axes=True, style = 2)
 # mod.plot3d(cartesian_coordinates=True, axes=True, style = 3)
@@ -261,7 +298,7 @@ axes = [toroidal.Axis1d(radius = 10, name="theta", units="rad", size=7),
 
 mesh = mesh.Mesh(axes)
 vertices, faces = axes[0].cell_edges3d_cartesian(axes[1], axes[2])
-geometry3d.show_cell(mesh, cell_index=(3, 3, 3))
+tomomak.util.geometry3d_trimesh.show_cell(mesh, cell_index=(3, 3, 3))
 
 #
 # And that's it. You get solution, which is, of course, not perfect,

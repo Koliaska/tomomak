@@ -1,5 +1,6 @@
-import tomomak.util.geometry3d as geometry3d
+import tomomak.util.geometry3d_basic as geometry3d
 import tomomak.util.array_routines as array_routines
+import tomomak.util.geometry3d_trimesh
 from tomomak.util.engine import muti_proc
 from tomomak.util import text
 import numpy as np
@@ -26,7 +27,7 @@ def four_pi_det(mesh, position, index=(0, 1, 2), response=1, radius_dependence=T
     """
     if isinstance(index, int):
         index = [index]
-    volumes = geometry3d.cell_volumes(mesh, index)
+    volumes = tomomak.util.geometry3d_trimesh.cell_volumes(mesh, index)
     volumes = volumes * response
     if radius_dependence:
         distances = geometry3d.cell_distances(mesh, position, index)
@@ -35,7 +36,7 @@ def four_pi_det(mesh, position, index=(0, 1, 2), response=1, radius_dependence=T
         #     sorted_dist = np.sort(distances, axis=None)
         #     distances[tuple(zero[0])] = sorted_dist[1] / (2 ** 4 / 3)
         volumes /= 4 * np.pi * distances ** 2
-    volumes = geometry3d.convert_slice_from_cartesian(volumes, mesh, index, data_type='detector_geometry')
+    volumes = tomomak.util.geometry3d_trimesh.convert_slice_from_cartesian(volumes, mesh, index, data_type='detector_geometry')
     if broadcast:
         volumes = array_routines.broadcast_object(volumes, index, mesh.shape)
     return volumes
@@ -65,7 +66,7 @@ def four_pi_detector_array(mesh, focus_point, radius, theta_num, phi_num, index=
     shape = [0]
     shape.extend(mesh.shape)
     res = np.zeros(shape)
-    volumes = geometry3d.cell_volumes(mesh, index)
+    volumes = tomomak.util.geometry3d_trimesh.cell_volumes(mesh, index)
     volumes = volumes * response
     for x_n in range(theta_num):
         theta = np.pi / (theta_num + 2) * (x_n + 1)
@@ -79,7 +80,7 @@ def four_pi_detector_array(mesh, focus_point, radius, theta_num, phi_num, index=
             if radius_dependence:
                 distances = geometry3d.cell_distances(mesh, position, index)
                 v /= 4 * np.pi * distances ** 2
-            v = geometry3d.convert_slice_from_cartesian(v, mesh, index, data_type='detector_geometry')
+            v = tomomak.util.geometry3d_trimesh.convert_slice_from_cartesian(v, mesh, index, data_type='detector_geometry')
             if broadcast:
                 v = array_routines.broadcast_object(v, index, mesh.shape)
             addition = np.array([v, ])
@@ -118,25 +119,25 @@ def line_detector(mesh, p1, p2, radius, calc_volume, index=(0, 1, 2),
     """
     if isinstance(index, int):
         index = [index]
-    trimesh_list = geometry3d.get_trimesh_grid(mesh, index)
+    trimesh_list = tomomak.util.geometry3d_trimesh.get_grid(mesh, index)
     distances = None
     if calc_volume:
         distances = geometry3d.cell_distances(mesh, p1, index)
         max_dist = np.max(distances) * 1.3
-        transform_matrix = geometry3d.trimesh_transform_matrix(p1, p2, max_dist / 2)
+        transform_matrix = tomomak.util.geometry3d_trimesh.transform_matrix(p1, p2, max_dist / 2)
         obj3d = trimesh.creation.cylinder(radius, max_dist)
         obj3d.apply_transform(transform_matrix)
-        volumes = geometry3d.grid_intersection3d(trimesh_list, obj3d)
+        volumes = tomomak.util.geometry3d_trimesh.grid_intersection3d(trimesh_list, obj3d)
     else:
         if radius is not None:
             raise ValueError("Radius is not used when calc_volume is False. Set radius to None.")
-        volumes = geometry3d.grid_ray_intersection(trimesh_list, p1, p2)
+        volumes = tomomak.util.geometry3d_trimesh.grid_ray_intersection(trimesh_list, p1, p2)
     volumes *= response
     if radius_dependence:
         if distances is None:
             distances = geometry3d.cell_distances(mesh, p1, index)
         volumes /= 4 * np.pi * distances ** 2
-    volumes = geometry3d.convert_slice_from_cartesian(volumes, mesh, index, data_type='detector_geometry')
+    volumes = tomomak.util.geometry3d_trimesh.convert_slice_from_cartesian(volumes, mesh, index, data_type='detector_geometry')
     if broadcast:
         volumes = array_routines.broadcast_object(volumes, index, mesh.shape)
     return volumes
@@ -163,18 +164,18 @@ def cone_detector(mesh, p1, p2, divergence, index=(0, 1, 2),
     """
     if isinstance(index, int):
         index = [index]
-    trimesh_list = geometry3d.get_trimesh_grid(mesh, index)
+    trimesh_list = tomomak.util.geometry3d_trimesh.get_grid(mesh, index)
     distances = geometry3d.cell_distances(mesh, p1, index)
     max_dist = np.max(distances) * 1.3 / np.cos(divergence / 2)
-    transform_matrix = geometry3d.trimesh_transform_matrix(p1, p2, max_dist)
+    transform_matrix = tomomak.util.geometry3d_trimesh.transform_matrix(p1, p2, max_dist)
     radius = max_dist * np.sin(divergence)
     obj3d = trimesh.creation.cone(radius, max_dist)
     obj3d.apply_transform(transform_matrix)
-    volumes = geometry3d.grid_intersection3d(trimesh_list, obj3d)
+    volumes = tomomak.util.geometry3d_trimesh.grid_intersection3d(trimesh_list, obj3d)
     volumes *= response
     if radius_dependence:
         volumes /= 4 * np.pi * distances ** 2
-    volumes = geometry3d.convert_slice_from_cartesian(volumes, mesh, index, data_type='detector_geometry')
+    volumes = tomomak.util.geometry3d_trimesh.convert_slice_from_cartesian(volumes, mesh, index, data_type='detector_geometry')
     if broadcast:
         volumes = array_routines.broadcast_object(volumes, index, mesh.shape)
     return volumes
@@ -205,16 +206,16 @@ def custom_detector(mesh, vertices, detector_origin=None, index=(0, 1, 2),
     """
     if isinstance(index, int):
         index = [index]
-    obj3d = geometry3d.get_trimesh_obj(vertices)
-    trimesh_list = geometry3d.get_trimesh_grid(mesh, index)
-    volumes = geometry3d.grid_intersection3d(trimesh_list, obj3d)
+    obj3d = tomomak.util.geometry3d_trimesh.get_obj(vertices)
+    trimesh_list = tomomak.util.geometry3d_trimesh.get_grid(mesh, index)
+    volumes = tomomak.util.geometry3d_trimesh.grid_intersection3d(trimesh_list, obj3d)
     volumes *= response
     if radius_dependence:
         if detector_origin is None:
             detector_origin = vertices[0]
         distances = geometry3d.cell_distances(mesh, detector_origin, index)
         volumes /= 4 * np.pi * distances ** 2
-    volumes = geometry3d.convert_slice_from_cartesian(volumes, mesh, index, data_type='detector_geometry')
+    volumes = tomomak.util.geometry3d_trimesh.convert_slice_from_cartesian(volumes, mesh, index, data_type='detector_geometry')
     if broadcast:
         volumes = array_routines.broadcast_object(volumes, index, mesh.shape)
     return volumes

@@ -16,8 +16,8 @@ def polygon(mesh, points=((0, 0), (5, 5), (10, 0)), index=(0, 1), density=1, bro
     If there are more than 2 dimension in model, broadcasting to other dimensions is performed.
     If broadcasting is not needed private method _polygon may be used.
     Only axes which implements cell_edges2d_cartesian method are supported.
-    cell_edges2d_cartesian method should  accept second axe and return 2d list of ordered sequence of point tuples for two 1d axes
-    or 1d list of ordered sequence of point tuples for one 2d axis.
+    cell_edges2d_cartesian method should  accept second axe and return 2d list of ordered sequence of point tuples
+    for two 1d axes or 1d list of ordered sequence of point tuples for one 2d axis.
     Each point tuple represents cell borders in the 2D cartesian coordinates.
     E.g. borders of the cell of two cartesian axes with edges (0,7) and (0,5)
     is a rectangle which can be represented by the following point tuple ((0 ,0), (0, 7), (5,7), (5, 0)).
@@ -59,7 +59,8 @@ def rectangle(mesh, center=(0, 0), size=(10, 10), index=(0, 1), density=1, broad
 
     Args:
         mesh (tomomak.main_structures.Mesh): mesh to work with.
-        center (tuple of int, optional): Center of the rectangle, given by tuples with 2 elements(x, y). default: (0, 0).
+        center (tuple of int, optional): Center of the rectangle, given by tuples with 2 elements(x, y).
+            default: (0, 0).
         size (tuple of int, optional): Length and height of the rectangle,
             given by tuples with 2 elements(length, height). default: (10, 10).
         index (tuple of two ints, optional): axes to build object at. Default:  (0,1)

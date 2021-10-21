@@ -13,8 +13,8 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
     If there are more than 2 dimension in model, broadcasting to other dimensions is performed.
     If broadcasting is not needed private method _polygon may be used.
     Only axes which implements cell_edges2d_cartesian method are supported.
-    cell_edges2d_cartesian method should  accept second axe and return 2d list of ordered sequence of point tuples for two 1d axes
-    or 1d list of ordered sequence of point tuples for one 2d axis.
+    cell_edges2d_cartesian method should  accept second axe and return 2d list of ordered sequence of point tuples
+        for two 1d axes or 1d list of ordered sequence of point tuples for one 2d axis.
     Each point tuple represents cell borders in the 2D cartesian coordinates.
     E.g. borders of the cell of two cartesian axes with edges (0,7) and (0,5)
     is a rectangle which can be represented by the following point tuple ((0 ,0), (0, 7), (5,7), (5, 0)).
@@ -68,7 +68,7 @@ def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
         except (TypeError, AttributeError, NotImplementedError):
             try:
                 cells = np.array(mesh.axes[i2].cell_edges2d_cartesian(mesh.axes[i1]), dtype=object)
-                cells =np.transpose(cells)
+                cells = np.transpose(cells)
             except (NotImplementedError, TypeError) as e:
                 raise type(e)("Custom axis should implement cell_edges2d_cartesian method. "
                               "This method returns 2d list of ordered sequence of point tuples."
@@ -397,5 +397,3 @@ def broadcast_1d_to_2d(data, mesh, index1, index2, data_type):
     else:
         raise ValueError('Unknown data type.')
     return new_data
-
-

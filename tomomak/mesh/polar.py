@@ -236,5 +236,4 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             ax_names = None
         plot, ax = super().plot3d(data, axis2, axis3, mesh, data_type, colormap, axes,
                                   cartesian_coordinates, interp_size, ax_names, *args, **kwargs)
-
         return plot, ax
