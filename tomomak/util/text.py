@@ -65,6 +65,8 @@ def solution_caption(cartesian, *axes):
         for a in axes:
             if type(a) is tomomak.mesh.cartesian.Axis1d and a.spatial:
                 cart_units = a.units
+        if cart_units is None:  # no cartesian axes
+            cart_units = 'a.u.'
     units = [a.units for a in axes]
     for i, u in enumerate(units):
         if axes[i].spatial:

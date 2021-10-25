@@ -77,27 +77,29 @@ from mayavi import mlab
 
 g = eqdsk.read_eqdsk('gglobus32994.g', b_ccw=-1)
 eqdsk.psi_to_rho(g)
-# edges=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-axes = [toroidal.Axis1d(radius=g['raxis'], name="theta", units="rad", size=2, upper_limit=np.pi/2),
+
+axes = [toroidal.Axis1d(radius=0, name="theta", units="rad", size=6, upper_limit=np.pi/2),
         level.Axis1d(level_map=g['rho'], x=g['r'], y=g['z'], x_axis=g['raxis'], y_axis=g['zaxis'], bry_level=0.999,
-                     name="rho", units="a.u.",edges=[0.0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.999]),
+                     name="rho", units="a.u.",edges=[0.0, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.998, 0.999]),
         polar.Axis1d(name="theta", units="rad", size=20)]
 # axes = [polar.Axis1d(name="phi", units="rad", size=12),
 #         cartesian.Axis1d(name="R", units="cm", size=15, upper_limit=10)]
 m = mesh.Mesh(axes)
 mod = model.Model(mesh=m)
-real_solution = objects2d.ellipse(m, ax_len=(1, 1), index=(1,2),center=(0.36,0), broadcast=False)
-res= tomomak.util.array_routines.broadcast_object(real_solution, (1,2), m.shape)
-res = tomomak.util.array_routines.normalize_broadcasted(res, (1,2), m, 'solution')
+res = objects2d.ellipse(m, ax_len=(2, 2), index=(1,2),center=(0.36,0), broadcast=True)
+# res= tomomak.util.array_routines.broadcast_object(real_solution, (1,2), m.shape)
+# res = tomomak.util.array_routines.normalize_broadcasted(res, (1,2), m, 'solution')
 vols = util.geometry3d_trimesh.cell_volumes(m)
-#res = res / vols
+areas = util.geometry2d.cell_areas(m, (1, 2))
+res = res * vols / areas
 #noise = np.random.normal(0, 0.0001, real_solution.shape)
 
-#res = util.array_routines.multiply_along_axis(res,np.linspace(22,10, num=axes[1].size), axis=1)
+res = util.array_routines.multiply_along_axis(res,np.linspace(22,10, num=axes[1].size), axis=1)
+res = util.array_routines.multiply_along_axis(res,np.abs(np.sin(np.linspace(0, np.pi, num=axes[2].size))) + 10, axis=2)
 mod.solution = res
 
-mod.plot2d(style ='colormesh', cartesian_coordinates=True, index=(1,2))
-mod.plot3d(cartesian_coordinates=True, axes=True, style=0)
+#mod.plot2d(style ='colormesh', cartesian_coordinates=True, index=(1,2))
+mod.plot3d(cartesian_coordinates=True, axes=True, style=3)
 
 axes = [toroidal.Axis1d(radius=15, name="theta", units="rad", size=7, upper_limit=np.pi),
         polar.Axis1d(name="phi", units="rad", size=8),

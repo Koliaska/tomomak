@@ -166,8 +166,10 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 for i, row in enumerate(x):
                     for j, _ in enumerate(row):
                         cell = shapely.geometry.Polygon(cells[i][j])
-                        x[i, j], y[i, j] = cell.centroid
+                        x[i, j] = cell.centroid.x
+                        y[i, j] = cell.centroid.y
                 return x, y
+        raise TypeError("cartesian_coordinate with such combination of axes is not supported.")
 
     @abstract_axes.precalculated
     def from_cartesian(self, coordinates, *axes):
@@ -177,13 +179,14 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             x_new, y_new, = coordinates[0], coordinates[1]
             # Level-polar coordinates
             if type(axes[0]) is polar.Axis1d:
-                theta = (np.arctan2(y_new, x_new) + 2 * np.pi) % (2 * np.pi)
+                theta = (np.arctan2(y_new - self.y_axis, x_new - self.x_axis) + 2 * np.pi) % (2 * np.pi)
+
                 f = interpolate.interp2d(self.x, self.y, self.level_map, kind='cubic')
-                new_levels = f(x_new, y_new)
+                new_levels = np.diagonal(f(x_new, y_new))
                 return new_levels, theta
         else:
             raise TypeError("from_cartesian with such combination of axes is not supported.")
 
-        def plot3d(self, data, axis2, axis3, mesh, data_type='solution', colormap='blue-red', axes=False,
-                   cartesian_coordinates=False, interp_size=None, *args, **kwargs):
-            raise TypeError("plot3d with such combination of axes is not supported.")
+    # def plot3d(self, data, axis2, axis3, mesh, data_type='solution', colormap='blue-red', axes=False,
+    #            cartesian_coordinates=False, interp_size=None, *args, **kwargs):
+    #     raise TypeError("plot3d with such combination of axes is not supported.")

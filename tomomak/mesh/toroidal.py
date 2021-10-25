@@ -149,7 +149,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                      """
         if not axes:
             raise ValueError("Impossible to convert 1D polar axis to cartesian coordinates.")
-        if len(axes) == 2:
+        if len(axes) == 2:  # 3D case
             shape = (self.size, axes[0].size, axes[1].size)
             x = np.zeros(shape)
             y = np.zeros(shape)
@@ -161,6 +161,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 if not axes[1].spatial:
                     raise ValueError("Toroidal axis works only with spatial axes")
                 x2d, y2d = axes[0].cartesian_coordinates(axes[1])
+
                 tor_axis = self.coordinates
                 for i, row in enumerate(x):
                     for j, col in enumerate(row):
@@ -207,11 +208,27 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 r_hor, theta = self._polar_to_cart(xx, yy)
                 r = r_hor - self._R
                 return theta, r, zz
-            # Level-polar coordinates
+            # Toroidal-Level-polar coordinates
             if type(axes[0]) is level.Axis1d and type(axes[1]) is polar.Axis1d:
                 r_hor, theta = self._polar_to_cart(xx, yy)
-                rho, phi = axes[0].from_cartesian((r_hor, zz), axes[1])
-                return theta, rho, phi
+                lev = np.zeros_like(r_hor)
+                phi = np.zeros_like(lev)
+                for i, rr in enumerate(r_hor):
+                    for j, _ in enumerate(rr):
+                        lev[i, j], phi[i, j] = axes[0].from_cartesian((r_hor[i,j], zz[i,j]), axes[1])
+                    # lev[i] = np.reshape(rav_rho, lev[i].shape)
+                    # phi[i] = np.reshape(rav_phi, phi[i].shape)
+                    # rav_r = r_hor[i].flatten()
+                    # rav_z = zz[i].flatten()
+                    # rav_rho, rav_phi = axes[0].from_cartesian((rav_r, rav_z), axes[1])
+                    # lev[i] = np.reshape(rav_rho, lev[i].shape)
+                    # phi[i] = np.reshape(rav_phi, phi[i].shape)
+                # print(zz[:, :, 0])
+                # print(zz[:, :, 1])
+                #
+                # lev = util.array_routines.broadcast_object(lev, (1, 2), r_hor.shape)
+                # phi = util.array_routines.broadcast_object(phi, (1, 2), r_hor.shape)
+                return theta, lev, phi
         else:
             raise TypeError("from_cartesian with such combination of axes is not supported.")
 
@@ -228,8 +245,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 else:
                     units = ""
                 ax_names = ('{}, {}'.format('X', units),
-                            '{}, {}'.format('Y', units),
-                            '{}, {}'.format('Z', units))
+                            '{}, {}'.format('Z', units),
+                            '{}, {}'.format('Y', units))
             else:
                 raise TypeError("plot3d with such combination of axes is not supported.")
         else:

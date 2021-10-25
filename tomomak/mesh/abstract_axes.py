@@ -157,7 +157,7 @@ def precalculated(method):
         try:
             arg_list = getattr(self, stored_name + '_args')
             for a1, a2 in zip(arg_list, args):
-                if type(a1) is list:
+                if type(a1) is list or tuple:
                     if not np.all(np.array(a1) == np.array(a2)):
                         parameters_match = False
                 else:
@@ -530,9 +530,9 @@ class Abstract1dAxis(AbstractAxis):
             else:
                 raise ValueError('data type {} is unknown'.format(data_type))
             return 0, 0
+
         if cartesian_coordinates:
             x_grid, y_grid, z_grid = self.cartesian_coordinates(axis2, axis3)
-
         else:
             coord = [self.coordinates, axis2.coordinates, axis3.coordinates]
             x_grid, y_grid, z_grid = np.array(np.meshgrid(*coord, indexing='ij'))
