@@ -219,11 +219,16 @@ class Abstract1dAxis(AbstractAxis):
             self._create_using_limits(lower_limit, upper_limit, size)
 
     def _create_using_edges(self, edges):
-        coordinates = np.zeros(len(edges) - 1)
+        self._size = len(edges) - 1
+        edges = np.array(edges)
+        self._cell_edges = edges
+        coordinates = np.zeros(self._size)
         for i, _ in enumerate(coordinates):
             coordinates[i] = (edges[i] + edges[i + 1]) / 2
-        self._create_using_coordinates(coordinates, edges[0])
-        self._cell_edges[0], self._cell_edges[-1] = edges[0], edges[-1]
+        self._coordinates = coordinates
+        self._volumes = edges[1:] - edges[0:-1]
+        # self._create_using_coordinates(coordinates, edges[0])
+        # self._cell_edges[0], self._cell_edges[-1] = edges[0], edges[-1]
 
     def _create_using_limits(self, lower_limit, upper_limit, size):
         self._size = size

@@ -80,7 +80,7 @@ eqdsk.psi_to_rho(g)
 # edges=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 axes = [toroidal.Axis1d(radius=g['raxis'], name="theta", units="rad", size=2, upper_limit=np.pi/2),
         level.Axis1d(level_map=g['rho'], x=g['r'], y=g['z'], x_axis=g['raxis'], y_axis=g['zaxis'], bry_level=0.999,
-                     name="rho", units="a.u.",edges=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]),
+                     name="rho", units="a.u.",edges=[0.0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.999]),
         polar.Axis1d(name="theta", units="rad", size=20)]
 # axes = [polar.Axis1d(name="phi", units="rad", size=12),
 #         cartesian.Axis1d(name="R", units="cm", size=15, upper_limit=10)]
