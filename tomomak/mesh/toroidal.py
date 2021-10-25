@@ -54,6 +54,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             edges2d = axis2.cell_edges2d_cartesian(axis3)
             if type(axis2) is polar.Axis1d:
                 res2d = axis2.RESOLUTION2D
+            elif type(axis3) is polar.Axis1d:
+                res2d = axis3.RESOLUTION2D
             else:
                 res2d = 1
             # Precalculate faces for 2 cases - 1) standard, 2) - center of the mesh
@@ -135,6 +137,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                             faces[i][j][k] = face
                         else:
                             faces[i][j][k] = faces_center
+
+
             return np.array(vertices, dtype=object), np.array(faces)
         else:
             raise TypeError("cell_edges3d_cartesian with such combination of axes is not supported.")
@@ -219,9 +223,13 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             if ((type(axis2) is polar.Axis1d or type(axis2) is cartesian.Axis1d)
                     and type(axis3) is cartesian.Axis1d)\
                     or (type(axis2) is level.Axis1d and type(axis3) is polar.Axis1d):
-                ax_names = ('{}, {}'.format('X', axis3.units),
-                            '{}, {}'.format('Y', axis3.units),
-                            '{}, {}'.format('Z', axis3.units))
+                if type(axis3) is cartesian.Axis1d:
+                    units = axis3.units
+                else:
+                    units = ""
+                ax_names = ('{}, {}'.format('X', units),
+                            '{}, {}'.format('Y', units),
+                            '{}, {}'.format('Z', units))
             else:
                 raise TypeError("plot3d with such combination of axes is not supported.")
         else:

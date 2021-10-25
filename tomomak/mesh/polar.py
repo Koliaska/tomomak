@@ -39,7 +39,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                     for k in range(self.RESOLUTION2D):
                         points.append((edge_r[j + 1], edge_p[i] + k * p_step))
                     points.append((edge_r[j + 1], edge_p[i + 1]))
-                    if edge_r[j] > 0:
+                    if edge_r[j] > 0:  # Not a central element
                         for k in range(self.RESOLUTION2D):
                             points.append((edge_r[j], edge_p[i + 1] - k * p_step))
                     for k, p in enumerate(points):

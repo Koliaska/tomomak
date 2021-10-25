@@ -12,7 +12,6 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     """
 
     """
-    RESOLUTION2D = 5
 
     def __init__(self, level_map, x, y, x_axis, y_axis, bry_level,
                  coordinates=None, edges=None, lower_limit=0, size=None, name="", units="", ):
@@ -39,6 +38,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         if type(axis2) is polar.Axis1d:
             shape = (self.size, axis2.size)
             res = np.zeros(shape).tolist()
+            res2d = axis2.RESOLUTION2D
 
             # Find level contours
             xx, yy = np.meshgrid(self.x, self.y)
@@ -47,11 +47,11 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             # Find polar angles
             r_max = np.sqrt((self.x[-1] - self.x[0]) ** 2 + (self.y[-1] - self.y[0]) ** 2) * 2
             original_angles = axis2.cell_edges
-            angles = np.zeros(self.RESOLUTION2D * (len(original_angles) - 1))
+            angles = np.zeros(res2d * (len(original_angles) - 1))
             # Add more angles between grid angles in order to correctly represent cell shape
             for i, _ in enumerate(angles):
-                orig_ind = int(np.floor(i / self.RESOLUTION2D))
-                angles[i] = original_angles[orig_ind] + i % self.RESOLUTION2D / self.RESOLUTION2D * \
+                orig_ind = int(np.floor(i / res2d))
+                angles[i] = original_angles[orig_ind] + i % res2d / res2d * \
                             (original_angles[orig_ind + 1] - original_angles[orig_ind])
             angles = np.append(angles, original_angles[-1])
             # Lines from the center
@@ -59,7 +59,6 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                                                                   (self.x_axis + r_max * np.cos(ang),
                                                                    self.y_axis + r_max * np.sin(ang))])
                              for ang in angles]
-
             def find_central_contour(cont):
                 """Find contour, closest to the axis."""
                 d = np.inf
@@ -74,7 +73,11 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             c2 = None  # second contour (outer)
             for i in range(len(contours) - 1):
                 if contours[i]:  # contours not empty - not central element
-                    c1 = c2  # first contour (inner)
+                    if c2 is not None:
+                        c1 = c2  # first contour (inner)
+                    else:
+                        cent_ind = find_central_contour(contours[i])
+                        c1 = shapely.geometry.polygon.LinearRing(contours[i][cent_ind])
                     cent_ind = find_central_contour(contours[i + 1])
                     c2 = shapely.geometry.polygon.LinearRing(contours[i + 1][cent_ind])
                     inters_points_c1 = [None] * len(section_lines)
@@ -82,14 +85,17 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                     for j, _ in enumerate(section_lines):
                         inters_points_c1[j] = c1.intersection(section_lines[j])
                         inters_points_c2[j] = c2.intersection(section_lines[j])
+
                     for j in range(len(axis2.cell_edges) - 1):
                         points = []
-                        for k in range(self.RESOLUTION2D + 1):
-                            points.append((inters_points_c2[j * self.RESOLUTION2D + k].x,
-                                           inters_points_c2[j * self.RESOLUTION2D + k].y))
-                        for k in range(self.RESOLUTION2D + 1):
-                            points.append((inters_points_c1[(j + 1) * self.RESOLUTION2D - k].x,
-                                           inters_points_c1[(j + 1) * self.RESOLUTION2D - k].y))
+                        points.append((inters_points_c1[j * res2d].x,
+                                       inters_points_c1[j * res2d].y))  # counter-clockwise form the right bottom corner
+                        for k in range(res2d + 1):
+                            points.append((inters_points_c2[j * res2d + k].x,
+                                           inters_points_c2[j * res2d + k].y))
+                        for k in range(res2d):
+                            points.append((inters_points_c1[(j + 1) * res2d - k].x,
+                                           inters_points_c1[(j + 1) * res2d - k].y))
                         res[i][j] = points
 
                 else:  # special case - inner contour is a point (central point)
@@ -100,13 +106,13 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                         inters_points_c2[j] = c2.intersection(section_lines[j])
 
                     for j in range(len(axis2.cell_edges) - 1):
-                        points = []
-                        for k in range(self.RESOLUTION2D + 1):
-                            points.append((inters_points_c2[j * self.RESOLUTION2D + k].x,
-                                           inters_points_c2[j * self.RESOLUTION2D + k].y))
-                        points.append((self.x_axis, self.y_axis))
+                        points = [(self.x_axis, self.y_axis)]
+                        for k in range(res2d + 1):
+                            points.append((inters_points_c2[j * res2d + k].x,
+                                           inters_points_c2[j * res2d + k].y))
                         res[i][j] = points
             plt.close()
+
             return res
         else:
             raise TypeError("cell_edges2d_cartesian with such combination of axes is not supported.")
