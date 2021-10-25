@@ -77,7 +77,7 @@ from mayavi import mlab
 
 g = eqdsk.read_eqdsk('gglobus32994.g', b_ccw=-1)
 eqdsk.psi_to_rho(g)
-#edges=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+# edges=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 axes = [toroidal.Axis1d(radius=g['raxis'], name="theta", units="rad", size=2, upper_limit=np.pi/2),
         level.Axis1d(level_map=g['rho'], x=g['r'], y=g['z'], x_axis=g['raxis'], y_axis=g['zaxis'], bry_level=0.999,
                      name="rho", units="a.u.",edges=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]),
