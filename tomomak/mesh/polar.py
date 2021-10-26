@@ -12,7 +12,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     polar + cartesian -> 2d polar
     polar + cartesian + cartesian -> 3d cylindrical
     """
-    RESOLUTION2D = 5
+    RESOLUTION2D = 10
 
     def __init__(self, coordinates=None, edges=None, lower_limit=0, upper_limit=2*np.pi, size=None, name="", units="",):
         super().__init__(coordinates, edges, lower_limit, upper_limit, size, name, units, True)

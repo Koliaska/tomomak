@@ -38,6 +38,10 @@ def detector_caption(mesh, data_type, cartesian=False):
         for a in mesh.axes:
             if type(a) is tomomak.mesh.cartesian.Axis1d and a.spatial:
                 cart_units = a.units
+        if cart_units is None:  # no cartesian axes
+            for a in mesh.axes:
+                if a.cart_units is not None:
+                    cart_units = a.cart_units
     if data_type == 'detector_geometry':
         units = [a.units for a in mesh.axes]
         for i, _ in enumerate(units):
@@ -66,7 +70,9 @@ def solution_caption(cartesian, *axes):
             if type(a) is tomomak.mesh.cartesian.Axis1d and a.spatial:
                 cart_units = a.units
         if cart_units is None:  # no cartesian axes
-            cart_units = 'a.u.'
+            for a in axes:
+                if a.cart_units is not None:
+                    cart_units = a.cart_units
     units = [a.units for a in axes]
     for i, u in enumerate(units):
         if axes[i].spatial:

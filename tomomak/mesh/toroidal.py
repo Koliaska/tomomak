@@ -246,6 +246,10 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                     or (type(axis2) is level.Axis1d and type(axis3) is polar.Axis1d):
                 if type(axis3) is cartesian.Axis1d:
                     units = axis3.units
+                elif axis2.cart_units is not None:
+                    units = axis2.cart_units
+                elif axis3.cart_units is not None:
+                    units = axis3.cart_units
                 else:
                     units = ""
                 ax_names = ('{}, {}'.format('X', units),

@@ -333,6 +333,7 @@ def detector_contour3d(data, x, y, z,  title='', colormap='blue-red', limits=Non
                     self.plot.contour.minimum_contour = np.amax(data) * 0.2
                     self.plot.module_manager.scalar_lut_manager.use_default_range = False
                     self.plot.module_manager.scalar_lut_manager.data_range = [min_d, max_d]
+
                 else:
                     warnings.warn("Equal norm is not supported for this style due to Mayavi bugs.")
 

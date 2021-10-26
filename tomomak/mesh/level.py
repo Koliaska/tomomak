@@ -10,18 +10,20 @@ from scipy import interpolate
 
 class Axis1d(abstract_axes.Abstract1dAxis):
     """
-
+        cart_units='a.u.' cartesian units for cartesian plotting
     """
 
-    def __init__(self, level_map, x, y, x_axis, y_axis, bry_level,
-                 coordinates=None, edges=None, lower_limit=0, size=None, name="", units="", ):
+    def __init__(self, level_map, x, y, x_axis, y_axis, bry_level, last_level_coordinates=None,
+                 coordinates=None, edges=None, lower_limit=0, size=None, name='', units='', cart_units='a.u.' ):
         super().__init__(coordinates, edges, lower_limit, bry_level, size, name, units, True)
+        self.cart_units = cart_units
         self.level_map = level_map
         self.x = x
         self.y = y
         self.x_axis = x_axis
         self.y_axis = y_axis
         self.bry_level = bry_level
+        self.last_level_coordinates = np.array(last_level_coordinates).T
         self._check_self_consistency()
 
     def _check_self_consistency(self):
@@ -80,6 +82,9 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                         c1 = shapely.geometry.polygon.LinearRing(contours[i][cent_ind])
                     cent_ind = find_central_contour(contours[i + 1])
                     c2 = shapely.geometry.polygon.LinearRing(contours[i + 1][cent_ind])
+                    if i == len(contours) - 2:  # special case for tha outer level
+                        if self.last_level_coordinates is not None:
+                            c2 = shapely.geometry.polygon.LinearRing(self.last_level_coordinates)
                     inters_points_c1 = [None] * len(section_lines)
                     inters_points_c2 = [None] * len(section_lines)
                     for j, _ in enumerate(section_lines):
@@ -126,7 +131,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         if cartesian_coordinates:
             if type(axis2) is not polar.Axis1d or not axis2.spatial:
                 raise TypeError("2D plots in cartesian coordinates with such combination of axes are not supported.")
-            ax_names = ("{}, {}".format('X', axis2.units), "{}, {}".format('Y', axis2.units))
+
+            ax_names = ("{}, {}".format('X', self.cart_units), "{}, {}".format('Y', self.cart_units))
             if style == 'colormesh':
                 if data_type == 'solution':
                     if title is None:

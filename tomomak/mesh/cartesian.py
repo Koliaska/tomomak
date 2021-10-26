@@ -54,3 +54,9 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             if type(a) is not Axis1d:
                 raise TypeError("from_cartesian with such combination of axes is not supported.")
         return coordinates
+
+    @property
+    def cart_units(self):
+        """See description in abstract axes.
+        """
+        return self.units
