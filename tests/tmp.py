@@ -78,7 +78,7 @@ from mayavi import mlab
 g = eqdsk.read_eqdsk('gglobus32994.g', b_ccw=-1)
 eqdsk.psi_to_rho(g)
 
-axes = [toroidal.Axis1d(radius=0, name="theta", units="rad", size=6, upper_limit=np.pi/2),
+axes = [toroidal.Axis1d(radius=0.0, name="theta", units="rad", size=6, upper_limit=np.pi/2*3),
         level.Axis1d(level_map=g['rho'], x=g['r'], y=g['z'], x_axis=g['raxis'], y_axis=g['zaxis'], bry_level=0.999,
                      name="rho", units="a.u.",edges=[0.0, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.998, 0.999]),
         polar.Axis1d(name="theta", units="rad", size=20)]
@@ -99,7 +99,7 @@ res = util.array_routines.multiply_along_axis(res,np.abs(np.sin(np.linspace(0, n
 mod.solution = res
 
 #mod.plot2d(style ='colormesh', cartesian_coordinates=True, index=(1,2))
-mod.plot3d(cartesian_coordinates=True, axes=True, style=3)
+mod.plot3d(cartesian_coordinates=True, axes=True, style=0)
 
 axes = [toroidal.Axis1d(radius=15, name="theta", units="rad", size=7, upper_limit=np.pi),
         polar.Axis1d(name="phi", units="rad", size=8),
