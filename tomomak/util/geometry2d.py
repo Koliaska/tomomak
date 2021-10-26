@@ -4,6 +4,7 @@ import numpy as np
 import shapely.geometry
 from . import array_routines
 from tomomak.mesh import cartesian
+from scipy.spatial import Delaunay
 
 
 def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
@@ -397,3 +398,59 @@ def broadcast_1d_to_2d(data, mesh, index1, index2, data_type):
     else:
         raise ValueError('Unknown data type.')
     return new_data
+
+
+def in_out_mask(grid, hull, method='ray_casting', out_value=0, in_value=1):
+    """ Returns 2d array, where points of the grid
+     inside of the hull are filled with in_value, and point outside - with out_value.
+
+    Args:
+        grid (tuple of 2 1d ndarrays): (x, y) to form a grid on grid.
+        hull (tuple of 2 1d ndarrays): (x, y) of the closed line, which separates inner and outer areas.
+        method (str): Used method.  'delaunay' or 'ray_casting'. Default: 'ray_casting'.
+        out_value (double): Value to fill outer points with. Default: 0.
+        in_value (double): Value to fill inner points with.  Default: 1.
+
+    Returns:
+        mask (2d ndarray): resulting mask for the input (x,y) grid.
+    """
+
+    x = grid[0]
+    y = grid[1]
+    nx = x.size
+    ny = y.size
+    k = nx * ny
+    p = np.zeros((k, 2))
+    for i in range(k):
+        y_ind = int(np.floor(i / nx))
+        p[i, 0] = y[y_ind]
+        p[i, 1] = x[i % nx]
+    hull = np.array(hull).T[:, [1, 0]]
+    inside = np.zeros((ny, nx))
+    if method == 'delaunay':
+        hull = Delaunay(hull)
+        p = (hull.find_simplex(p) >= 0)
+    else:        # ray casting
+        def point_in_poly(xp, yp, poly):
+            """Check if point is inside of the surface."""
+            n = len(poly)
+            inside = False
+            xints = None
+            p1x, p1y = poly[0]
+            for i in range(n+1):
+                p2x, p2y = poly[i % n]
+                if yp > min(p1y, p2y):
+                    if yp <= max(p1y, p2y):
+                        if xp <= max(p1x, p2x):
+                            if p1y != p2y:
+                                xints = (yp - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                            if p1x == p2x or xp <= xints:
+                                inside = not inside
+                p1x, p1y = p2x, p2y
+            return inside
+
+        p = [int(point_in_poly(p[i, 0], p[i, 1], hull)) for i in range(k)]
+    for i in range(k):
+        inside[int(np.floor(i/nx)), i % nx] = p[i]
+    inside = np.where(inside > 0, in_value, out_value)
+    return inside

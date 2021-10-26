@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 import tomomak.util.geometry3d_trimesh
 from tomomak.model import *
 from tomomak.solver import *
@@ -77,10 +79,11 @@ from mayavi import mlab
 
 g = eqdsk.read_eqdsk('gglobus32994.g', b_ccw=-1)
 eqdsk.psi_to_rho(g)
+g["masked_rho"] = geometry2d.in_out_mask((g['r'], g['z']), (g["rbdry"], g["zbdry"]), in_value=1, out_value=10) * g["rho"]
 
 axes = [toroidal.Axis1d(radius=0.0, name="theta", units="rad", size=6, upper_limit=np.pi/2*3),
-        level.Axis1d(level_map=g['rho'], x=g['r'], y=g['z'], x_axis=g['raxis'], y_axis=g['zaxis'], bry_level=0.999,
-                     name="rho", units="a.u.",edges=[0.0, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.998, 0.999]),
+        level.Axis1d(level_map=g['masked_rho'], x=g['r'], y=g['z'], x_axis=g['raxis'], y_axis=g['zaxis'], bry_level=0.999,
+                     name="rho", units="a.u.",edges=[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8,0.9,  0.998, 0.999]),
         polar.Axis1d(name="theta", units="rad", size=20)]
 # axes = [polar.Axis1d(name="phi", units="rad", size=12),
 #         cartesian.Axis1d(name="R", units="cm", size=15, upper_limit=10)]
@@ -93,13 +96,17 @@ vols = util.geometry3d_trimesh.cell_volumes(m)
 areas = util.geometry2d.cell_areas(m, (1, 2))
 res = res * vols / areas
 #noise = np.random.normal(0, 0.0001, real_solution.shape)
-
+res = util.array_routines.multiply_along_axis(res,np.abs(np.sin(np.linspace(0, np.pi, num=axes[2].size))) + 8, axis=2)
+res[:,0,:] = res[:,0,:] / (np.abs(np.sin(np.linspace(0, np.pi, num=axes[2].size))) + 10) * 11
+#res[:,0,:] = np.full_like(res[:,0,:] , np.mean(res[:,0,:]* vols[:,0,:] / areas[0,:]))
 res = util.array_routines.multiply_along_axis(res,np.linspace(22,10, num=axes[1].size), axis=1)
-res = util.array_routines.multiply_along_axis(res,np.abs(np.sin(np.linspace(0, np.pi, num=axes[2].size))) + 10, axis=2)
+
+
+
 mod.solution = res
 
 #mod.plot2d(style ='colormesh', cartesian_coordinates=True, index=(1,2))
-mod.plot3d(cartesian_coordinates=True, axes=True, style=0)
+mod.plot3d(cartesian_coordinates=True, axes=True, style=3)
 
 axes = [toroidal.Axis1d(radius=15, name="theta", units="rad", size=7, upper_limit=np.pi),
         polar.Axis1d(name="phi", units="rad", size=8),

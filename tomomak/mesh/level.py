@@ -180,7 +180,6 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             # Level-polar coordinates
             if type(axes[0]) is polar.Axis1d:
                 theta = (np.arctan2(y_new - self.y_axis, x_new - self.x_axis) + 2 * np.pi) % (2 * np.pi)
-
                 f = interpolate.interp2d(self.x, self.y, self.level_map, kind='cubic')
                 new_levels = np.diagonal(f(x_new, y_new))
                 return new_levels, theta

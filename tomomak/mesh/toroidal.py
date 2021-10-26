@@ -9,8 +9,11 @@ from tomomak import util
 
 class Axis1d(abstract_axes.Abstract1dAxis):
     """
+    Toroidal rotation of the 2D coordinate system.
+    R - is the radius of the 2D coordinate x=0 rotation.
     From 0  to 2pi
     toroidal + polar + cartesian -> 3d toroidal system
+    toroidal + level + polar -> 3d symmetric level system
     """
 
     RESOLUTION3D = 5
@@ -211,11 +214,12 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             # Toroidal-Level-polar coordinates
             if type(axes[0]) is level.Axis1d and type(axes[1]) is polar.Axis1d:
                 r_hor, theta = self._polar_to_cart(xx, yy)
+                r_hor = r_hor - self._R
                 lev = np.zeros_like(r_hor)
                 phi = np.zeros_like(lev)
                 for i, rr in enumerate(r_hor):
                     for j, _ in enumerate(rr):
-                        lev[i, j], phi[i, j] = axes[0].from_cartesian((r_hor[i,j], zz[i,j]), axes[1])
+                        lev[i, j], phi[i, j] = axes[0].from_cartesian((r_hor[i, j], zz[i, j]), axes[1])
                     # lev[i] = np.reshape(rav_rho, lev[i].shape)
                     # phi[i] = np.reshape(rav_phi, phi[i].shape)
                     # rav_r = r_hor[i].flatten()
