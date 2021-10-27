@@ -9,26 +9,43 @@ from scipy import interpolate
 
 
 class Axis1d(abstract_axes.Abstract1dAxis):
-    """
-        cart_units='a.u.' cartesian units for cartesian plotting
+    """ Coordinates for representation of the map of the equal heights (levels).
+
+    2D Implemented combinations:
+        level + polar: levels are monotonically increasing or decreasing from the center (highest or lowest point).
+        RESOLUTION2D of the polar axis represent number of points for representation of one curved element.
+    3D Implemented combinations:
+        level + polar + toroidal:
+        level + polar system,  rotated toroidally around x=0 point of the level + polar system.
+    See abstract_axes.Axis1D for parent attributes description.
+
+        Attributes:
+        level_map (2d ndarray): xy map of the levels.
+        x (ndarray): 1D x grid at which level_map is represented.
+        y (ndarray): 1D y grid at which level_map is represented.
+        x_axis (float): x coordinate of the highest/lowest level.
+         Required for combination with polar coordinates. Optional.
+        y_axis (float): y coordinate of the highest/lowest level.
+         Required for combination with polar coordinates. Optional.
+        bry_level (float): level at the boundary - only if you want to study space inside of the level.
+         Required for combination with polar coordinates. Optional.
+        last_level_coordinates (tuple of ndarrays): xy coordinates of the boundary
+         - if you want to specify the boundary coordinates. Optional.
     """
 
-    def __init__(self, level_map, x, y, x_axis, y_axis, bry_level, last_level_coordinates=None,
-                 coordinates=None, edges=None, lower_limit=0, size=None, name='', units='', cart_units='a.u.' ):
-        super().__init__(coordinates, edges, lower_limit, bry_level, size, name, units, True)
+    def __init__(self, level_map, x, y, x_axis=None, y_axis=None, last_level_coordinates=None,
+                 coordinates=None, edges=None, lower_limit=0, upper_limit=1, size=None, name='', units='', cart_units='a.u.' ):
+        super().__init__(coordinates, edges, lower_limit, upper_limit, size, name, units, True)
         self.cart_units = cart_units
         self.level_map = level_map
         self.x = x
         self.y = y
         self.x_axis = x_axis
         self.y_axis = y_axis
-        self.bry_level = bry_level
         self.last_level_coordinates = np.array(last_level_coordinates).T
         self._check_self_consistency()
 
     def _check_self_consistency(self):
-        if np.all(self.level_map > self.bry_level):
-            raise ValueError("Boundary level is lower than smallest value in the level map.")
         if self.x_axis > np.amax(self.x) or self.x_axis < np.amin(self.x):
             raise ValueError("X axis coordinate is outside of the x grid.")
         if self.y_axis > np.amax(self.y) or self.y_axis < np.amin(self.y):
@@ -36,6 +53,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
 
     @abstract_axes.precalculated
     def cell_edges2d_cartesian(self, axis2):
+        """See description in abstract axes.
+        """
         # 2D levels vs rotational symmetry
         if type(axis2) is polar.Axis1d:
             shape = (self.size, axis2.size)
@@ -46,23 +65,27 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             xx, yy = np.meshgrid(self.x, self.y)
             cs = plt.contour(xx, yy, self.level_map, self.cell_edges)
             contours = cs.allsegs
+
             # Find polar angles
             r_max = np.sqrt((self.x[-1] - self.x[0]) ** 2 + (self.y[-1] - self.y[0]) ** 2) * 2
             original_angles = axis2.cell_edges
             angles = np.zeros(res2d * (len(original_angles) - 1))
+
             # Add more angles between grid angles in order to correctly represent cell shape
             for i, _ in enumerate(angles):
                 orig_ind = int(np.floor(i / res2d))
                 angles[i] = original_angles[orig_ind] + i % res2d / res2d * \
                             (original_angles[orig_ind + 1] - original_angles[orig_ind])
             angles = np.append(angles, original_angles[-1])
+
             # Lines from the center
             section_lines = [shapely.geometry.polygon.LineString([(self.x_axis, self.y_axis),
                                                                   (self.x_axis + r_max * np.cos(ang),
                                                                    self.y_axis + r_max * np.sin(ang))])
                              for ang in angles]
             def find_central_contour(cont):
-                """Find contour, closest to the axis."""
+                """Find contour, closest to the axis.
+                """
                 d = np.inf
                 ind = 0
                 for z, c in enumerate(cont):
@@ -124,10 +147,14 @@ class Axis1d(abstract_axes.Abstract1dAxis):
 
     @abstract_axes.precalculated
     def cell_edges3d_cartesian(self, axis2, axis3):
+        """See description in abstract axes.
+        """
         raise TypeError("cell_edges3d_cartesian with such combination of axes is not supported.")
 
     def plot2d(self, axis2, data, mesh, data_type='solution', style='colormesh', fill_scheme='viridis',
                cartesian_coordinates=False, grid=False, equal_norm=False, title=None, *args, **kwargs):
+        """See description in abstract axes.
+        """
         if cartesian_coordinates:
             if type(axis2) is not polar.Axis1d or not axis2.spatial:
                 raise TypeError("2D plots in cartesian coordinates with such combination of axes are not supported.")
@@ -192,6 +219,3 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         else:
             raise TypeError("from_cartesian with such combination of axes is not supported.")
 
-    # def plot3d(self, data, axis2, axis3, mesh, data_type='solution', colormap='blue-red', axes=False,
-    #            cartesian_coordinates=False, interp_size=None, *args, **kwargs):
-    #     raise TypeError("plot3d with such combination of axes is not supported.")

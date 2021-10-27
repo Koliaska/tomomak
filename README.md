@@ -33,7 +33,7 @@ Required packages:
 * Shapely (for 2D geometry).
 * CuPy (for GPU acceleration).
 * Mayavi (for 3D visualization).
-* Trimesh (for 3D geometry)
+* Trimesh (for 3D geometry, note that you should also have OpenSCAD or Blender installed)
 * pyglet (for Trimesh visualization)
 * Rtree (for ray casting in 3D geometry)
 

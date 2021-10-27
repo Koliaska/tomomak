@@ -120,15 +120,20 @@ def grid_intersection3d(trimesh_list, obj3d):
     if list_dim == 3:
         shape = (len(trimesh_list), len(trimesh_list[0]), len(trimesh_list[0][0]))
         res = np.zeros(shape)
-        sys.stderr = open(os.devnull, "w")  # supressing console for trimesh calculations
+        #sys.stderr = open(os.devnull, "w")  # supressing console for trimesh calculations
         for i, row in enumerate(res):
             for j, col in enumerate(row):
                 for k, _ in enumerate(col):
                     try:
                         inters = trimesh.boolean.intersection((obj3d, trimesh_list[i][j][k]))
                         inters = inters.volume
-                    except (subprocess.CalledProcessError, ValueError):
+                    except subprocess.CalledProcessError:
                         inters = 0
+                    except ValueError as e:
+                        if str(e) == 'No backends available for boolean operations!':
+                            raise e
+                        else:
+                            inters = 0
                     res[i, j, k] = inters
         sys.stderr = sys.__stderr__
         return res

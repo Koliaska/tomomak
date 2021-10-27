@@ -173,20 +173,6 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                             y[i, j, k] = (x2d[j, k] + self._R) * np.sin(tor_axis[i])
                             z[i, j, k] = y2d[j, k]
                 return x, y, z
-            # # Toroidal-RZ coordinates
-            # if type(axes[0]) is cartesian.Axis1d and type(axes[1]) is cartesian.Axis1d:
-            #     if not axes[1].spatial:
-            #         raise ValueError("Toroidal axis works only with spatial axes")
-            #     x2d = axes[0].coordinates
-            #     y2d = axes[1].coordinates
-            #     tor_axis = self.coordinates
-            #     for i, row in enumerate(x):
-            #         for j, col in enumerate(row):
-            #             for k, _ in enumerate(col):
-            #                 x[i, j, k] = (x2d[j] + self._R) * np.cos(tor_axis[i])
-            #                 y[i, j, k] = (x2d[j] + self._R) * np.sin(tor_axis[i])
-            #                 z[i, j, k] = y2d[k]
-            #     return x, y, z
         raise TypeError("cartesian_coordinate with such combination of axes is not supported.")
 
     @staticmethod
@@ -253,8 +239,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 else:
                     units = ""
                 ax_names = ('{}, {}'.format('X', units),
-                            '{}, {}'.format('Z', units),
-                            '{}, {}'.format('Y', units))
+                            '{}, {}'.format('Y', units),
+                            '{}, {}'.format('Z', units))
             else:
                 raise TypeError("plot3d with such combination of axes is not supported.")
         else:
