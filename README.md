@@ -70,4 +70,10 @@ This project is licensed under the Revised BSD License - see the [LICENSE.txt](L
 If you have any questions, proposals or you simply don't know, is it possible to use this framework in your study - don't hesitate to contact [**the author.**](https://github.com/Koliaska/) 
 
 ## Gallery
-[Examples](examples/gallery/cyl.png)
+![Examples](examples/gallery/cyl.png)
+![Examples](examples/gallery/hole.png)
+![Examples](examples/gallery/tokomak 2d.png)
+![Examples](examples/gallery/tor2.png)
+![Examples](examples/gallery/dodec.png)
+![Examples](examples/gallery/tokomak 3d_9.png)
+![Examples](examples/gallery/tor4.png)
