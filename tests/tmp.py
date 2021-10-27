@@ -78,12 +78,16 @@ from mayavi import mlab
 
 
 g = eqdsk.read_eqdsk('gglobus32994.g', b_ccw=-1)
-eqdsk.psi_to_rho(g)
-g["masked_rho"] = geometry2d.in_out_mask((g['r'], g['z']), (g["rbdry"], g["zbdry"]), in_value=1, out_value=10) * g["rho"]
-
+g = eqdsk.norm_psi(g)
+#eqdsk['rho'] = util.eqdsk.calc_rho(g, eqdsk_out['psi'])
+#g["masked_rho"] = geometry2d.in_out_mask((g['r'], g['z']), (g["rbdry"], g["zbdry"]), in_value=1, out_value=10) * g["rho"]
+#last_level_coordinates=(g["rbdry"], g["zbdry"])
+ed = eqdsk.rho_to_psi(g, np.array([0.0, 0.2, 0.3, 0.5, 0.6, 0.8,  0.999]))
+print(ed)
+print(g['sibry'])
 axes = [toroidal.Axis1d(radius=0.0, name="theta", units="rad", size=12, upper_limit=3 * np.pi/2),
-        level.Axis1d(level_map=g['masked_rho'], x=g['r'], y=g['z'], x_axis=g['raxis'], y_axis=g['zaxis'], bry_level=0.999, last_level_coordinates=(g["rbdry"], g["zbdry"]),
-                     name="rho", units="a.u.",cart_units='m', edges=[0.0, 0.2, 0.3, 0.5, 0.6, 0.8,  0.999]),
+        level.Axis1d(level_map=g['psi'], x=g['r'], y=g['z'], x_axis=g['raxis'], y_axis=g['zaxis'],
+                     name="rho", units="a.u.",cart_units='m', edges=ed),
         polar.Axis1d(name="theta", units="rad", size=10)]
 axes[2].RESOLUTION2D = 10
 # axes = [polar.Axis1d(name="phi", units="rad", size=12),

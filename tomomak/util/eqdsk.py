@@ -112,16 +112,47 @@ def read_eqdsk(gname, b_ccw):
     return out
 
 
-def psi_to_rho(eqdsk_out):
-    """ Calculates rho array from eqdsk dictionary.
+def calc_rho(eqdsk_out, psi):
+    """ Calculates rho for given psi.
+    Args:
+        eqdsk_out (dictionary): dictionary with eqdsk file parameters (e.g. obtained with read_eqdsk())
+        psi (ndarray): psi to calculate rho at. For example eqdsk_out['psi'].
+
+    Returns:
+    out (ndarray): array of rho, corresponding to given psi.
+    """
+    psi_ax = eqdsk_out['simag']
+    psi_bry = eqdsk_out['sibry']
+    out = np.sqrt((psi-psi_ax) / (psi_bry - psi_ax))
+    return out
+
+
+def rho_to_psi(eqdsk_out, rho):
+    """ Calculates psi from given rho.
+    Args:
+        eqdsk_out (dictionary): dictionary with eqdsk file parameters (e.g. obtained with read_eqdsk())
+        rho (ndarray): rho to calculate psi at.
+
+    Returns:
+    out (2d ndarray): array of psi, corresponding to given rho.
+    """
+    psi_ax = eqdsk_out['simag']
+    psi_bry = eqdsk_out['sibry']
+    out = rho ** 2 * (psi_bry - psi_ax) + psi_ax
+    return out
+
+
+def norm_psi(eqdsk_out):
+    """ Normalize psi, so psi_axis = 0.
     Args:
         eqdsk_out (dictionary): dictionary with eqdsk file parameters (e.g. obtained with read_eqdsk())
 
     Returns:
-    eqdsk_out (dictionary): updated dictionary with 'rho' item: 2d array of rho, corresponding to g-file psi.
+    eqdsk_out (dictionary): updated dictionary with normalized psi item: 2d array of rho, corresponding to g-file psi.
     """
-    psi = eqdsk_out['psi']
-    psi_ax = eqdsk_out['simag']
-    psi_bry = eqdsk_out['sibry']
-    eqdsk_out['rho'] = np.sqrt((psi-psi_ax) / (psi_bry - psi_ax))
+    psi_axis = eqdsk_out['simag']
+    eqdsk_out['psi'] = eqdsk_out['psi'] - psi_axis
+    eqdsk_out['simag'] = eqdsk_out['simag'] - psi_axis
+    eqdsk_out['sibry'] = eqdsk_out['sibry'] - psi_axis
     return eqdsk_out
+

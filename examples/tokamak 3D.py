@@ -78,7 +78,7 @@ from mayavi import mlab
 
 
 g = eqdsk.read_eqdsk('gglobus32994.g', b_ccw=-1)
-eqdsk.psi_to_rho(g)
+eqdsk.calc_rho(g)
 g["masked_rho"] = geometry2d.in_out_mask((g['r'], g['z']), (g["rbdry"], g["zbdry"]), in_value=1, out_value=10) * g["rho"]
 
 axes = [toroidal.Axis1d(radius=0.0, name="theta", units="rad", size=6, upper_limit=np.pi/2*3),

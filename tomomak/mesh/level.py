@@ -42,7 +42,10 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         self.y = y
         self.x_axis = x_axis
         self.y_axis = y_axis
-        self.last_level_coordinates = np.array(last_level_coordinates).T
+        if last_level_coordinates is not None:
+            self.last_level_coordinates = np.array(last_level_coordinates).T
+        else:
+            self.last_level_coordinates = None
         self._check_self_consistency()
 
     def _check_self_consistency(self):
