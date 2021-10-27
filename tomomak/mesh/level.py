@@ -51,6 +51,97 @@ class Axis1d(abstract_axes.Abstract1dAxis):
         if self.y_axis > np.amax(self.y) or self.y_axis < np.amin(self.y):
             raise ValueError("Y axis coordinate is outside of the y grid.")
 
+    def _calc_eq_arc_len(self, axis2):
+        # 2D levels vs rotational symmetry
+        if type(axis2) is polar.Axis1d:
+            shape = (self.size, axis2.size)
+            res = np.zeros(shape).tolist()
+            res2d = axis2.RESOLUTION2D
+
+            # Find level contours
+            xx, yy = np.meshgrid(self.x, self.y)
+            cs = plt.contour(xx, yy, self.level_map, self.cell_edges)
+            contours = cs.allsegs
+
+            # Find polar angles
+            r_max = np.sqrt((self.x[-1] - self.x[0]) ** 2 + (self.y[-1] - self.y[0]) ** 2) * 2
+            original_angles = axis2.cell_edges
+            angles = np.zeros(res2d * (len(original_angles) - 1))
+
+            # Add more angles between grid angles in order to correctly represent cell shape
+            for i, _ in enumerate(angles):
+                orig_ind = int(np.floor(i / res2d))
+                angles[i] = original_angles[orig_ind] + i % res2d / res2d * \
+                            (original_angles[orig_ind + 1] - original_angles[orig_ind])
+            angles = np.append(angles, original_angles[-1])
+
+            # Lines from the center
+            section_lines = [shapely.geometry.polygon.LineString([(self.x_axis, self.y_axis),
+                                                                  (self.x_axis + r_max * np.cos(ang),
+                                                                   self.y_axis + r_max * np.sin(ang))])
+                             for ang in angles]
+            def find_central_contour(cont):
+                """Find contour, closest to the axis.
+                """
+                d = np.inf
+                ind = 0
+                for z, c in enumerate(cont):
+                    smallest_dist = np.amin(np.abs(c[:, 0] - self.x_axis))
+                    if smallest_dist < d:
+                        d = smallest_dist
+                        ind = z
+                return ind
+
+            c2 = None  # second contour (outer)
+            for i in range(len(contours) - 1):
+                if contours[i]:  # contours not empty - not central element
+                    if c2 is not None:
+                        c1 = c2  # first contour (inner)
+                    else:
+                        cent_ind = find_central_contour(contours[i])
+                        c1 = shapely.geometry.polygon.LinearRing(contours[i][cent_ind])
+                    cent_ind = find_central_contour(contours[i + 1])
+                    c2 = shapely.geometry.polygon.LinearRing(contours[i + 1][cent_ind])
+                    if i == len(contours) - 2:  # special case for tha outer level
+                        if self.last_level_coordinates is not None:
+                            c2 = shapely.geometry.polygon.LinearRing(self.last_level_coordinates)
+                    inters_points_c1 = [None] * len(section_lines)
+                    inters_points_c2 = [None] * len(section_lines)
+                    for j, _ in enumerate(section_lines):
+                        inters_points_c1[j] = c1.intersection(section_lines[j])
+                        inters_points_c2[j] = c2.intersection(section_lines[j])
+
+                    for j in range(len(axis2.cell_edges) - 1):
+                        points = []
+                        points.append((inters_points_c1[j * res2d].x,
+                                       inters_points_c1[j * res2d].y))  # counter-clockwise form the right bottom corner
+                        for k in range(res2d + 1):
+                            points.append((inters_points_c2[j * res2d + k].x,
+                                           inters_points_c2[j * res2d + k].y))
+                        for k in range(res2d):
+                            points.append((inters_points_c1[(j + 1) * res2d - k].x,
+                                           inters_points_c1[(j + 1) * res2d - k].y))
+                        res[i][j] = points
+
+                else:  # special case - inner contour is a point (central point)
+                    cent_ind = find_central_contour(contours[i + 1])
+                    c2 = shapely.geometry.polygon.LinearRing(contours[i + 1][cent_ind])
+                    inters_points_c2 = [None] * len(section_lines)
+                    for j, _ in enumerate(section_lines):
+                        inters_points_c2[j] = c2.intersection(section_lines[j])
+
+                    for j in range(len(axis2.cell_edges) - 1):
+                        points = [(self.x_axis, self.y_axis)]
+                        for k in range(res2d + 1):
+                            points.append((inters_points_c2[j * res2d + k].x,
+                                           inters_points_c2[j * res2d + k].y))
+                        res[i][j] = points
+            plt.close()
+
+            return res
+        else:
+            raise TypeError("cell_edges2d_cartesian with such combination of axes is not supported.")
+
     @abstract_axes.precalculated
     def cell_edges2d_cartesian(self, axis2):
         """See description in abstract axes.
