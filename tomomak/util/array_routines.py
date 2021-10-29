@@ -85,5 +85,23 @@ def normalize_broadcasted(data, index, mesh, data_type):
     return data
 
 
+def add_inner_points(original_points, inner_points_num):
+    """Add evenly spaced point inside of the 1D irregular array.
+
+    Args:
+        original_points (1D ndarray): original points.
+        inner_points_num (int): number of points to add between each original point pair.
+
+    Returns:
+        points (1D ndarray): new extended point array.
+    """
+    points = np.zeros(inner_points_num * (len(original_points) - 1))
+    for i, _ in enumerate(points):
+        orig_ind = int(np.floor(i / inner_points_num))
+        points[i] = original_points[orig_ind] + i % inner_points_num / inner_points_num * \
+                    (original_points[orig_ind + 1] - original_points[orig_ind])
+    points = np.append(points, original_points[-1])
+    return points
+
 
 

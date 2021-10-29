@@ -5,6 +5,7 @@ import shapely.geometry
 from . import array_routines
 from tomomak.mesh import cartesian
 from scipy.spatial import Delaunay
+from matplotlib import pyplot as plt
 
 
 def intersection_2d(mesh, points, index=(0, 1), calc_area=True):
@@ -434,23 +435,89 @@ def in_out_mask(grid, hull, method='ray_casting', out_value=0, in_value=1):
         def point_in_poly(xp, yp, poly):
             """Check if point is inside of the surface."""
             n = len(poly)
-            inside = False
+            ins = False
             xints = None
             p1x, p1y = poly[0]
-            for i in range(n+1):
-                p2x, p2y = poly[i % n]
+            for j in range(n+1):
+                p2x, p2y = poly[j % n]
                 if yp > min(p1y, p2y):
                     if yp <= max(p1y, p2y):
                         if xp <= max(p1x, p2x):
                             if p1y != p2y:
                                 xints = (yp - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
                             if p1x == p2x or xp <= xints:
-                                inside = not inside
+                                ins = not ins
                 p1x, p1y = p2x, p2y
-            return inside
+            return ins
 
         p = [int(point_in_poly(p[i, 0], p[i, 1], hull)) for i in range(k)]
     for i in range(k):
         inside[int(np.floor(i/nx)), i % nx] = p[i]
     inside = np.where(inside > 0, in_value, out_value)
     return inside
+
+
+def find_contour_levels(x, y, level_map, levels, axis, point_num, last_level_coordinates=None):
+    """Find contours of the monotonically increasing-decreasing values, corresponding to the given levels.
+    First point of the contour corresponds to the theta - 0 degrees. Matplotlib contour is used for the initial
+    contour search, so resolution of the x and y affects the number of points per level.
+
+    Args:
+        x (1D ndarray): X coordinate of the level map.
+        y (1D ndarray): Y coordinate of the level map.
+        level_map (2D ndarray): level map.
+        levels (1D ndarray): desired levels of the contours.
+        axis (tuple of two floats):  coordinate of the axis
+        point_num (int): number of points per contour.
+        last_level_coordinates (tuple of ndarrays): xy coordinates of the boundary
+         - if you want to specify the boundary coordinates explicitly. Optional.
+
+    Returns:
+        contours (list of shapely.geometry.polygon.LineString): list of contours.
+    """
+
+    x_axis = axis[0]
+    y_axis = axis[1]
+    cs = plt.contour(x, y, level_map, levels)
+    contours = cs.allsegs
+
+    # remove redundant contours
+    def find_central_contour(cont):
+        """Find contour, closest to the axis.
+        """
+        d = np.inf
+        cent_ind = 0
+        for z, c in enumerate(cont):
+            smallest_dist = np.amin(np.abs(c[:, 0] - x_axis))
+            if smallest_dist < d:
+                d = smallest_dist
+                cent_ind = z
+        return cent_ind
+
+    for i, cnt in enumerate(contours):
+        if cnt:
+            ind = find_central_contour(cnt)
+            contours[i] = shapely.geometry.polygon.LinearRing(cnt[ind])
+        else:
+            contours[i] = None
+    if last_level_coordinates is not None:  # special case for tha outer level
+        contours[-1] = shapely.geometry.polygon.LinearRing(last_level_coordinates)
+
+    # construct section lines from the center
+    angles = np.linspace(0, 2 * np.pi, point_num, endpoint=False)
+    r_max = np.sqrt((x[-1] - x[0]) ** 2 + (y[-1] - y[0]) ** 2) * 2
+    section_lines = [shapely.geometry.polygon.LineString([(x_axis, y_axis),
+                                                          (x_axis + r_max * np.cos(ang),
+                                                           y_axis + r_max * np.sin(ang))])
+                     for ang in angles]
+
+    # rearrange contours, so first point has y = 0
+    inters_points = [None] * len(section_lines)
+    for i, cnt in enumerate(contours):
+        if cnt is not None:
+            for j, sec_line in enumerate(section_lines):
+                inters_points[j] = cnt.intersection(section_lines[j])
+            contours[i] = shapely.geometry.polygon.LinearRing(inters_points)
+
+    plt.close()
+    return contours

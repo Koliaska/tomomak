@@ -79,12 +79,18 @@ from mayavi import mlab
 
 g = eqdsk.read_eqdsk('gglobus32994.g', b_ccw=-1)
 g = eqdsk.norm_psi(g)
+
 #eqdsk['rho'] = util.eqdsk.calc_rho(g, eqdsk_out['psi'])
 #g["masked_rho"] = geometry2d.in_out_mask((g['r'], g['z']), (g["rbdry"], g["zbdry"]), in_value=1, out_value=10) * g["rho"]
 #last_level_coordinates=(g["rbdry"], g["zbdry"])
-ed = eqdsk.rho_to_psi(g, np.array([0.0, 0.2, 0.3, 0.5, 0.6, 0.8,  0.999]))
-print(ed)
-print(g['sibry'])
+
+ed = eqdsk.rho_to_psi(g, np.array([0.0, 0.2, 0.3, 0.5, 0.6, 0.8, 0.9,   0.999]))
+
+
+# axes = [toroidal.Axis1d(radius=0.0, name="theta", units="rad", size=12, upper_limit=3 * np.pi/2),
+#         level.Axis1d(level_map=g['psi'], x=g['r'], y=g['z'], x_axis=g['raxis'], y_axis=g['zaxis'],
+#                      name="rho", units="a.u.",cart_units='m', edges=ed),
+#         polar.Axis1d(name="theta", units="rad", size=10)]
 axes = [toroidal.Axis1d(radius=0.0, name="theta", units="rad", size=12, upper_limit=3 * np.pi/2),
         level.Axis1d(level_map=g['psi'], x=g['r'], y=g['z'], x_axis=g['raxis'], y_axis=g['zaxis'],
                      name="rho", units="a.u.",cart_units='m', edges=ed),
@@ -110,7 +116,7 @@ res = res * vols / areas
 #noise = np.random.normal(0, 0.0001, real_solution.shape)
 res = util.array_routines.multiply_along_axis(res,np.abs(np.sin(np.linspace(0, np.pi, num=axes[2].size))) + 8, axis=2)
 res[:,0,:] = res[:,0,:] / (np.abs(np.sin(np.linspace(0, np.pi, num=axes[2].size))) + 10) * 11
-#res[:,0,:] = np.full_like(res[:,0,:] , np.mean(res[:,0,:]* vols[:,0,:] / areas[0,:]))
+res[:,0,:] = np.full_like(res[:,0,:] , np.mean(res[:,0,:]* vols[:,0,:] / areas[0,:]))
 res = util.array_routines.multiply_along_axis(res,np.linspace(22,10, num=axes[1].size), axis=1)
 
 
