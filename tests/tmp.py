@@ -93,7 +93,7 @@ ed = eqdsk.rho_to_psi(g, np.array([0.0, 0.2, 0.3, 0.5, 0.6, 0.8, 0.9,   0.999]))
 #         polar.Axis1d(name="theta", units="rad", size=10)]
 axes = [toroidal.Axis1d(radius=0.0, name="theta", units="rad", size=12, upper_limit=3 * np.pi/2),
         level.Axis1d(level_map=g['psi'], x=g['r'], y=g['z'], x_axis=g['raxis'], y_axis=g['zaxis'],
-                     name="rho", units="a.u.",cart_units='m', edges=ed),
+                     name="rho", units="a.u.",cart_units='m', edges=ed, polar_angle_type='eq_angle'),
         polar.Axis1d(name="theta", units="rad", size=10)]
 axes[2].RESOLUTION2D = 10
 # axes = [polar.Axis1d(name="phi", units="rad", size=12),
@@ -110,13 +110,13 @@ mod = model.Model(mesh=m)
 res = objects2d.ellipse(m, ax_len=(2, 2), index=(1,2),center=(0.36,0), broadcast=True)
 # res= tomomak.util.array_routines.broadcast_object(real_solution, (1,2), m.shape)
 # res = tomomak.util.array_routines.normalize_broadcasted(res, (1,2), m, 'solution')
-vols = util.geometry3d_trimesh.cell_volumes(m)
+vols = 1#util.geometry3d_trimesh.cell_volumes(m)
 areas = util.geometry2d.cell_areas(m, (1, 2))
 res = res * vols / areas
 #noise = np.random.normal(0, 0.0001, real_solution.shape)
-res = util.array_routines.multiply_along_axis(res,np.abs(np.sin(np.linspace(0, np.pi, num=axes[2].size))) + 8, axis=2)
-res[:,0,:] = res[:,0,:] / (np.abs(np.sin(np.linspace(0, np.pi, num=axes[2].size))) + 10) * 11
-res[:,0,:] = np.full_like(res[:,0,:] , np.mean(res[:,0,:]* vols[:,0,:] / areas[0,:]))
+# res = util.array_routines.multiply_along_axis(res,np.abs(np.sin(np.linspace(0, np.pi, num=axes[2].size))) + 8, axis=2)
+# res[:,0,:] = res[:,0,:] / (np.abs(np.sin(np.linspace(0, np.pi, num=axes[2].size))) + 10) * 11
+# res[:,0,:] = np.full_like(res[:,0,:] , np.mean(res[:,0,:]* vols[:,0,:] / areas[0,:]))
 res = util.array_routines.multiply_along_axis(res,np.linspace(22,10, num=axes[1].size), axis=1)
 
 

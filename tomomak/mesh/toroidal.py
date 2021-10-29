@@ -57,7 +57,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             edges2d = axis2.cell_edges2d_cartesian(axis3)
             if type(axis2) is polar.Axis1d:
                 res2d = axis2.RESOLUTION2D
-            elif type(axis3) is polar.Axis1d and type(axis2) is level.Axis1d:
+            elif type(axis3) is polar.Axis1d:
                 res2d = axis3.RESOLUTION2D
             else:
                 res2d = 1

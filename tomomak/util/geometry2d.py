@@ -457,7 +457,7 @@ def in_out_mask(grid, hull, method='ray_casting', out_value=0, in_value=1):
     return inside
 
 
-def find_contour_levels(x, y, level_map, levels, axis, point_num, last_level_coordinates=None):
+def find_contour_levels(x, y, level_map, levels, axis, point_num, last_level_coordinates=None, angles=None):
     """Find contours of the monotonically increasing-decreasing values, corresponding to the given levels.
     First point of the contour corresponds to the theta - 0 degrees. Matplotlib contour is used for the initial
     contour search, so resolution of the x and y affects the number of points per level.
@@ -504,7 +504,8 @@ def find_contour_levels(x, y, level_map, levels, axis, point_num, last_level_coo
         contours[-1] = shapely.geometry.polygon.LinearRing(last_level_coordinates)
 
     # construct section lines from the center
-    angles = np.linspace(0, 2 * np.pi, point_num, endpoint=False)
+    if angles is None:
+        angles = np.linspace(0, 2 * np.pi, point_num, endpoint=False)
     r_max = np.sqrt((x[-1] - x[0]) ** 2 + (y[-1] - y[0]) ** 2) * 2
     section_lines = [shapely.geometry.polygon.LineString([(x_axis, y_axis),
                                                           (x_axis + r_max * np.cos(ang),
