@@ -2,9 +2,11 @@ from . import cartesian
 import numpy as np
 from . import abstract_axes
 from . import polar, level
+from scipy import spatial
 import matplotlib.pyplot as plt
 from tomomak.plots import plot2d
 from tomomak import util
+import shapely.geometry.polygon
 
 
 class Axis1d(abstract_axes.Abstract1dAxis):
@@ -45,9 +47,11 @@ class Axis1d(abstract_axes.Abstract1dAxis):
     def cell_edges3d_cartesian(self, axis2, axis3):
         # Toroidal-cylindrical coordinates
         # or Toroidal-RZ coordinates
-        if type(axis2) is polar.Axis1d and type(axis3) is cartesian.Axis1d \
-                or type(axis2) is cartesian.Axis1d and type(axis3) is cartesian.Axis1d \
-                or type(axis2) is level.Axis1d and type(axis3) is polar.Axis1d:
+        # or Toroidal-level with equal angle
+        if (type(axis2) is polar.Axis1d and type(axis3) is cartesian.Axis1d) \
+                or (type(axis2) is cartesian.Axis1d and type(axis3) is cartesian.Axis1d) \
+                or (type(axis2) is level.Axis1d and type(axis3) is polar.Axis1d
+                    and axis2.polar_angle_type == 'eq_angle'):
             if not axis3.spatial:
                 raise ValueError("Toroidal axis works only with spatial axes")
             shape = (self.size, axis2.size, axis3.size)
@@ -56,26 +60,26 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             edge_tor = self.cell_edges
             edges2d = axis2.cell_edges2d_cartesian(axis3)
             if type(axis2) is polar.Axis1d:
-                res2d = axis2.RESOLUTION2D
+                res2d_p = axis2.RESOLUTION2D
             elif type(axis3) is polar.Axis1d:
-                res2d = axis3.RESOLUTION2D
+                res2d_p = axis3.RESOLUTION2D
             else:
-                res2d = 1
+                res2d_p = 1
             # Precalculate faces for 2 cases - 1) standard, 2) - center of the mesh
             # 1) standard
             face = list()
-            layer_len = res2d * 2 + 2
-            # first front and back faces
+            layer_len = res2d_p * 2 + 2
+            # uttermost front and back faces
             face.append((2, 1, 0))
-            face.append((2, 0, res2d * 2 + 1))
+            face.append((2, 0, res2d_p * 2 + 1))
             face.append((layer_len * self.RESOLUTION3D, layer_len * self.RESOLUTION3D + 1,
                          layer_len * self.RESOLUTION3D + 2))
             face.append((layer_len * self.RESOLUTION3D,
                          layer_len * self.RESOLUTION3D + 2, layer_len * (self.RESOLUTION3D + 1) - 1))
-            for i in range(res2d - 1):
+            for i in range(res2d_p - 1):
                 # front
-                face.append((i + 3, i + 2, res2d * 2 - i + 1))
-                face.append((i + 3, res2d * 2 - i + 1, res2d * 2 - i))
+                face.append((i + 3, i + 2, res2d_p * 2 - i + 1))
+                face.append((i + 3, res2d_p * 2 - i + 1, res2d_p * 2 - i))
                 # back
                 face.append((layer_len * self.RESOLUTION3D + 2 + i, layer_len * self.RESOLUTION3D + 3 + i,
                              layer_len * (self.RESOLUTION3D + 1) - i - 2))
@@ -87,27 +91,27 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 next_layer = (res_l + 1) * layer_len
                 face.append((layer, layer + 1, next_layer + 1))
                 face.append((layer, next_layer + 1, next_layer))
-                face.append((layer + res2d + 1, layer + res2d + 2,
-                             next_layer + res2d + 2))
-                face.append((layer + res2d + 1,
-                             next_layer + res2d + 2, next_layer + res2d + 1))
+                face.append((layer + res2d_p + 1, layer + res2d_p + 2,
+                             next_layer + res2d_p + 2))
+                face.append((layer + res2d_p + 1,
+                             next_layer + res2d_p + 2, next_layer + res2d_p + 1))
                 # first top and bot face
                 face.append((layer + 1, layer + 2, next_layer + 2))
                 face.append((layer + 1, next_layer + 2, next_layer + 1))
                 face.append((layer, next_layer, (res_l + 2) * layer_len - 1))
                 face.append((layer, (res_l + 2) * layer_len - 1, next_layer - 1))
-                for i in range(res2d - 1):
+                for i in range(res2d_p - 1):
                     # top
-                    face.append((layer + i + 2, layer + i + 3, layer + res2d * 2 + i + 5))
-                    face.append((layer + i + 2, layer + res2d * 2 + i + 5, layer + res2d * 2 + i + 4))
+                    face.append((layer + i + 2, layer + i + 3, layer + res2d_p * 2 + i + 5))
+                    face.append((layer + i + 2, layer + res2d_p * 2 + i + 5, layer + res2d_p * 2 + i + 4))
                     # bottom
-                    face.append((layer + res2d * 2 - i, layer + res2d * 2 - i + 1,
-                                 layer + res2d * 4 - i + 3))
-                    face.append((layer + res2d * 2 - i,
-                                 layer + res2d * 4 - i + 3, layer + res2d * 4 - i + 2))
+                    face.append((layer + res2d_p * 2 - i, layer + res2d_p * 2 - i + 1,
+                                 layer + res2d_p * 4 - i + 3))
+                    face.append((layer + res2d_p * 2 - i,
+                                 layer + res2d_p * 4 - i + 3, layer + res2d_p * 4 - i + 2))
             # 2) - center of the mesh
             faces_center = list()
-            layer_len = res2d + 2
+            layer_len = res2d_p + 2
             for res_l in range(self.RESOLUTION3D):
                 layer = res_l * layer_len
                 next_layer = (res_l + 1) * layer_len
@@ -116,11 +120,11 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 faces_center.append((layer + 1, next_layer + 1, next_layer))
                 faces_center.append((next_layer - 1, layer, next_layer))
                 faces_center.append((next_layer - 1, next_layer, (res_l + 2) * layer_len - 1))
-                for i in range(res2d):
+                for i in range(res2d_p):
                     # top
                     faces_center.append((layer + i + 1, next_layer + i + 2, next_layer + i + 1))
                     faces_center.append((layer + i + 1, layer + i + 2, next_layer + i + 2))
-            for i in range(res2d):
+            for i in range(res2d_p):
                 # front
                 faces_center.append((i + 2, i + 1, 0))
                 # back
@@ -136,11 +140,123 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                                 vertices[i][j][k].append(((e[0] + self._R) * np.cos(edge_tor[i] + res_l * tor_step),
                                                           e[1],
                                                           (e[0] + self._R) * np.sin(edge_tor[i] + res_l * tor_step)))
-                        if len(edges2d[j][k]) == res2d * 2 + 2:
+                        if len(edges2d[j][k]) == res2d_p * 2 + 2:
                             faces[i][j][k] = face
                         else:
                             faces[i][j][k] = faces_center
 
+
+            return np.array(vertices, dtype=object), np.array(faces)
+
+        # Toroidal-level with equal arc or volume
+        elif type(axis2) is level.Axis1d and type(axis3) is polar.Axis1d:
+            if not axis3.spatial:
+                raise ValueError("Toroidal axis works only with spatial axes")
+            shape = (self.size, axis2.size, axis3.size)
+            vertices = np.zeros(shape).tolist()
+            faces = np.zeros(shape).tolist()
+            edge_tor = self.cell_edges
+            edges2d = axis2.cell_edges2d_cartesian(axis3)
+
+            res2d_p = axis3.RESOLUTION2D
+            res2d_l = axis2.resolution2d + 1
+
+            # Precalculate faces for 2 cases - 1) standard, 2) - center of the mesh
+            # for all abut front and back faces
+            precalc_face = list()
+            layer_len = res2d_p * 2 + res2d_l * 2
+            half_layer_len = res2d_p + res2d_l
+
+            for res_l in range(self.RESOLUTION3D):
+                layer = res_l * layer_len
+                next_layer = (res_l + 1) * layer_len
+                next_next_layer = (res_l + 2) * layer_len
+                # top and bot faces
+                precalc_face.append((layer + res2d_l, layer + res2d_l + 1, next_layer  + res2d_l + 1))
+                precalc_face.append((layer + res2d_l, next_layer + res2d_l + 1, next_layer  + res2d_l))
+                precalc_face.append((layer, next_layer, next_next_layer - 1))
+                precalc_face.append((layer, next_next_layer - 1, next_layer - 1))
+                for i in range(res2d_p - 1):
+                    # top
+                    precalc_face.append((layer + i + res2d_l + 1, layer + i + res2d_l + 2, next_layer + i + res2d_l + 2))
+                    precalc_face.append((layer + i + res2d_l + 1, next_layer + i + res2d_l + 2, next_layer + i + res2d_l + 1))
+                    # bottom
+                    precalc_face.append((next_layer - 1 - i, next_next_layer - 1 - i, next_next_layer - 2 - i))
+                    precalc_face.append((next_layer - 1 - i, next_next_layer - 2 - i, next_layer - 2 - i))
+                # left and right faces
+                for i in range(res2d_l):
+                    # right
+                    precalc_face.append((layer + i, layer + i + 1, next_layer + i + 1))
+                    precalc_face.append((layer + i, next_layer + i + 1, next_layer + i ))
+                    # left
+                    precalc_face.append((layer + i + half_layer_len, layer + i + 1 + half_layer_len, next_layer + i + 1 + half_layer_len))
+                    precalc_face.append((layer + i + half_layer_len, next_layer + i + 1 + half_layer_len, next_layer + i + half_layer_len))
+
+            # 2) - center of the mesh
+            precalc_face_center = list()
+            layer_len = res2d_p + res2d_l * 2
+            half_layer_len = res2d_p + res2d_l
+
+            for res_l in range(self.RESOLUTION3D):
+                layer = res_l * layer_len
+                next_layer = (res_l + 1) * layer_len
+                next_next_layer = (res_l + 2) * layer_len
+                # top and bot faces
+                precalc_face_center.append((layer + res2d_l, layer + res2d_l + 1, next_layer  + res2d_l + 1))
+                precalc_face_center.append((layer + res2d_l, next_layer + res2d_l + 1, next_layer  + res2d_l))
+
+                for i in range(res2d_p - 1):
+                    # top
+                    precalc_face_center.append((layer + i + res2d_l + 1, layer + i + res2d_l + 2, next_layer + i + res2d_l + 2))
+                    precalc_face_center.append((layer + i + res2d_l + 1, next_layer + i + res2d_l + 2, next_layer + i + res2d_l + 1))
+                    # bottom
+
+                # left and right faces
+                for i in range(res2d_l - 1):
+                    # right
+                    precalc_face_center.append((layer + i, layer + i + 1, next_layer + i + 1))
+                    precalc_face_center.append((layer + i, next_layer + i + 1, next_layer + i ))
+                    # left
+                    precalc_face_center.append((layer + i + half_layer_len, layer + i + 1 + half_layer_len, next_layer + i + 1 + half_layer_len))
+                    precalc_face_center.append((layer + i + half_layer_len, next_layer + i + 1 + half_layer_len, next_layer + i + half_layer_len))
+                # right
+                precalc_face_center.append((layer + res2d_l - 1, layer + res2d_l , next_layer + res2d_l))
+                precalc_face_center.append((layer + res2d_l - 1, next_layer + res2d_l, next_layer + res2d_l - 1))
+                # left
+                precalc_face_center.append((layer + res2d_l - 1 + half_layer_len, layer, next_layer))
+                precalc_face_center.append((layer + res2d_l - 1 + half_layer_len, next_layer , next_layer + res2d_l - 1 + half_layer_len))
+
+            for i, row in enumerate(vertices):
+                tor_step = (edge_tor[i + 1] - edge_tor[i]) / self.RESOLUTION3D
+                for j, col in enumerate(row):
+                    for k, _ in enumerate(col):
+
+                        face = list()
+                        # Front and back faces
+                        front_edges = np.array(edges2d[j][k])
+                        layer_len = front_edges.shape[0]
+                        triang = spatial.Delaunay(front_edges)
+                        # Don't append  triangles outside of the figure.
+                        poly = shapely.geometry.polygon.Polygon(front_edges)
+                        z = triang.simplices
+                        for t in triang.simplices:
+                            p = shapely.geometry.polygon.Polygon(front_edges[t]).centroid # Center of the triangle
+                            if poly.contains(p):
+                                face.append(t[::-1])  # front
+                                face.append(t + layer_len * self.RESOLUTION3D)  # back
+                        #
+                        vertices[i][j][k] = []
+                        for res_l in range(self.RESOLUTION3D + 1):
+                            for e in edges2d[j][k]:
+                                vertices[i][j][k].append(((e[0] + self._R) * np.cos(edge_tor[i] + res_l * tor_step),
+                                                          e[1],
+                                                          (e[0] + self._R) * np.sin(edge_tor[i] + res_l * tor_step)))
+                        if len(edges2d[j][k]) == res2d_p * 2 + res2d_l * 2 :
+                            face.extend(precalc_face)
+                        else:
+                            face.extend(precalc_face_center)
+
+                        faces[i][j][k] = face
 
             return np.array(vertices, dtype=object), np.array(faces)
         else:
