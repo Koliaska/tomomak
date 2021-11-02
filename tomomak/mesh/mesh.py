@@ -230,7 +230,7 @@ class Mesh:
             index = [index]
         cart = False
         if 'cartesian_coordinates' in kwargs:
-            cart =True
+            cart = True
         # try to draw using 1 axis
         if len(index) == 1:
             try:
@@ -239,10 +239,12 @@ class Mesh:
                     new_data = self._normalize_detectors(new_data, index)
                 if cart:
                     if data_type == 'solution':
-                        new_data = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data, self, index, data_type)
+                        new_data = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data, self,
+                                                                                              index, data_type)
                     elif data_type == 'detector_geometry':
                         for i, s in enumerate(new_data):
-                            new_data[i] = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data[i], self, index, data_type)
+                            new_data[i] = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data[i], self,
+                                                                                                     index, data_type)
                 plot = self._axes[index[0]].plot3d(new_data, self, *args, **kwargs)
                 return plot
             except (NotImplementedError, TypeError):
@@ -254,10 +256,12 @@ class Mesh:
                 new_data = self._normalize_detectors(new_data, index)
             if cart:
                 if data_type == 'solution':
-                    new_data = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data, self, index, data_type)
+                    new_data = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data, self,
+                                                                                          index, data_type)
                 elif data_type == 'detector_geometry':
                     for i, s in enumerate(new_data):
-                        new_data[i] = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data[i], self, index, data_type)
+                        new_data[i] = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data[i], self,
+                                                                                                 index, data_type)
             try:
                 plot = self._axes[index[0]].plot3d(new_data, self._axes[index[1]], self, data_type, *args, **kwargs)
                 return plot
@@ -275,10 +279,12 @@ class Mesh:
                 new_data = self._normalize_detectors(new_data, index)
             if cart:
                 if data_type == 'solution':
-                    new_data = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data, self, index, data_type)
+                    new_data = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data, self,
+                                                                                          index, data_type)
                 elif data_type == 'detector_geometry':
                     for i, s in enumerate(new_data):
-                        new_data[i] = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data[i], self, index, data_type)
+                        new_data[i] = tomomak.util.geometry3d_trimesh.convert_slice_to_cartesian(new_data[i], self,
+                                                                                                 index, data_type)
             ind_lst = list(itertools.permutations((0, 1, 2), 3))
             for p in ind_lst:
                 try:
@@ -390,5 +396,3 @@ class Mesh:
 
     def density(self, data, coordinate):
         pass
-
-

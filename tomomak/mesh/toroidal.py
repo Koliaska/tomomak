@@ -3,9 +3,6 @@ import numpy as np
 from . import abstract_axes
 from . import polar, level
 from scipy import spatial
-import matplotlib.pyplot as plt
-from tomomak.plots import plot2d
-from tomomak import util
 import shapely.geometry.polygon
 
 
@@ -145,7 +142,6 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                         else:
                             faces[i][j][k] = faces_center
 
-
             return np.array(vertices, dtype=object), np.array(faces)
 
         # Toroidal-level with equal arc or volume
@@ -172,14 +168,16 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 next_layer = (res_l + 1) * layer_len
                 next_next_layer = (res_l + 2) * layer_len
                 # top and bot faces
-                precalc_face.append((layer + res2d_l, layer + res2d_l + 1, next_layer  + res2d_l + 1))
-                precalc_face.append((layer + res2d_l, next_layer + res2d_l + 1, next_layer  + res2d_l))
+                precalc_face.append((layer + res2d_l, layer + res2d_l + 1, next_layer + res2d_l + 1))
+                precalc_face.append((layer + res2d_l, next_layer + res2d_l + 1, next_layer + res2d_l))
                 precalc_face.append((layer, next_layer, next_next_layer - 1))
                 precalc_face.append((layer, next_next_layer - 1, next_layer - 1))
                 for i in range(res2d_p - 1):
                     # top
-                    precalc_face.append((layer + i + res2d_l + 1, layer + i + res2d_l + 2, next_layer + i + res2d_l + 2))
-                    precalc_face.append((layer + i + res2d_l + 1, next_layer + i + res2d_l + 2, next_layer + i + res2d_l + 1))
+                    precalc_face.append((layer + i + res2d_l + 1, layer + i + res2d_l + 2,
+                                         next_layer + i + res2d_l + 2))
+                    precalc_face.append((layer + i + res2d_l + 1, next_layer + i + res2d_l + 2,
+                                         next_layer + i + res2d_l + 1))
                     # bottom
                     precalc_face.append((next_layer - 1 - i, next_next_layer - 1 - i, next_next_layer - 2 - i))
                     precalc_face.append((next_layer - 1 - i, next_next_layer - 2 - i, next_layer - 2 - i))
@@ -187,10 +185,12 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 for i in range(res2d_l):
                     # right
                     precalc_face.append((layer + i, layer + i + 1, next_layer + i + 1))
-                    precalc_face.append((layer + i, next_layer + i + 1, next_layer + i ))
+                    precalc_face.append((layer + i, next_layer + i + 1, next_layer + i))
                     # left
-                    precalc_face.append((layer + i + half_layer_len, layer + i + 1 + half_layer_len, next_layer + i + 1 + half_layer_len))
-                    precalc_face.append((layer + i + half_layer_len, next_layer + i + 1 + half_layer_len, next_layer + i + half_layer_len))
+                    precalc_face.append((layer + i + half_layer_len, layer + i + 1 + half_layer_len,
+                                         next_layer + i + 1 + half_layer_len))
+                    precalc_face.append((layer + i + half_layer_len, next_layer + i + 1 + half_layer_len,
+                                         next_layer + i + half_layer_len))
 
             # 2) - center of the mesh
             precalc_face_center = list()
@@ -200,31 +200,35 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             for res_l in range(self.RESOLUTION3D):
                 layer = res_l * layer_len
                 next_layer = (res_l + 1) * layer_len
-                next_next_layer = (res_l + 2) * layer_len
                 # top and bot faces
-                precalc_face_center.append((layer + res2d_l, layer + res2d_l + 1, next_layer  + res2d_l + 1))
-                precalc_face_center.append((layer + res2d_l, next_layer + res2d_l + 1, next_layer  + res2d_l))
+                precalc_face_center.append((layer + res2d_l, layer + res2d_l + 1, next_layer + res2d_l + 1))
+                precalc_face_center.append((layer + res2d_l, next_layer + res2d_l + 1, next_layer + res2d_l))
 
                 for i in range(res2d_p - 1):
                     # top
-                    precalc_face_center.append((layer + i + res2d_l + 1, layer + i + res2d_l + 2, next_layer + i + res2d_l + 2))
-                    precalc_face_center.append((layer + i + res2d_l + 1, next_layer + i + res2d_l + 2, next_layer + i + res2d_l + 1))
+                    precalc_face_center.append((layer + i + res2d_l + 1, layer + i + res2d_l + 2,
+                                                next_layer + i + res2d_l + 2))
+                    precalc_face_center.append((layer + i + res2d_l + 1, next_layer + i + res2d_l + 2,
+                                                next_layer + i + res2d_l + 1))
                     # bottom
 
                 # left and right faces
                 for i in range(res2d_l - 1):
                     # right
                     precalc_face_center.append((layer + i, layer + i + 1, next_layer + i + 1))
-                    precalc_face_center.append((layer + i, next_layer + i + 1, next_layer + i ))
+                    precalc_face_center.append((layer + i, next_layer + i + 1, next_layer + i))
                     # left
-                    precalc_face_center.append((layer + i + half_layer_len, layer + i + 1 + half_layer_len, next_layer + i + 1 + half_layer_len))
-                    precalc_face_center.append((layer + i + half_layer_len, next_layer + i + 1 + half_layer_len, next_layer + i + half_layer_len))
+                    precalc_face_center.append((layer + i + half_layer_len, layer + i + 1 + half_layer_len,
+                                                next_layer + i + 1 + half_layer_len))
+                    precalc_face_center.append((layer + i + half_layer_len, next_layer + i + 1 + half_layer_len,
+                                                next_layer + i + half_layer_len))
                 # right
-                precalc_face_center.append((layer + res2d_l - 1, layer + res2d_l , next_layer + res2d_l))
+                precalc_face_center.append((layer + res2d_l - 1, layer + res2d_l, next_layer + res2d_l))
                 precalc_face_center.append((layer + res2d_l - 1, next_layer + res2d_l, next_layer + res2d_l - 1))
                 # left
                 precalc_face_center.append((layer + res2d_l - 1 + half_layer_len, layer, next_layer))
-                precalc_face_center.append((layer + res2d_l - 1 + half_layer_len, next_layer , next_layer + res2d_l - 1 + half_layer_len))
+                precalc_face_center.append((layer + res2d_l - 1 + half_layer_len, next_layer,
+                                            next_layer + res2d_l - 1 + half_layer_len))
 
             for i, row in enumerate(vertices):
                 tor_step = (edge_tor[i + 1] - edge_tor[i]) / self.RESOLUTION3D
@@ -238,9 +242,8 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                         triang = spatial.Delaunay(front_edges)
                         # Don't append  triangles outside of the figure.
                         poly = shapely.geometry.polygon.Polygon(front_edges)
-                        z = triang.simplices
                         for t in triang.simplices:
-                            p = shapely.geometry.polygon.Polygon(front_edges[t]).centroid # Center of the triangle
+                            p = shapely.geometry.polygon.Polygon(front_edges[t]).centroid  # Center of the triangle
                             if poly.contains(p):
                                 face.append(t[::-1])  # front
                                 face.append(t + layer_len * self.RESOLUTION3D)  # back
@@ -251,7 +254,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                                 vertices[i][j][k].append(((e[0] + self._R) * np.cos(edge_tor[i] + res_l * tor_step),
                                                           e[1],
                                                           (e[0] + self._R) * np.sin(edge_tor[i] + res_l * tor_step)))
-                        if len(edges2d[j][k]) == res2d_p * 2 + res2d_l * 2 :
+                        if len(edges2d[j][k]) == res2d_p * 2 + res2d_l * 2:
                             face.extend(precalc_face)
                         else:
                             face.extend(precalc_face_center)

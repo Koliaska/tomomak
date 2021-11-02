@@ -63,7 +63,8 @@ def _create_figure(mesh, obj3d, index, density, broadcast):
     intersection *= density
     dv = tomomak.util.geometry3d_trimesh.cell_volumes(mesh, index)
     intersection /= dv
-    intersection = tomomak.util.geometry3d_trimesh.convert_slice_from_cartesian(intersection, mesh, index, data_type='solution')
+    intersection = tomomak.util.geometry3d_trimesh.convert_slice_from_cartesian(intersection, mesh, index,
+                                                                                data_type='solution')
     if broadcast:
         intersection = tomomak.util.array_routines.broadcast_object(intersection, index, mesh.shape)
     return intersection
@@ -97,7 +98,60 @@ def point_source(mesh, point, index=(0, 1, 2), density=1, broadcast=True):
     distances = 1 / (distances ** 2) * density
     dv = tomomak.util.geometry3d_trimesh.cell_volumes(mesh, index)
     distances /= dv
-    distances = tomomak.util.geometry3d_trimesh.convert_slice_from_cartesian(distances, mesh, index, data_type='solution')
+    distances = tomomak.util.geometry3d_trimesh.convert_slice_from_cartesian(distances, mesh, index,
+                                                                             data_type='solution')
     if broadcast:
         distances = tomomak.util.array_routines.broadcast_object(distances, index, mesh.shape)
     return distances
+
+
+def rotational_mode(mesh, n, m, coord, index, n_phase=0, m_phase=0, shift=0):
+    """ Creates rotational mode in 3d coordinates.
+    See tokomak (n,m) modes for the reference.
+    Mode will have n maximums along 1st axis, m maximums along 2nd axis and exist only in specific cell along 3rd axis.
+    Makes sense only when 1st and 2nd axes are polar or toroidal rotational axes.
+
+    Args:
+
+        mesh (tomomak.mesh.Mesh): mesh to work with.
+        n (int): toroidal rotation number.
+        m (int): polar rotation number
+        coord (float): coordinate, at which mode exist.
+        index (tuple of 3 ints): indexes of axes in the following order:
+          (axis for n rotation, axis for m rotation, axis without rotation).
+        n_phase (float): starting n rotation phase. Optional. Default: 0.
+        m_phase (float): starting m rotation phase. Optional. Default: 0.
+        shift (float): shift if the mode. Optional. Default: 0.
+
+    Returns:
+        result (3d ndarray): resulting 3d object.
+
+    """
+
+    # find cell index
+    cell_edges = mesh.axes[index[2]].cell_edges
+    if coord < min(cell_edges) or coord > max(cell_edges):
+        raise ValueError("Coordinate lies outside of axis coordinates.")
+    coord_index = 0
+    for i, _ in enumerate(cell_edges):
+        if cell_edges[i] <= coord < cell_edges[i + 1] \
+                or cell_edges[i] > coord >= cell_edges[i + 1]:
+            coord_index = i
+            break
+
+    # create structure
+
+    n_structure = mesh.axes[index[0]].coordinates
+    n_structure = n_structure * n + n_phase
+
+    m_structure = mesh.axes[index[1]].coordinates * m + m_phase
+    res_3d = np.zeros(mesh.shape)
+    for ar_ind, x in np.ndenumerate(res_3d):
+        coord_val = int(coord_index == ar_ind[index[2]])
+        m_phase = m_structure[ar_ind[index[1]]]
+        n_phase = n_structure[ar_ind[index[0]]]
+        res_3d[ar_ind] = coord_val * np.cos(m_phase + n_phase) + coord_val * shift
+
+    dv = tomomak.util.geometry3d_trimesh.cell_volumes(mesh)
+
+    return res_3d * dv
