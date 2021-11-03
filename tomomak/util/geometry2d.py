@@ -471,6 +471,8 @@ def find_contour_levels(x, y, level_map, levels, axis, point_num, last_level_coo
         point_num (int): number of points per contour.
         last_level_coordinates (tuple of ndarrays): xy coordinates of the boundary
          - if you want to specify the boundary coordinates explicitly. Optional.
+        angles (ndarray of floats): specific angles, for representing contour points.
+        If not given, uniform [0, 2pi) angles wil be generated. Optional.
 
     Returns:
         contours (list of shapely.geometry.polygon.LineString): list of contours.

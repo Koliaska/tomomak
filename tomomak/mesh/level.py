@@ -1,3 +1,4 @@
+import scipy.integrate
 from . import polar
 import numpy as np
 from . import abstract_axes
@@ -33,7 +34,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
          - if you want to specify the boundary coordinates. Optional.
          polar_angle_type (str): Approach used for the polar angle calculation (if combination with polar axis is used).
          'eq_angle' - naive method, with equal angles. 'eq_arc'- equal arc length of the contour.
-        'eq_vol' equal volume of the cell. Default: 'eq_angle'.
+        'eq_vol' equal volume of the cell. 'straight_line' - straight field line. Default: 'eq_angle'.
 
     """
 
@@ -65,7 +66,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             raise ValueError("X axis coordinate is outside of the x grid.")
         if self.y_axis > np.amax(self.y) or self.y_axis < np.amin(self.y):
             raise ValueError("Y axis coordinate is outside of the y grid.")
-        if self._polar_angle_type not in ('eq_angle', 'eq_arc', 'eq_vol'):
+        if self._polar_angle_type not in ('eq_angle', 'eq_arc', 'eq_vol', 'straight_line'):
             raise ValueError("Incorrect ")
 
     @property
@@ -103,16 +104,18 @@ class Axis1d(abstract_axes.Abstract1dAxis):
             polar_step = polar_res2d + 1
 
             # Interpolate level map
-            x = np.linspace(self.x[0], self.x[-1], self.LEVEL_INTERP_GRID_SIZE)
+            x = np.linspace(self.x[0], self.x[-1], self.LEVEL_INTERP_GRID_SIZE + 1)
             y = np.linspace(self.y[0], self.y[-1], self.LEVEL_INTERP_GRID_SIZE)
-            int_spline = interpolate.RectBivariateSpline(self.x, self.y, self.level_map)
+            int_spline = interpolate.interp2d(self.x, self.y, self.level_map)  # In current scipy version
+            # RectBivariate Spline works incorrectly
             new_level_map = int_spline(x, y)
 
             # Add more angles between grid angles in order to correctly represent cell shape
             original_angles = axis2.cell_edges
             angles = util.array_routines.add_inner_points(original_angles, polar_res2d)
 
-            if self.polar_angle_type == 'eq_arc' or self.polar_angle_type == 'eq_vol':
+            if self.polar_angle_type == 'eq_arc' or self.polar_angle_type == 'eq_vol' \
+                    or self.polar_angle_type == 'straight_line':
                 level_res2d = self.resolution2d
                 point_num = self.LEVEL_INTERP_GRID_SIZE
                 interp_angles = None
@@ -138,14 +141,48 @@ class Axis1d(abstract_axes.Abstract1dAxis):
 
             # Find points, corresponding to  given angles on different contours
             angle_coords = []
+            if self.polar_angle_type == 'eq_vol' or self.polar_angle_type == 'straight_line':
+                grad_psi = np.gradient(self.level_map, self.y, self.x)
+                #  np.gradient need reverse order of y, x - known problem
+                grad_psi = np.sqrt(grad_psi[0] ** 2 + grad_psi[1] ** 2)
+                xx, yy = np.meshgrid(self.x, self.y)
+                grad_psi_interp = interpolate.CloughTocher2DInterpolator(list(zip(xx.flatten(), yy.flatten())),
+                                                                         grad_psi.flatten())
+
             for i, cnt in enumerate(contours):
                 if cnt is not None:
                     new_coords = []
-                    if self.polar_angle_type == 'eq_arc' or self.polar_angle_type == 'eq_vol':
+                    if self.polar_angle_type == 'eq_arc':
                         contour_len = cnt.length
                         for j, ang in enumerate(angles):
                             new_coords.append(cnt.interpolate(ang / (2 * np.pi) * contour_len))
-                    else:  # self.polar_angle_type == 'eq_angle'
+
+                    elif self.polar_angle_type == 'eq_vol' or self.polar_angle_type == 'straight_line':
+                        #  In order to find theta values, we need to take contour integral of specific J
+                        cnt_coords = []
+                        contour_len = cnt.length
+                        points_num = 20  # This magic number may is chosen from the Globus example
+                        dl = contour_len / (points_num - 1)
+                        len_along = np.linspace(0, contour_len, points_num)
+                        for j in range(points_num):  # divide contour by eq distances
+                            p = list(cnt.interpolate(j / (points_num - 1) * contour_len).coords)[0]
+                            cnt_coords.append(p)
+                        x_at_cont = np.array(cnt_coords)[:, 0]
+                        y_at_cont = np.array(cnt_coords)[:, 1]
+                        grad_psi_at_cont = grad_psi_interp(x_at_cont, y_at_cont)
+                        if self.polar_angle_type == 'eq_vol':
+                            expr = x_at_cont / grad_psi_at_cont
+                        else:
+                            expr = 1 / x_at_cont / grad_psi_at_cont
+                        resulting_integr = scipy.integrate.cumtrapz(expr, dx=dl)
+                        resulting_integr = np.insert(resulting_integr, 0, 0)
+                        resulting_integr = resulting_integr / resulting_integr[-1]
+                        interpolator = interpolate.interp1d(resulting_integr, len_along)
+                        desired_len = angles / (2 * np.pi)
+                        new_len = interpolator(desired_len)
+                        for j, nl in enumerate(new_len):
+                            new_coords.append(cnt.interpolate(nl))
+                    else:  # eq_angle
                         for j, ang in enumerate(angles):
                             new_coords.append(shapely.geometry.Point(cnt.coords[j]))
                     angle_coords.append(new_coords)
@@ -168,7 +205,7 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                                            angle_coords[(i + 1) * level_step - k][(j + 1) * polar_step].y))
                         for k in range(polar_res2d + 1):
                             points.append((angle_coords[i * level_step][(j + 1) * polar_step - k].x,
-                                           angle_coords[i * level_step][(j + 1) * polar_step- k].y))
+                                           angle_coords[i * level_step][(j + 1) * polar_step - k].y))
                         res[i][j] = points
 
                 else:  # special case - inner contour is a point (central point)
@@ -262,5 +299,3 @@ class Axis1d(abstract_axes.Abstract1dAxis):
                 return new_levels, theta
         else:
             raise TypeError("from_cartesian with such combination of axes is not supported.")
-
-
