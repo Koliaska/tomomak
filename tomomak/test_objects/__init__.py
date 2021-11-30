@@ -1,1 +1,1 @@
-from . import objects2d
+from . import objects2d, objects3d
