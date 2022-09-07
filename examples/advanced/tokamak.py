@@ -45,7 +45,7 @@ psi_edges = eqdsk.rho_to_psi(g, np.array([0.0, 0.2, 0.3, 0.5, 0.6, 0.8, 0.9, 0.9
 axes = [toroidal.Axis1d(radius=0.0, name="phi", units="rad", size=10, upper_limit=3*np.pi/2),
         level.Axis1d(level_map=g['psi'], x=g['r'], y=g['z'], x_axis=g['raxis'], y_axis=g['zaxis'],
                      name="rho", units="a.u.", cart_units='m', edges=psi_edges, polar_angle_type='eq_vol'),
-        polar.Axis1d(name="theta", units="rad", size=14)]
+        polar.Axis1d(name="theta", units="rad", size=16)]
 
 # It is possible to change number of points in each direction per one element:
 axes[0].RESOLUTION3D = 4
@@ -63,7 +63,7 @@ mod = model.Model(mesh=m)
 # First of all, let's see what the grid looks like.
 # The first step is to create a uniform distribution in the poloidal cross section.
 # The easiest way to do this is to calculate the intersection with a very big 2D object.
-res = objects2d.ellipse(m, ax_len=(2, 2), index=(1,2),center=(0.36,0), broadcast=True)
+res = objects2d.ellipse(m, ax_len=(2, 2), index=(1, 2), center=(0.36, 0), broadcast=True)
 mod.solution = res
 mod.plot2d(style='colormesh', cartesian_coordinates=True, index=(1, 2))
 
