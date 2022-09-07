@@ -197,8 +197,8 @@ class Abstract1dAxis(AbstractAxis):
     """
 
     def __init__(self, coordinates=None, edges=None, lower_limit=0, upper_limit=None, size=None, name="", units="",
-                 spatial=True):
-        self.cart_units = None
+                 spatial=True, cart_units='a.u.'):
+        self.cart_units = cart_units
         super().__init__(name, units, spatial)
         if coordinates is not None:
             if size is not None or upper_limit is not None:

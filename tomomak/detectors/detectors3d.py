@@ -4,7 +4,10 @@ import tomomak.util.geometry3d_trimesh
 from tomomak.util.engine import muti_proc
 from tomomak.util import text
 import numpy as np
-import trimesh
+try:
+    import trimesh
+except ImportError:
+    pass
 from multiprocessing import Pool
 import os
 

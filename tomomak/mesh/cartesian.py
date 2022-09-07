@@ -57,6 +57,12 @@ class Axis1d(abstract_axes.Abstract1dAxis):
 
     @property
     def cart_units(self):
-        """See description in abstract axes.
+        """Same as units for the cartesian axis.
         """
         return self.units
+
+    @cart_units.setter
+    def cart_units(self, value):
+        self.units = value
+
+

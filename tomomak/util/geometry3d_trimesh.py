@@ -3,7 +3,10 @@ import subprocess
 import sys
 
 import numpy as np
-import trimesh
+try:
+    import trimesh
+except ImportError:
+    pass
 
 from tomomak.mesh import cartesian
 from tomomak.util import array_routines, geometry2d
