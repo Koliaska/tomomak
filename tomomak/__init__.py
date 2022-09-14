@@ -11,7 +11,7 @@ from .detectors import signal
 from .iterators import statistics
 
 # Modules
-from . import constraints
+from . import penalties_and_constraints
 from . import detectors
 from . import iterators
 from . import mesh

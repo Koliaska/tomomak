@@ -38,7 +38,8 @@ def two_pi_det(mesh, position, index=(0, 1), response=1, radius_dependence=True,
                                                                                  data_type='detector_geometry')
     if broadcast:
         intersection_geometry = tomomak.util.array_routines.broadcast_object(intersection_geometry, index, mesh.shape)
-        intersection_geometry  = tomomak.util.array_routines.normalize_broadcasted(intersection_geometry, index, mesh, 'detector_geometry')
+        intersection_geometry = tomomak.util.array_routines.normalize_broadcasted(intersection_geometry, index, mesh,
+                                                                                  'detector_geometry')
     return intersection_geometry
 
 
@@ -51,11 +52,16 @@ def two_pi_detector_array(mesh, focus_point, radius, det_num,
               focus_point (tuple of 2 floats): Focus point (x, y).
               radius (float): radius of the circle around focus_point, where detectors are located.
               det_num (integer): number of detectors.
-              *args: fan_detector arguments.
-              **kwargs: fan_detector keyword arguments.
+              index (tuple of two ints, optional): axes to build object at. Default: (0,1).
+              response (float, optional): Detector response = amplification * detector area.
+                    E.g. detector signal at 1m from source, emitting 4*pi particles at given time interval. Default: 1.
+              radius_dependence (bool, optional): if True, signal is divided by 4 *pi *r^2
+              broadcast (bool, optional): If true, resulted array is broadcasted to fit Mesh shape.
+                    If False, 2d array is returned, even if Mesh is not 2D. Default: True.
 
           Returns:
               ndarray: numpy array, representing group of 2pi detectors on a given mesh.
+
           """
     shape = [0]
     shape.extend(mesh.shape)
@@ -112,7 +118,7 @@ def detector2d(mesh, p1, p2, width, divergence=0, index=(0, 1), response=1, radi
     res = tomomak.util.geometry2d.convert_slice_from_cartesian(res, mesh, index, data_type='detector_geometry')
     if broadcast:
         res = tomomak.util.array_routines.broadcast_object(res, index, mesh.shape)
-        res  = tomomak.util.array_routines.normalize_broadcasted(res, index, mesh, 'detector_geometry')
+        res = tomomak.util.array_routines.normalize_broadcasted(res, index, mesh, 'detector_geometry')
     return res
 
 
@@ -174,7 +180,7 @@ def fan_detector_array(mesh, focus_point, radius, fan_num, line_num, width,
 
       Args:
           mesh (tomomak.main_structures.Mesh): mesh to work with.
-          focus_point (tuple of 2 floats): Focus point (x, y).
+          focus_point (tuple of 2 floats): Focus point (x, y), around which fan vertexes are placed.
           radius (float): radius of the circle around focus_point, where detectors are located.
           fan_num (integer): number of fans.
           line_num (integer): number of lines.

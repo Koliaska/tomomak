@@ -15,7 +15,7 @@ from tomomak import util
 # However it is much more convenient to use common tokamak coordinate system (psi, theta, phi),
 # where psi is poloidal magnetic flux, determining radial position
 # (normalized magnetic coordinate rho may be used instead),
-# theta is poloidal angle and phi is toroidal angle. In this case it is easier to set constraints
+# theta is poloidal angle and phi is toroidal angle. In this case it is easier to set penalties_and_constraints
 # during the reconstruction, e.g. radial or poloidal smoothness.
 
 # The first step is to get 2D magnetic flux. Routine for the reading of the EFIT files already exists.

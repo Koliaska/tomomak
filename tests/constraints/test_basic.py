@@ -5,7 +5,7 @@ from tomomak.solver import *
 from tomomak.test_objects.objects2d import *
 from tomomak.mesh.mesh import *
 from tomomak.mesh.cartesian import Axis1d
-import tomomak.constraints.basic
+import tomomak.penalties_and_constraints.basic
 import scipy.ndimage
 
 class TestBasic(unittest.TestCase):

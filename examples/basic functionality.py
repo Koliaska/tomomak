@@ -8,7 +8,7 @@ from tomomak.transform import pipeline
 from tomomak.detectors import detectors2d, signal
 from tomomak.iterators import ml, algebraic
 from tomomak.iterators import statistics
-import tomomak.constraints.basic
+import tomomak.penalties_and_constraints.basic
 import numpy as np
 
 
@@ -17,8 +17,9 @@ import numpy as np
 # More advanced features are described in advanced examples.
 
 # The first step is to create coordinate system. We will consider 2D cartesian coordinates.
-# Let's create coordinate mesh. First axis will consist of 20 segments. Second - of 30 segments.
-# This means that solution will be described by the 20x30 array.
+# Let's create coordinate mesh. First axis will be from 0 to 10 cm and consist of 20 segments.
+# Second - from 0 to 10 cm of 30 segments.
+# In this case the solution will be described by the 20x30 array.
 axes = [cartesian.Axis1d(name="X", units="cm", size=20, upper_limit=10),
         cartesian.Axis1d(name="Y", units="cm", size=30, upper_limit=10)]
 mesh = mesh.Mesh(axes)
@@ -44,6 +45,7 @@ mod.solution = None
 
 # Next step is to provide information about the detectors.
 # Let's create 15 fans with 22 detectors around the investigated object.
+# The fans will be positioned around the focus point (5, 5) at a distance of 11 cm.
 # Each line will have 1 cm width and 0.2 Rad divergence.
 # Note that number of detectors = 330 < solution cells = 600, so it's impossible to get perfect solution.
 det = detectors2d.fan_detector_array(mesh=mesh,
@@ -77,11 +79,11 @@ pipe.add_transform(r)
 mod.solution = real_solution
 pipe.forward()
 real_solution = mod.solution
+print(f"Rescaled model:\n{mod}")
 mod.plot2d()
 mod.solution = None
 # The rescaling is successful.
-# If you want to switch to previous 20x30 cells case just use pipe.backward(). Note that you will lost
-
+# If you want to switch to previous 20x30 cells case just use pipe.backward().
 # Now let's find the solution. In order to do so we need to create solver.
 solver = Solver()
 # We can easily track different statistics. Let's track residual norm and Chi^2 statistics.
@@ -102,7 +104,7 @@ solver.plot_statistics()
 
 # Now let's change to  algebraic reconstruction technique.
 solver.iterator = algebraic.ART()
-# We can also add some constraints. This is important in the case of limited date reconstruction.
+# We can also add some penalties_and_constraints. This is important in the case of limited date reconstruction.
 # For now let's assume that all values are positive. Note that ML method didn't need this constraint,
 # since one of it's features is to preserve solution sign.
 solver.constraints = [tomomak.constraints.basic.Positive()]
@@ -121,7 +123,7 @@ solver.solve(mod, steps=steps)
 mod.plot2d()
 solver.plot_statistics()
 
-# Finally we can save our model for later usage. I
+# Finally we can save our model for later usage.
 mod.save("basic_func_model.tmm")
 
 # And that's it. You get solution, which is, of course, not perfect,

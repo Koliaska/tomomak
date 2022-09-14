@@ -7,7 +7,7 @@ import numpy as np
 from tomomak.detectors import detectors2d, signal
 from tomomak.iterators import algebraic
 from tomomak.iterators import statistics
-import tomomak.constraints.basic
+import tomomak.penalties_and_constraints.basic
 import matplotlib.pyplot as plt
 import scipy.ndimage
 from matplotlib.colors import LogNorm

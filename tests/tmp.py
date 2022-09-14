@@ -8,7 +8,7 @@ from tomomak.transform import pipeline
 from tomomak.detectors import detectors2d, signal
 from tomomak.iterators import ml, algebraic
 from tomomak.iterators import statistics
-import tomomak.constraints.basic
+import tomomak.penalties_and_constraints.basic
 import numpy as np
 
 axes = [cartesian.Axis1d(name="X", units="cm", size=20, upper_limit=10),
@@ -77,7 +77,6 @@ solver.stop_values = [15]
 steps = 10000
 
 solver.iterator.alpha = np.linspace(0.1, 0.01, steps)
-# And here we go:
 solver.solve(mod, steps=steps)
 mod.plot2d()
 solver.plot_statistics()

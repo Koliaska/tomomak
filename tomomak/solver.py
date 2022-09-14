@@ -49,13 +49,13 @@ class Solver:
                 for ind, s in enumerate(self.stop_conditions):
                     if type(s).__name__[-3:] != 'GPU':
                         raise RuntimeError("{} stop condition calculation doesn't support GPU acceleration".format(s))
-        # Init iterator and constraints.
+        # Init iterator and penalties_and_constraints.
         print("Started calculation with {} iterations using {}.".format(steps, self.iterator))
         start_time = time.time()
         if self.iterator is not None:
             self.iterator.init(model, steps, *args, **kwargs)
         if self.constraints is not None:
-            print("Used constraints:")
+            print("Used penalties_and_constraints:")
             for r in self.constraints:
                 r.init(model, steps, *args, **kwargs)
                 print("  " + str(r))
@@ -74,7 +74,7 @@ class Solver:
             old_solution = copy.copy(model.solution)
             if self.iterator is not None:
                 self.iterator.step(model=model, step_num=i)
-            # constraints
+            # penalties_and_constraints
             if self.constraints is not None:
                 for k, r in enumerate(self.constraints):
                     r.step(model=model, step_num=i)

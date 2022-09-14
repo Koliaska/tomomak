@@ -4,7 +4,6 @@ try:
     import cupy as cp
 except ImportError:
     cp = None
-
 from tomomak.util.engine import IteratorFactory
 
 
@@ -61,10 +60,11 @@ class ApplyAlongAxis(abstract_iterator.AbstractIterator):
         """
 
         Args:
-            func:
-            axis:
-            alpha:
-            alpha_calc:
+            func (function): applied function.
+            axis (int): axis number. Default: 0.
+            alpha (float): weighting coefficient. The result is equal to
+            old_solution + alpha * (new_solution - old_solution). Default: 0.1.
+            alpha_calc (function): function for alpha calculation if needed. Default: None.
             **kwargs:
         """
         super().__init__(alpha, alpha_calc)
