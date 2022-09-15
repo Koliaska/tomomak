@@ -8,7 +8,7 @@ from tomomak.transform import pipeline
 from tomomak.detectors import detectors2d, signal
 from tomomak.iterators import ml, algebraic
 from tomomak.iterators import statistics
-import tomomak.penalties_and_constraints.basic
+import tomomak.constraints.basic
 import numpy as np
 
 
@@ -37,9 +37,9 @@ real_solution = objects2d.polygon(mesh, [(1, 1), (4, 8), (7, 2)])
 # Recently we've generated test object, which is, of course, real solution.
 # A trick to visualize this object is to temporarily use it as model solution.
 mod.solution = real_solution
-mod.plot2d()
+mod.plot2d(fig_name='Test object')
 # You can also make 1D plot. In this case data will be integrated over 2nd axis.
-mod.plot1d(index=0)
+mod.plot1d(index=0, fig_name='Test object')
 # After we've visualized our test object, it's time to set model solution to None and try to find this solution fairly.
 mod.solution = None
 
@@ -61,7 +61,7 @@ det_signal = signal.get_signal(real_solution, det)
 mod.detector_signal = det_signal
 mod.detector_geometry = det
 # Let's take a look at the detectors geometry:
-mod.plot2d(data_type='detector_geometry')
+mod.plot2d(data_type='detector_geometry', fig_name='Detector geometry')
 # It's also possible to get short model summary by converting the model object to string.
 print(mod)
 
@@ -79,8 +79,8 @@ pipe.add_transform(r)
 mod.solution = real_solution
 pipe.forward()
 real_solution = mod.solution
-print(f"Rescaled model:\n{mod}")
-mod.plot2d()
+print(f"\nRescaled mesh:\n{mod.mesh}")
+mod.plot2d(fig_name='Rescaled solution')
 mod.solution = None
 # The rescaling is successful.
 # If you want to switch to previous 20x30 cells case just use pipe.backward().
@@ -99,12 +99,12 @@ solver.iterator = ml.ML()
 # Let's do 50 steps and see resulted image and statistics.
 steps = 50
 solver.solve(mod, steps=steps)
-mod.plot2d()
-solver.plot_statistics()
+mod.plot2d(fig_name='ML reconstruction')
+solver.plot_statistics(fig_name='Reconstruction statistics')
 
 # Now let's change to  algebraic reconstruction technique.
 solver.iterator = algebraic.ART()
-# We can also add some penalties_and_constraints. This is important in the case of limited date reconstruction.
+# We can also add some constraints. This is important in the case of limited date reconstruction.
 # For now let's assume that all values are positive. Note that ML method didn't need this constraint,
 # since one of it's features is to preserve solution sign.
 solver.constraints = [tomomak.constraints.basic.Positive()]
@@ -120,7 +120,7 @@ steps = 10000
 solver.iterator.alpha = np.linspace(0.1, 0.01, steps)
 # And here we go:
 solver.solve(mod, steps=steps)
-mod.plot2d()
+mod.plot2d(fig_name='ART + positive constraint reconstruction')
 solver.plot_statistics()
 
 # Finally we can save our model for later usage.

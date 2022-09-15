@@ -7,7 +7,7 @@ import numpy as np
 from tomomak.detectors import detectors2d, signal
 from tomomak.iterators import algebraic
 from tomomak.iterators import statistics
-import tomomak.penalties_and_constraints.basic
+import tomomak.constraints.basic
 import matplotlib.pyplot as plt
 import scipy.ndimage
 from matplotlib.colors import LogNorm
@@ -26,7 +26,7 @@ real_solution = objects2d.ellipse(mesh, center=(5, 5), ax_len=(3, 3))
 # An easy way to visualize this object is using plot2d() function of the Model class.
 # To do this let's create our model and  assign real_solution to it's solution.
 mod = model.Model(mesh=mesh, solution=real_solution)
-mod.plot2d()
+mod.plot2d(fig_name='Test object')
 # You should see a discrete circle. Now let's pretend that solution is unknown.
 mod.solution = None
 
@@ -62,10 +62,10 @@ solver.real_solution = real_solution
 # Ok, it's time to solve. Let's do 1000 iterations and see the results.
 steps = 1000
 solver.solve(mod, steps)
-mod.plot2d()
+mod.plot2d(fig_name='ART solution after 1000 iterations')
 # There are some artifacts but generally picture looks pretty good.
 # Now let's plot the statistics.
-solver.plot_statistics()
+solver.plot_statistics(fig_name='Reconstruction statistics')
 # You can see that both RMS and RN quickly fall during several first steps
 # and than begin to slowly reach zero. !!!reach
 # You can check yourself that after more iterations
@@ -95,8 +95,8 @@ mod.detector_signal = signal.get_signal(real_solution, limited_det)
 solver.refresh_statistics()
 mod.solution = None
 solver.solve(mod, steps)
-mod.plot2d()
-solver.plot_statistics()
+mod.plot2d(fig_name='Limited data reconstruction')
+solver.plot_statistics(fig_name='Limited data reconstruction statistics')
 # The image became more noisy. Also you can notice, that RMS and RN no longer reaching zero.
 # They are limited by some value. That is the price you pay for the low number of the detectors.
 
@@ -112,16 +112,16 @@ mod.detector_signal = noisy_det_signal
 solver.refresh_statistics()
 mod.solution = None
 steps = 20
-for _ in range(5):
+for i in range(5):
     solver.solve(mod, steps)
-    mod.plot2d()
+    mod.plot2d(fig_name=f'Noisy object after {(i + 1) * steps} steps')
 # The first image you see is pretty noisy, but it's only a part of the problem:
 # unlike the previous cases, our solution become worse, when we increase the number of steps.
 
 # Let's see the statistics.
-solver.plot_statistics()
-# You can see, that RN is decreasing at every step since that is what we are doing - decreasing with our iterator.
-# RMS, however, at some point starts to increase - that's what we save during our investigation.
+solver.plot_statistics(fig_name='Noisy data reconstruction statistics')
+# You can see, that RN is decreasing at every step since it is what our iterator doing.
+# RMS, however, at some point starts to increase.
 
 # A possible solution to this problem is to use early stopping criteria. This will be discussed in other tutorial.
 # Here we will use another trick - additional constraint.
@@ -136,8 +136,8 @@ mod.solution = None
 solver.refresh_statistics()
 steps = 100
 solver.solve(mod, steps)
-mod.plot2d()
-solver.plot_statistics()
+mod.plot2d(fig_name='Noisy object with early stopping')
+solver.plot_statistics(fig_name='Noisy data reconstruction statistics with early stopping')
 # Well, the result is clearly better. More importantly our solution converges now.
 
 # The question is: what gaussian_filter1d parameters should we use?
@@ -189,8 +189,8 @@ mod.solution = None
 solver.refresh_statistics()
 steps = 100
 solver.solve(mod, steps)
-mod.plot2d()
-solver.plot_statistics()
+mod.plot2d(fig_name='Noisy data object with hyperparameter optimization')
+solver.plot_statistics(fig_name='Noisy data reconstruction statistics with optimization')
 
 # This is much better. However don't forget, that parameters we choose
 # are the best parameter only for our specific synthetic case.

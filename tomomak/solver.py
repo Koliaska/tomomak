@@ -49,13 +49,13 @@ class Solver:
                 for ind, s in enumerate(self.stop_conditions):
                     if type(s).__name__[-3:] != 'GPU':
                         raise RuntimeError("{} stop condition calculation doesn't support GPU acceleration".format(s))
-        # Init iterator and penalties_and_constraints.
+        # Init iterator and constraints.
         print("Started calculation with {} iterations using {}.".format(steps, self.iterator))
         start_time = time.time()
         if self.iterator is not None:
             self.iterator.init(model, steps, *args, **kwargs)
         if self.constraints is not None:
-            print("Used penalties_and_constraints:")
+            print("Used constraints:")
             for r in self.constraints:
                 r.init(model, steps, *args, **kwargs)
                 print("  " + str(r))
@@ -74,7 +74,7 @@ class Solver:
             old_solution = copy.copy(model.solution)
             if self.iterator is not None:
                 self.iterator.step(model=model, step_num=i)
-            # penalties_and_constraints
+            # constraints
             if self.constraints is not None:
                 for k, r in enumerate(self.constraints):
                     r.step(model=model, step_num=i)
@@ -115,8 +115,9 @@ class Solver:
                 print("  {}: {}".format(s, s.data[-1]))
         model.solution = np.array(model.solution, dtype='float')
 
-    def plot_statistics(self):
+    def plot_statistics(self, fig_name='Statistics'):
         if self.statistics is not None:
+            plt.figure(fig_name)
             subpl = len(self.statistics) * 100 + 11
             axes = []
             for s in self.statistics:

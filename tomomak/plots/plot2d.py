@@ -7,7 +7,8 @@ from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
 
-def patches(data, axis1, axis2, title='', fill_scheme='viridis', norm=None, ax_names=('-', '-'), *args,  **kwargs):
+def patches(data, axis1, axis2, title='', fill_scheme='viridis', norm=None, ax_names=('-', '-'), fig_name='Figure',
+            *args,  **kwargs):
     """Prepare patches plot for 2D data visualization.
 
     Works with arbitrary axes types.
@@ -20,6 +21,7 @@ def patches(data, axis1, axis2, title='', fill_scheme='viridis', norm=None, ax_n
         norm (None/[Number, Number], optional): If not None, all detectors will have same z axis
             with [ymin, ymax] = norm. default: None.
         ax_names (list of str, optional): caption for coordinate axes. Default: ('-', '-').
+        fig_name (str, optional): Figure ID. Same as num parameter in matplotlib. Default: 'Figure'.
         *args, **kwargs: not used.
 
     Returns:
@@ -30,25 +32,25 @@ def patches(data, axis1, axis2, title='', fill_scheme='viridis', norm=None, ax_n
          cb (matplotlib.pyplot.colorbar): colorbar on the right of the axis.
     """
     cmap = plt.get_cmap(fill_scheme)
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(num=fig_name)
     try:
         edges = axis1.cell_edges2d_cartesian(axis2)
     except TypeError:
         edges = axis2.cell_edges2d_cartesian(axis1).transpose()
     z = data
-    patches = []
+    patch_list = []
     x_max, x_min = edges[0][0][0]
     y_max, y_min = edges[0][0][1]
     for row in edges:
         for points in row:
             polygon = Polygon(points)
-            patches.append(polygon)
+            patch_list.append(polygon)
             for p in points:
                 x_max = max(x_max, p[0])
                 x_min = min(x_min, p[0])
                 y_max = max(y_max, p[1])
                 y_min = min(y_min, p[1])
-    pc = PatchCollection(patches, alpha=1)
+    pc = PatchCollection(patch_list, alpha=1)
     pc.set_array(np.array(z).flatten())
     if norm is not None:
         pc.set_clim(norm[0], norm[1])
@@ -62,7 +64,7 @@ def patches(data, axis1, axis2, title='', fill_scheme='viridis', norm=None, ax_n
 
 
 def colormesh2d(data, axis1, axis2, title='', style='colormesh', fill_scheme='viridis',
-                grid=False, norm=None, ax_names=('-', '-'), *args,  **kwargs):
+                grid=False, norm=None, ax_names=('-', '-'), fig_name='Figure', *args,  **kwargs):
     """Prepare bar plot for 2D data visualization.
 
      matplotlib.pyplot.pcolormesh  is used.
@@ -78,6 +80,7 @@ def colormesh2d(data, axis1, axis2, title='', style='colormesh', fill_scheme='vi
         norm (None/[Number, Number], optional): If not None, all detectors will have same z axis
             with [ymin, ymax] = norm. default: None.
         ax_names (list of str, optional): caption for coordinate axes. Default: ('-', '-').
+        fig_name (str, optional): Figure ID. Same as num parameter in matplotlib. Default: 'Figure'.
         *args, **kwargs: arguments will be passed to matplotlib.pyplot.pcolormesh
 
      Returns:
@@ -88,7 +91,7 @@ def colormesh2d(data, axis1, axis2, title='', style='colormesh', fill_scheme='vi
          cb (matplotlib.pyplot.colorbar): colorbar on the right of the axis.
      """
     cmap = plt.get_cmap(fill_scheme)
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(num=fig_name)
     if style == 'colormesh':
         x = axis1.cell_edges
         y = axis2.cell_edges
@@ -133,6 +136,8 @@ def detector_plot2d(data, axis1, axis2, title='', cb_title='', style='colormesh'
         grid (bool, optional): if True, grid is shown. Default: False.
         equal_norm (bool, optional): If True,  all detectors will have same z axis.
             If False, each detector has individual z axis. Default:False
+        transpose (bool, optional): transpose y data for correct representation. Default: True.
+        plot_type (str, optional): type of the 2d plot: 'colormesh' or 'patches'. Default: 'colormesh'.
         ax_names (list of str, optional): caption for coordinate axes. Default: ('-', '-').
         *args, **kwargs: arguments will be passed to matplotlib.pyplot.pcolormesh
 
@@ -170,7 +175,7 @@ def detector_plot2d(data, axis1, axis2, title='', cb_title='', style='colormesh'
         plot, ax, fig, cb = colormesh2d(data[0], axis1, axis2, title, style,  fill_scheme, grid, norm, ax_names,
                                         *args, **kwargs)
     elif plot_type == 'patches':
-        plot, ax, fig, cb = patches(data[0], axis1, axis2, title, fill_scheme, norm,ax_names, *args, **kwargs)
+        plot, ax, fig, cb = patches(data[0], axis1, axis2, title, fill_scheme, norm, ax_names, *args, **kwargs)
     else:
         raise ValueError('plot_type {} is unknown. See docstring for more information.'.format(plot_type))
     cb.set_label(cb_title)
@@ -198,4 +203,3 @@ def _set_labels(ax, title, ax_names):
     xlabel = ax_names[0]
     ylabel = ax_names[1]
     ax.set(xlabel=xlabel, ylabel=ylabel)
-

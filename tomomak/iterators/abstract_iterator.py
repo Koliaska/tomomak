@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 class AbstractSolverClass(ABC):
-    """Abstract class for Solvers and penalties_and_constraints.
+    """Abstract class for Solvers and constraints.
 
     Every solver or constraint should implement these four methods to work correctly.
     However, often only step() and __str__() methods are required. So init() and finalize() methods may just pass.

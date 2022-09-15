@@ -5,7 +5,7 @@ from . import interactive
 
 
 def bar1d(data, axis, title='', ylabel='', filled=True, fill_scheme='viridis', edgecolor='black',
-          grid=False, norm=None, *args,  **kwargs):
+          grid=False, norm=None, fig_name='Figure', *args,  **kwargs):
     """Prepare bar plot for 1D data visualization.
 
     matplotlib.pyplot.bar plot is used.
@@ -23,6 +23,7 @@ def bar1d(data, axis, title='', ylabel='', filled=True, fill_scheme='viridis', e
         grid (bool, optional): if True, grid is shown. default: False.
         norm (None/[Number, Number], optional):
             If not None, all detectors will have same y axis with [ymin, ymax] = norm.иdefault: None.
+        fig_name (str, optional): Figure ID. Same as num parameter in matplotlib. Default: 'Figure'.
         *args, **kwargs: arguments will be passed to matplotlib.pyplot.bar
 
     Returns:
@@ -30,7 +31,7 @@ def bar1d(data, axis, title='', ylabel='', filled=True, fill_scheme='viridis', e
         ax (axes.Axes): axes.Axes object or array of Axes objects.
             See matplotlib Axes class
     """
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(num=fig_name)
     color = None
     if filled:
         color = _fill_plot(data, fill_scheme, norm)

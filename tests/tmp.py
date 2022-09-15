@@ -8,7 +8,7 @@ from tomomak.transform import pipeline
 from tomomak.detectors import detectors2d, signal
 from tomomak.iterators import ml, algebraic
 from tomomak.iterators import statistics
-import tomomak.penalties_and_constraints.basic
+import tomomak.constraints.basic
 import numpy as np
 
 axes = [cartesian.Axis1d(name="X", units="cm", size=20, upper_limit=10),

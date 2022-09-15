@@ -1,3 +1,5 @@
+"""Basic penalties and constraints used for regularization."""
+
 from ..iterators import abstract_iterator
 import numpy as np
 try:
