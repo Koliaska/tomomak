@@ -17,8 +17,11 @@ from matplotlib.colors import LogNorm
 # In order to find best smoothing parameters grid search is used.
 
 # Let's create 2D Cartesian mesh 10 cm x 10 cm which will store our data in  30x30 ndarray.
-axes = [Axis1d(name="X", units="cm", size=30, lower_limit=0, upper_limit=10),
-        Axis1d(name="Y", units="cm", size=30, lower_limit=0, upper_limit=10)]
+print("-----------------------------------------------------------------------------------")
+print("Ideal case:")
+print("-----------------------------------------------------------------------------------")
+axes = [Axis1d(name="X", units="cm", size=30, upper_limit=10),
+        Axis1d(name="Y", units="cm", size=30, upper_limit=10)]
 mesh = mesh.Mesh(axes)
 
 # Now we need some simple object to work with. Let's create circle r = 3 cm in the center of our mesh.
@@ -79,6 +82,10 @@ solver.plot_statistics(fig_name='Reconstruction statistics')
 # you will not meet such conditions.
 # Let's consider our first case: limited data. In this example we will use only 10 fans with 30 detectors,
 # while mesh is still consist of 30x30 cells.
+# Note that we increased the divergence, so detectors cover the entire space.
+print("\n-----------------------------------------------------------------------------------")
+print("Limited data case (300 detectors, but 900 cells):")
+print("-----------------------------------------------------------------------------------")
 limited_det = detectors2d.fan_detector_array(mesh=mesh,
                                              focus_point=(5, 5),
                                              radius=11,
@@ -103,6 +110,9 @@ solver.plot_statistics(fig_name='Limited data reconstruction statistics')
 # Now let's consider high measurements error. For example, this may happen when your detectors are poorly calibrated,
 # detector signal has statistical nature, or you don't know exact geometry of the experiment.
 # We go back to our 40x30 detectors case but with some Gaussian noises.
+print("\n-----------------------------------------------------------------------------------")
+print("Noisy signal case:")
+print("-----------------------------------------------------------------------------------")
 mod.detector_signal = None
 mod.detector_geometry = det
 noisy_det_signal = signal.add_noise(det_signal, 5)
@@ -126,7 +136,7 @@ solver.plot_statistics(fig_name='Noisy data reconstruction statistics')
 # A possible solution to this problem is to use early stopping criteria. This will be discussed in other tutorial.
 # Here we will use another trick - additional constraint.
 # It is possible to apply 1D function along specific axis at each reconstruction step.
-# We will apply scipy.ndimage.gaussian_filter1d
+# We will apply scipy.ndimage.gaussian_filter1d, where sigma argument is standard deviation for Gaussian kernel.
 func = scipy.ndimage.gaussian_filter1d
 c2 = tomomak.constraints.basic.ApplyAlongAxis(func, axis=0, alpha=0.1, sigma=1)
 c3 = tomomak.constraints.basic.ApplyAlongAxis(func, axis=1, alpha=0.1, sigma=1)
@@ -144,6 +154,9 @@ solver.plot_statistics(fig_name='Noisy data reconstruction statistics with early
 # In order to answer this question we should do hyperparameter optimization.
 # Let's implement grid search method which suggest trying many different parameter combinations.
 #  We will try some alphas and sigmas and store RMS after 100 steps for each combination. This will take some time.
+print("\n-----------------------------------------------------------------------------------")
+print("Hyperparameter optimization:")
+print("-----------------------------------------------------------------------------------")
 res = ""
 dat = []
 mod.solution = None
@@ -153,9 +166,9 @@ for alpha in np.linspace(0.01, 0.3, 20):
     for sig in np.linspace(0.1, 2, 20):
         mod.solution = None
         solver.refresh_statistics()
-        c1 = tomomak.constraints.basic.ApplyAlongAxis(func, axis=0, alpha=alpha, sigma=sig)
-        c2 = tomomak.constraints.basic.ApplyAlongAxis(func, axis=1, alpha=alpha, sigma=sig)
-        solver.constraints = [tomomak.constraints.basic.Positive(), c1, c2]
+        c_scan1 = tomomak.constraints.basic.ApplyAlongAxis(func, axis=0, alpha=alpha, sigma=sig)
+        c_scan2 = tomomak.constraints.basic.ApplyAlongAxis(func, axis=1, alpha=alpha, sigma=sig)
+        solver.constraints = [c1, c_scan1, c_scan2]
         solver.solve(mod, steps=steps)
         res += "alpha = {}, sigma = {}, rms = {}\n".format(alpha, sig, solver.statistics[0].data[-1])
         new_dat = [alpha, sig, solver.statistics[0].data[-1]]
@@ -179,8 +192,8 @@ plt.show()
 min_ind = np.argmin(np.array(dat)[:, 2])
 alpha = dat[min_ind][0]
 sigma = dat[min_ind][1]
-print(dat)
-print("alpha = {}, sigma = {}, RMS = {}".format(alpha, sigma, dat[min_ind][2]))
+print("\nFinished hyperparameter optimization.")
+print(f"Best parameters: alpha = {alpha}, sigma = {sigma}, RMS = {dat[min_ind][2]}")
 func = scipy.ndimage.gaussian_filter1d
 c2 = tomomak.constraints.basic.ApplyAlongAxis(func, axis=0, alpha=alpha, sigma=sigma)
 c3 = tomomak.constraints.basic.ApplyAlongAxis(func, axis=1, alpha=alpha, sigma=sigma)
