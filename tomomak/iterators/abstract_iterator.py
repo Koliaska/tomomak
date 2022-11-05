@@ -92,10 +92,6 @@ class AbstractIterator(AbstractSolverClass):
                 self._alpha = self.alpha
             if len(self._alpha) < steps:
                 raise ValueError("Alpha len in {} should be equal or greater than number of steps.".format(self))
-        """
-
-        :return:
-        """
 
     def get_alpha(self, model, step_num):
         """Use this to get alpha.

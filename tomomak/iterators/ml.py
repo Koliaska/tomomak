@@ -53,7 +53,7 @@ class _MLCPU(abstract_iterator.AbstractIterator):
         # expected signal
         y_expected = signal.get_signal(model.solution, model.detector_geometry)
         # multiplication
-        mult =  np.sum(np.divide(self.w_det, y_expected, out=np.zeros_like(self.w_det), where=y_expected != 0), axis=-1)
+        mult = np.sum(np.divide(self.w_det, y_expected, out=np.zeros_like(self.w_det), where=y_expected != 0), axis=-1)
         mult = mult / self.wi
         # result
         model.solution = model.solution * mult

@@ -19,67 +19,68 @@ mod = model.Model(mesh=mesh)
 
 real_solution = objects2d.polygon(mesh, [(1, 1), (4, 8), (7, 2)])
 
-mod.solution = real_solution
-mod.plot2d()
-
-mod.plot1d(index=0)
-
-mod.solution = None
 
 det = detectors2d.fan_detector_array(mesh=mesh,
                                      focus_point=(5, 5),
                                      radius=11,
-                                     fan_num=15,
-                                     line_num=22,
+                                     fan_num=14,
+                                     line_num=20,
                                      width=1,
                                      divergence=0.2)
 
 det_signal = signal.get_signal(real_solution, det)
-mod.detector_signal = det_signal
+print(det_signal)
+noisy_det_signal = signal.add_noise(det_signal, 10)
+mod.detector_signal = noisy_det_signal
 mod.detector_geometry = det
 
-mod.plot2d(data_type='detector_geometry')
+#os.environ["TM_GPU"] = "1"
 
-print(mod)
+steps = 100
+solver = Solver()
+solver.statistics = [statistics.RN(), statistics.RMS()]
+solver.real_solution = real_solution
+solver.iterator = algebraic.ART()
+solver.constraints = [tomomak.constraints.basic.Positive()]
+solver.solve(mod, steps=steps)
+mod.plot2d(fig_name='No reg')
 
+mod.solution = None
+solver = Solver()
+solver.statistics = [statistics.RN(), statistics.RMS()]
+solver.real_solution = real_solution
+solver.iterator = algebraic.ART()
+solver.constraints = [tomomak.constraints.regression.Lasso(alpha=0.1),
+                      tomomak.constraints.basic.Positive()]
+solver.solve(mod, steps=steps)
+mod.plot2d(fig_name='Lasso')
 
-pipe = pipeline.Pipeline(mod)
-r = rescale.Rescale((20, 20))
-pipe.add_transform(r)
+mod.solution = None
+solver = Solver()
+solver.statistics = [statistics.RN(), statistics.RMS()]
+solver.real_solution = real_solution
+solver.iterator = algebraic.ART()
+solver.constraints = [tomomak.constraints.regression.Tikhonov(alpha=0.5),
+                      tomomak.constraints.basic.Positive()]
+
+solver.solve(mod, steps=steps)
+mod.plot2d(fig_name='Tikhonov')
+import scipy.ndimage
+func = scipy.ndimage.gaussian_filter1d
+mod.solution = None
+solver = Solver()
+solver.statistics = [statistics.RN(), statistics.RMS()]
+solver.real_solution = real_solution
+solver.iterator = algebraic.ART()
+solver.constraints = [tomomak.constraints.basic.Positive(),
+                      tomomak.constraints.basic.ApplyAlongAxis(func, axis=0, alpha=0.1, sigma=1),
+                      tomomak.constraints.basic.ApplyAlongAxis(func, axis=1, alpha=0.1, sigma=1)
+                      ]
+solver.solve(mod, steps=steps)
+mod.plot2d(fig_name='Smooth')
 
 mod.solution = real_solution
-pipe.forward()
-real_solution = mod.solution
-mod.plot2d()
-mod.solution = None
-
-solver = Solver()
-
-solver.statistics = [statistics.RN(), statistics.RMS()]
-
-solver.real_solution = real_solution
-
-solver.iterator = ml.ML()
-
-steps = 50
-solver.solve(mod, steps=steps)
-mod.plot2d()
-solver.plot_statistics()
+mod.plot2d(fig_name='Test object')
 
 
-solver.iterator = algebraic.ART()
-
-solver.constraints = [tomomak.constraints.basic.Positive()]
-
-solver.stop_conditions = [statistics.RMS()]
-solver.stop_values = [15]
-
-steps = 10000
-
-solver.iterator.alpha = np.linspace(0.1, 0.01, steps)
-solver.solve(mod, steps=steps)
-mod.plot2d()
-solver.plot_statistics()
-
-mod.save("basic_func_model.tmm")
 
