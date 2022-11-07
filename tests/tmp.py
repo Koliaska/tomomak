@@ -50,6 +50,16 @@ solver = Solver()
 solver.statistics = [statistics.RN(), statistics.RMS()]
 solver.real_solution = real_solution
 solver.iterator = algebraic.ART()
+solver.constraints = [tomomak.constraints.regression.Entropy(alpha=0.1),
+                      tomomak.constraints.basic.Positive()]
+solver.solve(mod, steps=steps)
+mod.plot2d(fig_name='entropy')
+
+mod.solution = None
+solver = Solver()
+solver.statistics = [statistics.RN(), statistics.RMS()]
+solver.real_solution = real_solution
+solver.iterator = algebraic.ART()
 solver.constraints = [tomomak.constraints.regression.Lasso(alpha=0.1),
                       tomomak.constraints.basic.Positive()]
 solver.solve(mod, steps=steps)

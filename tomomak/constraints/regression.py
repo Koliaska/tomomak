@@ -3,7 +3,7 @@ import numpy as np
 from tomomak.util.engine import IteratorFactory
 import warnings
 import numbers
-
+from tomomak.util import array_routines
 try:
     import cupy as cp
 except ImportError:
@@ -17,7 +17,6 @@ class Tikhonov(IteratorFactory):
 
 
 class _TikhonovCPU(abstract_iterator.AbstractIterator):
-
     def __init__(self, alpha=0.1, alpha_calc=None):
         """
         Args:
@@ -44,7 +43,6 @@ class _TikhonovCPU(abstract_iterator.AbstractIterator):
 
 
 class _TikhonovGPU(_TikhonovCPU):
-
     def step(self, model, step_num):
         """Step function, called by solver.
         """
@@ -59,7 +57,6 @@ class Lasso(IteratorFactory):
 
 
 class _LassoCPU(abstract_iterator.AbstractIterator):
-
     def __init__(self, alpha=0.1, alpha_calc=None):
         """
         Args:
@@ -86,7 +83,6 @@ class _LassoCPU(abstract_iterator.AbstractIterator):
 
 
 class _LassoGPU(_LassoCPU):
-
     def step(self, model, step_num):
         """Step function, called by solver.
         """
@@ -101,7 +97,6 @@ class ElasticNet(IteratorFactory):
 
 
 class _ElasticNetCPU(abstract_iterator.AbstractIterator):
-
     def __init__(self, alpha1=0.1, alpha2=0.1, alpha_calc=None):
         """
         Args:
@@ -149,3 +144,55 @@ class _ElasticNetGPU(_ElasticNetCPU):
         a2 = self.get_alpha(model, step_num)[1]
         model.solution = model.solution - a1 * cp.sign(model.solution) \
                          - a2 * model.solution / cp.sqrt(cp.sum(model.solution ** 2))
+
+
+class Entropy(IteratorFactory):
+    """Regularization, which minimizes entropy.
+    """
+    pass
+
+
+class _EntropyCPU(abstract_iterator.AbstractIterator):
+    def __init__(self, alpha=0.1, alpha_calc=None):
+        """
+        Args:
+            alpha (float): weighting coefficient. The result is equal to
+            old_solution + alpha * (new_solution - old_solution). Default: 0.1.
+            alpha_calc (function): function for alpha calculation if needed. Default: None.
+        """
+        super().__init__(alpha, alpha_calc)
+
+    def init(self, model, steps, *args, **kwargs):
+        super().init(model, steps, *args, **kwargs)
+
+    def finalize(self, model):
+        pass
+
+    def __str__(self):
+        return "Entropy regularization"
+
+    def step(self, model, step_num):
+        """Step function, called by solver.
+        """
+        alpha = self.get_alpha(model, step_num)
+        det_geom_sum = np.sum(model.detector_geometry, axis=0)
+        det_geom_sum_ln = array_routines.multiply_along_axis(model.detector_geometry, model.detector_signal, 0)
+        det_geom_sum_ln = np.sum(det_geom_sum_ln, axis=0)
+        model.solution = model.solution + alpha * (det_geom_sum + det_geom_sum_ln)
+
+
+class _EntropyGPU(_TikhonovCPU):
+    def step(self, model, step_num):
+        """Step function, called by solver.
+        """
+        alpha = self.get_alpha(model, step_num)
+        det_geom_sum = cp.sum(model.detector_geometry, axis=0)
+
+        def mult_along_axis_GPU(a, b, axis):
+            dim_array = np.ones((1, a.ndim), int).ravel()
+            dim_array[axis] = -1
+            b_reshaped = b.reshape(dim_array)
+            return a * b_reshaped
+        det_geom_sum_ln = mult_along_axis_GPU(model.detector_geometry, model.detector_signal, 0)
+        det_geom_sum_ln = cp.sum(det_geom_sum_ln, axis=0)
+        model.solution = model.solution + alpha * (det_geom_sum + det_geom_sum_ln)
