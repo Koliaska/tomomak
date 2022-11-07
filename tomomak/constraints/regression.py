@@ -3,6 +3,7 @@ import numpy as np
 from tomomak.util.engine import IteratorFactory
 import warnings
 import numbers
+
 try:
     import cupy as cp
 except ImportError:
@@ -75,17 +76,23 @@ class _LassoCPU(abstract_iterator.AbstractIterator):
         pass
 
     def __str__(self):
-        return "Tikhonov regularization"
+        return "Lasso regularization"
 
     def step(self, model, step_num):
         """Step function, called by solver.
         """
         alpha = self.get_alpha(model, step_num)
-        model.solution = model.solution - alpha
+        model.solution = model.solution - alpha * np.sign(model.solution)
 
 
 class _LassoGPU(_LassoCPU):
-    pass
+
+    def step(self, model, step_num):
+        """Step function, called by solver.
+        """
+        alpha = self.get_alpha(model, step_num)
+        model.solution = model.solution - alpha * cp.sign(model.solution)
+
 
 class ElasticNet(IteratorFactory):
     """Combination of Ridge and Lasso regressions.
@@ -95,7 +102,7 @@ class ElasticNet(IteratorFactory):
 
 class _ElasticNetCPU(abstract_iterator.AbstractIterator):
 
-    def __init__(self, alpha1=0.1, alpha2=0.1,  alpha_calc=None):
+    def __init__(self, alpha1=0.1, alpha2=0.1, alpha_calc=None):
         """
         Args:
             alpha1 (float): weighting coefficient for L1 norm (Lasso regression)
@@ -122,14 +129,15 @@ class _ElasticNetCPU(abstract_iterator.AbstractIterator):
         pass
 
     def __str__(self):
-        return "Tikhonov regularization"
+        return "Elastic Net regularization"
 
     def step(self, model, step_num):
         """Step function, called by solver.
         """
         a1 = self.get_alpha(model, step_num)[0]
         a2 = self.get_alpha(model, step_num)[1]
-        model.solution = model.solution - a1 - a2 * model.solution / np.sqrt(np.sum(model.solution ** 2))
+        model.solution = model.solution - a1 * np.sign(model.solution) - a2 * model.solution / np.sqrt(
+            np.sum(model.solution ** 2))
 
 
 class _ElasticNetGPU(_ElasticNetCPU):
@@ -139,4 +147,5 @@ class _ElasticNetGPU(_ElasticNetCPU):
         """
         a1 = self.get_alpha(model, step_num)[0]
         a2 = self.get_alpha(model, step_num)[1]
-        model.solution = model.solution - a1 - a2 * model.solution / cp.sqrt(cp.sum(model.solution ** 2))
+        model.solution = model.solution - a1 * cp.sign(model.solution) \
+                         - a2 * model.solution / cp.sqrt(cp.sum(model.solution ** 2))
