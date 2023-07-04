@@ -151,11 +151,10 @@ def detector_plot2d(data, axis1, axis2, title='', cb_title='', style='colormesh'
 
     class ColormeshSlider(interactive.DetectorPlotSlider):
         def __init__(self, data_input, axis, figure, color_bar, normalization, slider):
-            super().__init__(data_input, axis)
+            super().__init__(data_input, axis, slider)
             self.fig = figure
             self.cb = color_bar
             self.norm = normalization
-            self.slider = slider
 
         def redraw(self):
             y_data = self.data[self.ind]

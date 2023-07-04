@@ -14,7 +14,7 @@ class DetectorPlotSlider:
             ax (matplotlib.axes.Axes): Plot axis.
 
         """
-    def __init__(self, data, ax):
+    def __init__(self, data, ax, slider):
         """Class constructor, which requires only data and plot axes.
 
         Args:
@@ -22,7 +22,7 @@ class DetectorPlotSlider:
             ax (matplotlib.axes.Axes): Plot axes.
         """
         self.ind = 0
-        self.slider = None
+        self.slider = slider
         self.data = data
         self.ax = ax
 

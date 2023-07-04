@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import colors
 from . import interactive
+from matplotlib.widgets import Button, Slider
 
 
 def bar1d(data, axis, title='', ylabel='', filled=True, fill_scheme='viridis', edgecolor='black',
@@ -93,9 +94,9 @@ def detector_bar1d(data, axis, title='', ylabel='', filled=True,
     """
 
     # Callback for Next and Prev buttons
-    class BarPlotSlice(interactive.DetectorPlotSlicer):
-        def __init__(self, dat, ax,  normalization):
-            super().__init__(dat, ax)
+    class BarPlotSlide(interactive.DetectorPlotSlider):
+        def __init__(self, dat, ax,  normalization, slider):
+            super().__init__(dat, ax, slider)
             self.norm = normalization
 
         def redraw(self):
@@ -116,7 +117,26 @@ def detector_bar1d(data, axis, title='', ylabel='', filled=True,
         # normalization failed. e.g. all signals = 0
         if norm[0] == norm[1]:
             norm = None
+
+
     plot, axis = bar1d(data[0], axis, title, ylabel, filled, fill_scheme, edgecolor, grid, norm, *args, **kwargs)
-    callback = BarPlotSlice(data, axis, norm)
-    b_next, b_prev = interactive.crete_prev_next_buttons(callback.next, callback.prev)
-    return plot, axis, (b_next, b_prev)
+
+    slider_color = 'lightgoldenrodyellow'
+    plt.subplots_adjust(bottom=0.2)
+    ax_slider = plt.axes([0.12, 0.05, 0.62, 0.03], facecolor=slider_color)
+    slider = Slider(ax_slider, '', 0, data.shape[0] - 1, valinit=0, valstep=1)
+    slider.valtext.set_visible(False)
+    callback = BarPlotSlide(data, axis, norm, slider)
+    slider.on_changed(callback.update)
+    # buttons
+    ax_prev = plt.axes([0.07, 0.028, 0.02, 0.075])
+    ax_next = plt.axes([0.78, 0.028, 0.02, 0.075])
+    b_next = Button(ax_next, '>')
+    b_prev = Button(ax_prev, '<')
+    b_next.on_clicked(callback.next)
+    b_prev.on_clicked(callback.prev)
+
+
+
+
+    return plot, axis, (slider, b_next, b_prev)
