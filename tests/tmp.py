@@ -32,62 +32,34 @@ import numpy as np
 # Let's create coordinate mesh. First axis will be from 0 to 10 cm and consist of 20 segments.
 # Second - from 0 to 10 cm of 30 segments.
 # In this case the solution will be described by the 20x30 array.
-axes = [cartesian.Axis1d(name="X", units="cm", size=20, upper_limit=10),
-        cartesian.Axis1d(name="Y", units="cm", size=30, upper_limit=10)]
-mesh = mesh.Mesh(axes)
-# Now we can create Model.
-# Model is one of the basic tomomak structures which stores information about geometry, solution and detectors.
-# At present we only have information about the geometry.
-mod = model.Model(mesh=mesh)
 
-det = detectors2d.fan_detector_array(mesh=mesh,
-                                     focus_point=(5, 5),
-                                     radius=11,
-                                     fan_num=5,
-                                     line_num=4,
-                                     width=1,
-                                     divergence=0.2)
-# Now we can calculate signal of each detector.
-# Of course in the real experiment you measure detector signals so you don't need this function.
-
-
-# Let's take a look at the detectors geometry:
-mod.detector_geometry = det
-mod.plot2d(data_type='detector_geometry', fig_name='Detector geometry')
-mod.plot1d(data_type='detector_geometry', fig_name='Detector geometry')
-
-
-axes = [cartesian.Axis1d(name="X", units="cm", size=20, upper_limit=10),
-        cartesian.Axis1d(name="Y", units="cm", size=30, upper_limit=10)]
+axes = [cartesian.Axis1d(name="X", units="cm", size=12, upper_limit=8),
+        cartesian.Axis1d(name="Y", units="cm", size=13, upper_limit=10)]
 mesh = mesh.Mesh(axes)
 
 mod = model.Model(mesh=mesh)
 
 real_solution = objects2d.polygon(mesh, [(1, 1), (4, 8), (7, 2)])
 
-
+print(axes[0].cell_edges)
 det = detectors2d.fan_detector_array(mesh=mesh,
                                      focus_point=(5, 5),
                                      radius=11,
-                                     fan_num=14,
-                                     line_num=20,
+                                     fan_num=9,
+                                     line_num=8,
                                      width=1,
                                      divergence=0.2)
 
 det_signal = signal.get_signal(real_solution, det)
-print(det_signal)
-noisy_det_signal = signal.add_noise(det_signal, 10)
-mod.detector_signal = noisy_det_signal
+mod.detector_signal = det_signal
 mod.detector_geometry = det
-
-#os.environ["TM_GPU"] = "1"
-
 steps = 100
 solver = Solver()
 solver.statistics = [statistics.RN(), statistics.RMS()]
 solver.real_solution = real_solution
 solver.iterator = algebraic.ART()
-solver.constraints = [tomomak.constraints.basic.Positive()]
+solver.constraints = [tomomak.constraints.basic.Positive(),
+                      tomomak.constraints.basic.SolutionBoundary(axis=0,  alpha=1, boundaries=(1.9, 5.9))]
 solver.solve(mod, steps=steps)
 mod.plot2d(fig_name='No reg')
 

@@ -352,6 +352,34 @@ class Abstract1dAxis(AbstractAxis):
                 intersection[i, j] = dist
         return intersection
 
+    def find_position(self, val):
+        """Find position of the value in respect to cell edges
+
+        Args:
+            val (float): value of interest.
+
+        Returns:
+            (int, int): index of the left and right cell edge.
+             If value is located exactly at at the cell edge, both values are equal.
+             If value is outside of axis boundaries, return (-1, 0) or (0, -1).
+        """
+        edges = np.array(self.cell_edges)
+        if val in edges:
+            index = np.searchsorted(edges, val)
+            return index, index
+        else:
+            edges -= val
+            if edges[0] > 0:
+                return -1, 0
+            if edges[-1] < 0:
+                return 0, -1
+            index = 0
+            for i, e in enumerate(edges):
+                if e > 0:
+                    index = i
+                    break
+            return index - 1, index
+
     def plot1d(self, data, mesh, data_type='solution', filled=True,
                fill_scheme='viridis', edge_color='black', grid=False, equal_norm=False, y_label=None, *args, **kwargs):
         """Create 1D plot of the solution or detector geometry.
